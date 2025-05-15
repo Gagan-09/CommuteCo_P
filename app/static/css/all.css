@@ -1,0 +1,100 @@
+body {
+    font-family: "Robotic" sans-serif;
+    user-select: none;
+    -ms-user-select: none;
+    -moz-user-select: none;
+    background-image: linear-gradient(rgb(0, 0, 0), rgba(0, 0, 0, 0.318)),url(/static/img/car3.jpg);
+    background-size: cover;
+    background-repeat: no-repeat;
+    height: 100vh;
+}
+
+.titlePoint {
+    justify-content: start;
+    align-items: center;    
+    font-size: larger;
+    color: #000;
+    font-weight: bold;
+    display: flex;
+}
+
+.headerSelction {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    background-color: #FFF;
+    margin: 40px;
+    border-radius: 20px;
+    box-shadow:
+        0 0 6px 3px #f3cf06,
+        0 0 9px 6px rgb(255, 246, 118),
+        0 0 10px 9px rgb(238, 255, 0);
+    padding: 20px 40px;
+}
+
+.navPoint {
+    gap: 60px;
+    width: 100%;
+    display: flex;
+    justify-content: end;
+}
+
+.navPoint a {
+    width: fit-content;
+    padding: 10px;
+    color: black;
+    text-decoration: none;
+    font-size: 1000;
+    border-radius: 10px;
+    text-align: start;
+    border-color: transparent;
+    border-width: 1px;
+
+    border-style: groove;
+}
+
+.navPoint a:hover {
+    background-color: #000;
+    color: white;
+}
+
+#activac {
+    background-color: #000;
+    color: white;}
+
+.dialog {
+    z-index: 1000;
+    position: absolute;
+    padding: 10px;
+    border-radius: 20px;
+    background-color: #000;
+    width: fit-content;
+    height: fit-content;
+    bottom: 50px;
+    right: 60px;
+    color: white;
+    animation: test 4000ms forwards;
+}
+
+@keyframes test {
+    0% {
+        bottom: 50px;
+    }
+
+    50% {
+        bottom: 500px;
+    }
+
+    80% {
+        right: 0px;
+    }
+
+    100% {
+        bottom: 500px;
+        opacity: 0;
+    }
+}
+
+.nothing {
+    display: none;
+}

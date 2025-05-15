@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="/static/css/all.css">
+    {%if messages%}
+
+    {%for me in messages %}
+    
+    <input type="hidden" value="{{me}}" id="successpoint">
+
+    
+    {% endfor %}
+
+    {% endif %}
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Home</title>
+</head>
+
+<body>
+    <style>
+        .tab-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: #ffffff33;
+            color: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .tab-btn:hover,
+        .tab-btn.active {
+            background: #ffcc00;
+            color: #000;
+        }
+
+        main {
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .form-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .form-section h2 {
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        input {
+            padding: 0.75rem;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+        .btn-submit {
+            background: #004aad;
+            color: white;
+            padding: 0.75rem;
+            width: 100%;
+            font-size: 1rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-submit:hover {
+            background: #00338d;
+        }
+
+        footer {
+            background: #e9e9e9;
+            padding: 1rem;
+            text-align: center;
+            font-size: 0.9rem;
+            margin-top: auto;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+    <div class="nothing" id="messagePoint"></div>
+    <div class="headerSelction">
+        <div class="titlePoint">CAR POOL</div>
+        <div class="navPoint">
+            <a href="/">My Pool</a>
+            <a href="/addPool" id="activac">Add Pool</a>
+            <a href="/joinPool">Join Pool</a>
+            
+            <a href="/profile">Profile</a>
+        </div>
+    </div>
+    <main>
+        <section id="request-form" class="form-section">
+            <h2>Request a Ride</h2>
+            <form action="/addPool/" method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="pickup">Pickup Location</label>
+                    <input type="text" id="pickup" placeholder="e.g., Tirupati" name="formPoint" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="destination">Destination</label>
+                    <input type="text" id="destination" placeholder="e.g., Chennai" name="toPoint" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="date">Date</label>
+                    <input type="date" id="date" required name="datePoint" />
+                </div>
+                <input type="hidden" name="userId" id="userId">
+
+                <div class="form-group">
+                    <label for="contact">Contact Info</label>
+                    <input type="text" id="contact" placeholder="Phone or Email" name="contactPoint" required />
+                </div>
+
+                <button type="submit" class="btn-submit">Submit Request</button>
+            </form>
+        </section>
+
+
+    </main>
+
+</body>
+
+<script>
+    window.addEventListener('DOMContentLoaded', () => {
+        const store = sessionStorage.getItem('Store')
+        if (store == null) {
+            window.location.href = '/'
+        } else {
+            const { id, type } = JSON.parse(store)
+            document.getElementById('userId').value = id
+     
+            if (type != "user") {
+                window.location.href = '/'
+            }
+        }
+    })
+
+
+</script>
+
+{%if messages%}
+<script>
+    const success = document.getElementById('successpoint').value
+   
+        const vali = document.getElementById('messagePoint')
+        vali.className = "dialog"
+        vali.innerText=success
+        setTimeout(() => {
+            vali.className = "nothing"
+        }, 3000)
+    
+</script>
+{% endif %}
+
+</html>

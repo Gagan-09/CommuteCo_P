@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="/static/css/all.css">
+
+    {%if messages%}
+
+    {%for me in messages %}
+
+    {%if me.tags in "success" %}
+    <input type="hidden" value="{{me}}" id="successpoint">
+
+    {% endif %}
+    {%if me.tags in "info" %}
+    <input type="hidden" value="{{me}}" id="infoPoint">
+    {% endif %}
+    
+    {% endfor %}
+
+    {% endif %}
+
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Home</title>
+</head>
+
+<body>
+    <style>
+        .ride-cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            padding: 20px;
+        }
+
+        .ride-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+            width: 300px;
+            transition: transform 0.2s;
+        }
+
+        .ride-card:hover {
+            transform: translateY(-5px);
+        }
+
+        h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        p {
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .ride-actions {
+            margin-top: 15px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .accept-btn,
+        .reject-btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .accept-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .accept-btn:hover {
+            background-color: #45a049;
+        }
+
+        .reject-btn {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .reject-btn:hover {
+            background-color: #e53935;
+        }
+    </style>
+    <div class="nothing" id="messagePoint"></div>
+    <div class="headerSelction">
+        <div class="titlePoint">CAR POOL</div>
+        <div class="navPoint">
+            <a href="" id="activac">Pending Rides</a>
+            <a id="acceptedPoint">Accepted Pool</a>
+            <a href="/profiledriver">Profile</a>
+        </div>
+    </div>
+    <p style="font-size: large;font-size: 30px;padding-left: 20px;color: white;margin-top: 20px;">Rides</p>
+    
+    <div class="ride-cards-container">
+        {% for view in data %}
+        <div class="ride-card">
+            <form action="/stateOF/" method="post">
+                {%csrf_token%}
+                <h3>Ride #1</h3>
+                <p><strong>Pickup Location:</strong> {{view.fromCity}}</p>
+                <p><strong>Dropoff Location:</strong> {{view.toCity}}</p>
+                <input type="hidden" name="rideId" value="{{view.id}}">
+                <input type="hidden" name="driverId" class="idSettter">
+                <p><strong>Applied on :</strong> {{view.applyOn}}</p>
+                <p><strong>Estimaeted Date:</strong> {{view.datePoint}}</p>
+                <div class="ride-actions">
+                    <button class="accept-btn" type="submit">Accept</button>
+                </div>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+
+
+</body>
+
+{%if messages%}
+<script>
+    const data = document.getElementById('infoPoint').value
+    if (data.length != 0) {
+        const view = String(data).split(',')
+        sessionStorage.setItem("Store", JSON.stringify({ 'id': view[0], 'type': view[1] }))
+    }
+    const success = document.getElementById('successpoint').value
+    if (screen.length != 0) {
+        const vali = document.getElementById('messagePoint')
+        vali.className = "dialog"
+        vali.innerText = success
+        setTimeout(() => {
+            vali.className = "nothing"
+        }, 3000)
+    }
+</script>
+{% endif %}
+
+<script>
+    window.addEventListener('DOMContentLoaded', () => {
+        const store = sessionStorage.getItem('Store')
+        if (store == null) {
+            window.location.href = '/'
+
+        } else {
+            const { id, type } = JSON.parse(store)
+
+            if (type != "driver") {
+                window.location.href = '/'
+            }
+            const view = document.querySelectorAll('.idSettter')
+            view.forEach(vo => vo.value = id)
+
+            document.getElementById('acceptedPoint').href = `/acceptance/${id}/`
+            const myRequest = document.getElementById('myRequest')
+            fetch(`/getRequestFromUsers?userid=${id}`).then(view => view.json()).then(point => {
+                var text = ""
+                point.data.forEach(element => {
+                    text += `<div class="card">
+          <h3>${element.fromCity} ➜ ${element.toCity}</h3>
+          <p><strong>Date:</strong> ${element.datePoint}</p>
+          <p><strong>Contact:</strong> ${element.contactPoint}</p>
+          <p><strong>Raised On:</strong> ${element.applyOn}</p>
+           <button  class="accept-btn" style='color:black' onclick="setString('${element.toCity}','${element.fromCity}')"><img src='/static/img/point.png' style='width:24px;height:24px;'></img>Directions</button>
+    
+        </div>`
+
+                });
+                myRequest.innerHTML = text
+            })
+        }
+       
+    function setString(toCity,fromCity){
+         window.location.href=`/maps?source=${fromCity}'&destination=${toCity}`
+     }
+
+    })
+
+</script>
+
+</html>

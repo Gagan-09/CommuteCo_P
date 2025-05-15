@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="/static/css/all.css" />
+
+    {%if messages%} {%for me in messages %} {%if me.tags in "success" %}
+    <input type="hidden" value="{{me}}" id="successpoint" />
+
+    {% endif %} {%if me.tags in "info" %}
+    <input type="hidden" value="{{me}}" id="infoPoint" />
+    {% endif %} {% endfor %} {% endif %}
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User Home</title>
+  </head>
+
+  <body>
+    <style>
+      h2 {
+        text-align: center;
+        color: #333;
+      }
+
+      .request-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-top: 2rem;
+      }
+
+      .card {
+        background: #fff;
+        padding: 1rem 1.5rem;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+        transition: 0.3s;
+      }
+
+      .card:hover {
+        transform: translateY(-5px);
+      }
+
+      .card h3 {
+        margin: 0;
+        font-size: 1.2rem;
+        color: #007bff;
+      }
+
+      .card p {
+        margin: 0.4rem 0;
+        color: #555;
+      }
+      .accept-btn,
+      .reject-btn {
+        padding: 10px 15px;
+        border: none;
+        border-radius: 5px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+
+      .accept-btn {
+        background-color: #4caf50;
+        color: white;
+      }
+    </style>
+    <div class="nothing" id="messagePoint"></div>
+    <div class="headerSelction">
+      <div class="titlePoint">CAR POOL</div>
+      <div class="navPoint">
+        <a href="/" id="activac">My Pool</a>
+        <a href="/addPool">Add Pool</a>
+        <a href="/joinPool">Join Pool</a>
+        <a href="/profile">Profile</a>
+      </div>
+    </div>
+    <div class="request-list" id="myRequest"></div>
+  </body>
+
+  {%if messages%}
+  <script>
+    const data = document.getElementById("infoPoint").value;
+    if (data.length != 0) {
+      const view = String(data).split(",");
+      sessionStorage.setItem(
+        "Store",
+        JSON.stringify({ id: view[0], type: view[1] })
+      );
+    }
+    const success = document.getElementById("successpoint").value;
+    if (screen.length != 0) {
+      const vali = document.getElementById("messagePoint");
+      vali.className = "dialog";
+      vali.innerText = success;
+      setTimeout(() => {
+        vali.className = "nothing";
+      }, 3000);
+    }
+  </script>
+  {% endif %}
+
+  <script>
+    window.addEventListener("DOMContentLoaded", () => {
+      const store = sessionStorage.getItem("Store");
+      if (store == null) {
+        window.location.href = "/";
+      } else {
+        const { id, type } = JSON.parse(store);
+
+        if (type != "user") {
+          window.location.href = "/";
+        }
+
+        const myRequest = document.getElementById("myRequest");
+        fetch(`/getRequestFromUsers?userid=${id}`)
+          .then((view) => view.json())
+          .then((point) => {
+            var text = "";
+            point.data.forEach((element) => {
+              text += `<div class="card">
+          <h3>${element.fromCity} ➜ ${element.toCity}</h3>
+          <p><strong>Date:</strong> ${element.datePoint}</p>
+          <p><strong>Contact:</strong> ${element.contactPoint}</p>
+          <p><strong>Raised On:</strong> ${element.applyOn}</p>
+          <p><strong>Status :</strong> ${element.status}</p>
+        <button class="accept-btn" style='color:white;' onclick="setString('${
+          element.toCity
+        }','${
+                element.fromCity
+              }')"><img src='/static/img/point.png' style='width:24px;height:24px;'></img>Directions</button>
+    
+                    ${checkAndUpdate(element.status)}
+          </div>`;
+            });
+            myRequest.innerHTML = text;
+          });
+      }
+    });
+    function setString(toCity, fromCity) {
+      window.location.href = `/maps?source=${fromCity}'&destination=${toCity}`;
+    }
+
+    function checkAndUpdate(status) {
+      if (status == "Ride Completed") {
+        return "    <div class='navPoint'><a id='activac' href='/payment'> Payment</a></div>";
+      } else {
+        return "";
+      }
+    }
+  </script>
+</html>

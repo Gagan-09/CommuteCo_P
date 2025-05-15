@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Registration - CarPool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="/static/css/login.css">
+</head>
+<body>
+    <div class="container">
+        <p class="head">Driver Registration</p>
+        <p class="head2">Join Our CarPool Community</p>
+        
+        {% if messages %}
+        {% for review in messages %}
+        <input type="text" value="{{review.message}}" id="point">
+        {% endfor %}
+        <script>
+            const view = document.getElementById('point');
+            view.className = "dialog";
+            setTimeout(() => {
+                view.className = "nothing";
+            }, 3000);
+        </script>
+        {% endif %}
+
+        <form action="/dregister/" method="post">
+            {% csrf_token %}
+            <div class="input-icon">
+                <i class="fas fa-user"></i>
+                <input type="text" name="name" placeholder="Full Name" required>
+            </div>
+            
+            <div class="input-icon">
+                <i class="fas fa-envelope"></i>
+                <input type="email" name="email" pattern="[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$" 
+                       placeholder="Email Address" title="Invalid Email Format" required>
+            </div>
+            
+            <div class="input-icon">
+                <i class="fas fa-lock"></i>
+                <input type="password" name="password" 
+                       pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" 
+                       placeholder="Create Password" required>
+            </div>
+
+            <button>REGISTER NOW</button>
+        </form>
+
+        <div class="login-link">
+            <p>Existing Driver?</p>
+            <h3 onclick="history.back()" >Sign In</h3>
+        </div>
+    </div>
+</body>
+</html>
