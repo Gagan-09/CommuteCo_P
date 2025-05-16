@@ -122,6 +122,12 @@
             }')"><img src='/static/img/point.png' style='width:24px;height:24px;'></img>Directions</button>
     
                     ${checkAndUpdate(element.status, element.id)}
+          <form method='post' action='/deletePool/${
+            element.id
+          }/' style='margin-top:10px;'>
+            {% csrf_token %}
+            <button type='submit' class='reject-btn' style='background:#e74c3c;color:white;'>Delete</button>
+          </form>
           </div>`;
           });
           myRequest.innerHTML = text;

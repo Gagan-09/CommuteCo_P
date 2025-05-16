@@ -4,16 +4,17 @@ from .views import *
 
 urlpatterns = [
     path("maps/", view=maps, name="maps"),
-
+    path('update_distance/', view=update_distance, name="update_distance"),
     path('payment/', view=payment, name="payment"),
+    path('updateTransaction/', view=updateTransaction, name="updateTransaction"),
     path('AcceptTheRide/', view=AcceptTheRide, name="AcceptTheRide"),
     path('stateOFCompleted/', view=stateOFCompleted, name="stateOFCompleted"),
     path('getJoinPool/', view=getJoinPool, name="getJoinPool"),
     path('joinPool/', view=joinPool, name="joinPool"),
-    path('profiledriver/', view=profiledriver, name="profiledriver"),
     path('stateOF/', view=stateOF, name="stateOF"),
     path('rejectRide/', view=rejectRide, name="rejectRide"),
     path('acceptance/<int:userid>/', view=acceptance, name="acceptance"),
+    path('driver/transactions/', view=driverTransactions, name="driverTransactions"),
     path('profileDetails/', view=profileDetails, name="profileDetails"),
     path('profile/', view=profile, name="profile"),
     path('getRequestFromUsers/', view=getRequestFromUsers, name="getRequestFromUsers"),
@@ -24,5 +25,7 @@ urlpatterns = [
     path("signup/", view=signup, name="signup"),
     path("dregister/", view=dregister, name="dregister"),
     path('logout/', view=logout, name="logout"),
+    path('payment-success/', view=payment_success, name='payment_success'),
+    path('deletePool/<int:pool_id>/', view=deletePool, name='deletePool'),
     path("", view=index, name="index"),
 ]

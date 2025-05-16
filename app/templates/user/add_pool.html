@@ -119,7 +119,7 @@
     <main>
       <section id="request-form" class="form-section">
         <h2>Request a Ride</h2>
-        <form action="/addPool/" method="post">
+        <form action="/addPool/" method="post" id="addPoolForm">
           {% csrf_token %}
           <div class="form-group">
             <label for="pickup">Pickup Location</label>
@@ -164,11 +164,25 @@
             />
           </div>
 
-          <button type="submit" class="btn-submit">Submit Request</button>
+          <button type="submit" class="btn-submit" id="submitBtn">
+            Submit Request
+          </button>
         </form>
       </section>
     </main>
   </body>
+
+  <script>
+    // Handle form submission
+    document
+      .getElementById("addPoolForm")
+      .addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        // Submit the form
+        this.submit();
+      });
+  </script>
 
   {%if messages%}
   <script>

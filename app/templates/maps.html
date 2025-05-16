@@ -37,38 +37,15 @@
         margin-top: 20px;
         font-size: 18px;
       }
-      .headerSelction {
-        background: #004aad;
-        padding: 1rem;
-        color: white;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-      .titlePoint {
-        font-size: 1.5rem;
-        font-weight: bold;
-      }
-      .navPoint a {
-        color: white;
-        text-decoration: none;
-        margin-left: 1rem;
-        padding: 0.5rem 1rem;
-        border-radius: 4px;
-        transition: background-color 0.3s;
-      }
-      .navPoint a:hover {
-        background-color: rgba(255, 255, 255, 0.1);
+      .success-message {
+        color: green;
+        text-align: center;
+        margin-top: 20px;
+        font-size: 18px;
       }
     </style>
   </head>
   <body>
-    <div class="headerSelction">
-      <div class="titlePoint">CAR POOL</div>
-      <div class="navPoint">
-        <a href="/userHome">Back to Home</a>
-      </div>
-    </div>
     <div class="container">
       <h1>Route Map</h1>
       <div id="map"></div>
@@ -78,6 +55,24 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
     <script>
+      // Function to get CSRF token
+      function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== "") {
+          const cookies = document.cookie.split(";");
+          for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === name + "=") {
+              cookieValue = decodeURIComponent(
+                cookie.substring(name.length + 1)
+              );
+              break;
+            }
+          }
+        }
+        return cookieValue;
+      }
+
       async function initMap() {
         const map = L.map("map").setView([20.5937, 78.9629], 5); // Center on India
         const errorDiv = document.getElementById("error");
@@ -98,7 +93,7 @@
         }
 
         try {
-          // Geocode source and destination using Nominatim
+          // Geocode locations using Nominatim
           const geocode = async (query) => {
             const response = await fetch(
               `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
@@ -115,7 +110,7 @@
           const sourceCoords = await geocode(source);
           const destCoords = await geocode(destination);
 
-          // Add markers for source and destination
+          // Add markers
           L.marker(sourceCoords)
             .addTo(map)
             .bindPopup("Source: " + source)
@@ -125,10 +120,6 @@
             .addTo(map)
             .bindPopup("Destination: " + destination)
             .openPopup();
-
-          // Fit map to show both markers
-          const bounds = L.latLngBounds([sourceCoords, destCoords]);
-          map.fitBounds(bounds, { padding: [50, 50] });
 
           // Add routing control
           L.Routing.control({
@@ -147,6 +138,65 @@
             fitSelectedRoutes: true,
             show: false, // Hide default itinerary
           })
+            .on("routesfound", function (e) {
+              const routes = e.routes;
+              const distance = routes[0].summary.totalDistance / 1000; // Convert to kilometers
+
+              // Get CSRF token
+              const csrftoken = getCookie("csrftoken");
+              if (!csrftoken) {
+                errorDiv.textContent =
+                  "Error: CSRF token not found. Please refresh the page.";
+                return;
+              }
+
+              // Send distance to backend
+              fetch("{% url 'update_distance' %}", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "X-CSRFToken": csrftoken,
+                },
+                body: JSON.stringify({
+                  distance: distance,
+                }),
+              })
+                .then((response) => {
+                  if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                  }
+                  return response.json();
+                })
+                .then((data) => {
+                  if (data.success) {
+                    errorDiv.className = "success-message";
+                    errorDiv.textContent = `Distance: ${distance.toFixed(
+                      2
+                    )} km`;
+                    // Add a button to go back to add pool
+                    const backButton = document.createElement("button");
+                    backButton.textContent = "Return to Add Pool";
+                    backButton.style.marginTop = "10px";
+                    backButton.style.padding = "10px 20px";
+                    backButton.style.backgroundColor = "#0078A8";
+                    backButton.style.color = "white";
+                    backButton.style.border = "none";
+                    backButton.style.borderRadius = "5px";
+                    backButton.style.cursor = "pointer";
+                    backButton.onclick = () => {
+                      window.location.href = "/addPool";
+                    };
+                    errorDiv.appendChild(backButton);
+                  } else {
+                    throw new Error(data.error || "Unknown error occurred");
+                  }
+                })
+                .catch((error) => {
+                  errorDiv.className = "error-message";
+                  errorDiv.textContent = `Error saving distance: ${error.message}`;
+                  console.error("Error:", error);
+                });
+            })
             .on("routingerror", (e) => {
               errorDiv.textContent =
                 "Failed to load route: " + (e.error.message || "Unknown error");

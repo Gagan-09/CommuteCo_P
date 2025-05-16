@@ -135,6 +135,12 @@
       // Initialize Web3 with Ganache
       const web3 = new Web3("http://127.0.0.1:7545");
 
+      // Check Web3 connection
+      web3.eth.net
+        .isListening()
+        .then(() => console.log("Connected to Ganache"))
+        .catch((e) => console.error("Failed to connect to Ganache:", e));
+
       // Get ride details from DOM elements
       const rideId = document.getElementById("rideId").textContent;
       const driverName = document.getElementById("driverName").textContent;
@@ -189,23 +195,54 @@
       function makePayment() {
         const userWallet = document.getElementById("userWallet").value;
         const payButton = document.getElementById("payButton");
-        const successMessage = document.getElementById("successMessage");
 
         payButton.disabled = true;
         payButton.textContent = "Processing Payment...";
 
-        // In a real implementation, this would create and send a transaction
-        // For now, we'll simulate a successful transaction
-        setTimeout(() => {
-          const txHash = "0x" + Math.random().toString(16).substr(2, 40);
+        // Create transaction object
+        const transaction = {
+          from: userWallet,
+          to: driverWallet,
+          value: web3.utils.toWei(fare.toString(), "ether"),
+          gas: 21000,
+        };
 
-          document.getElementById("transactionHash").textContent = txHash;
-          document.getElementById("successDistance").textContent = distance;
-          document.getElementById("successAmount").textContent = fare;
+        console.log("Sending transaction:", transaction);
 
-          successMessage.classList.add("show");
-          payButton.textContent = "Payment Successful";
-        }, 2000);
+        // Send transaction
+        web3.eth
+          .sendTransaction(transaction)
+          .on("transactionHash", function (hash) {
+            console.log("Transaction hash received:", hash);
+            payButton.textContent = "Payment Processing...";
+
+            // Redirect to success page after 2 seconds
+            setTimeout(() => {
+              const successUrl = `/payment-success/?hash=${encodeURIComponent(
+                hash
+              )}&distance=${encodeURIComponent(
+                distance
+              )}&amount=${encodeURIComponent(fare)}`;
+              window.location.href = successUrl;
+            }, 2000);
+          })
+          .on("error", function (error) {
+            console.error("Transaction error:", error);
+            payButton.disabled = false;
+            payButton.textContent = "Pay Now";
+            alert("Transaction failed. Please try again.");
+          });
+      }
+
+      // Add this function to force UI updates
+      function forceUIUpdate() {
+        const successMessage = document.getElementById("successMessage");
+        if (successMessage) {
+          successMessage.style.display = "none";
+          setTimeout(() => {
+            successMessage.style.display = "block";
+          }, 0);
+        }
       }
     </script>
   </body>

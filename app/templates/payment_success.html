@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Payment Successful - Car Pool</title>
+    <style>
+      body {
+        font-family: "Arial", sans-serif;
+        background: linear-gradient(135deg, #f3e7ff, #d9c7ff);
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background: #ffffff;
+        border-radius: 15px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+        padding: 40px;
+        text-align: center;
+      }
+      .success-icon {
+        color: #4caf50;
+        font-size: 64px;
+        margin-bottom: 20px;
+      }
+      .success-title {
+        color: #333;
+        font-size: 24px;
+        margin-bottom: 20px;
+      }
+      .transaction-details {
+        background: #f9f9f9;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px 0;
+        text-align: left;
+      }
+      .transaction-details p {
+        margin: 10px 0;
+        color: #666;
+      }
+      .transaction-details strong {
+        color: #333;
+      }
+      .dashboard-btn {
+        background: #4caf50;
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 25px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        margin-top: 20px;
+      }
+      .dashboard-btn:hover {
+        background: #45a049;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="success-icon">✓</div>
+      <h1 class="success-title">Payment Successful!</h1>
+
+      <div class="transaction-details">
+        <p>
+          <strong>Transaction Hash:</strong>
+          <span id="transactionHash">{{ hash }}</span>
+        </p>
+        <p>
+          <strong>Distance:</strong>
+          <span id="distance">{{ distance }}</span> km
+        </p>
+        <p>
+          <strong>Amount Paid:</strong>
+          <span id="amount">{{ amount }}</span> ETH
+        </p>
+      </div>
+
+      <a href="/userHome/" class="dashboard-btn">Return to Dashboard</a>
+    </div>
+  </body>
+</html>

@@ -10,6 +10,8 @@ import requests
 from math import radians, sin, cos, sqrt, atan2
 
 def calculate_distance(lat1, lon1, lat2, lon2):
+    print(f"Calculating distance between ({lat1}, {lon1}) and ({lat2}, {lon2})")
+    
     # Convert latitude and longitude from degrees to radians
     lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
     
@@ -21,23 +23,82 @@ def calculate_distance(lat1, lon1, lat2, lon2):
     radius = 6371  # Earth's radius in kilometers
     distance = radius * c
     
-    return round(distance, 2)
+    print(f"Raw distance calculation: {distance} km")
+    rounded_distance = round(distance, 2)
+    print(f"Rounded distance: {rounded_distance} km")
+    
+    return rounded_distance
 
 def get_coordinates(city):
     # Use Nominatim API to get coordinates
     url = f"https://nominatim.openstreetmap.org/search?q={city}&format=json"
     headers = {'User-Agent': 'CarPool/1.0'}
     try:
+        print(f"Fetching coordinates for: {city}")
         response = requests.get(url, headers=headers)
+        print(f"API Response status: {response.status_code}")
+        
         if response.status_code == 200:
             data = response.json()
+            print(f"API Response data: {data}")
+            
             if data:
-                return float(data[0]['lat']), float(data[0]['lon'])
+                lat = float(data[0]['lat'])
+                lon = float(data[0]['lon'])
+                print(f"Found coordinates: {lat}, {lon}")
+                return lat, lon
+            else:
+                print(f"No coordinates found for: {city}")
+        else:
+            print(f"API request failed with status: {response.status_code}")
+            
     except Exception as e:
         print(f"Error getting coordinates for {city}: {str(e)}")
     return None
 
-def maps(request):return render(request,'maps.html')
+def maps(request):
+    # Get source and destination from URL parameters
+    source = request.GET.get('source', '').strip("'")  # Remove any single quotes
+    destination = request.GET.get('destination', '').strip("'")  # Remove any single quotes
+    
+    if not source or not destination:
+        messages.error(request, "Source and destination are required")
+        return redirect('userHome')
+        
+    try:
+        # Get coordinates for source and destination
+        from_coords = get_coordinates(source)
+        to_coords = get_coordinates(destination)
+        
+        print(f"Source coordinates: {from_coords}")
+        print(f"Destination coordinates: {to_coords}")
+        
+        if from_coords and to_coords:
+            # Calculate distance using coordinates
+            distance = calculate_distance(
+                from_coords[0], from_coords[1],
+                to_coords[0], to_coords[1]
+            )
+            print(f"Calculated distance: {distance} km")
+            
+            # Store distance in session
+            request.session['current_ride_distance'] = distance
+            messages.success(request, f"Distance calculated: {distance} km")
+            
+            # If this was called from add_pool, redirect back
+            if request.GET.get('from_add_pool'):
+                return redirect('addPool')
+        else:
+            print("Could not get coordinates for one or both locations")
+            messages.error(request, "Could not calculate distance. Please check the locations and try again.")
+            return redirect('userHome')
+            
+    except Exception as e:
+        print(f"Error in maps view: {str(e)}")
+        messages.error(request, f"Error calculating distance: {str(e)}")
+        return redirect('userHome')
+        
+    return render(request, 'maps.html')
 
 def payment(request):
     ride_id = request.GET.get('rideId')
@@ -49,23 +110,13 @@ def payment(request):
         ride = RidePoint.objects.get(id=ride_id)
         driver = User.objects.get(id=ride.driverId)
         
-        # Get coordinates for source and destination cities
-        from_coords = get_coordinates(ride.fromCity)
-        to_coords = get_coordinates(ride.toCity)
-        
-        if from_coords and to_coords:
-            # Calculate actual distance using coordinates
-            distance = calculate_distance(
-                from_coords[0], from_coords[1],
-                to_coords[0], to_coords[1]
-            )
-        else:
-            # Fallback to default distance if coordinates not found
-            distance = 50
-            messages.warning(request, "Could not calculate exact distance, using default value")
+        # Get distance from the ride object
+        if not ride.distance:
+            messages.error(request, "Distance information not available for this ride")
+            return redirect('userHome')
             
-        # Calculate fare based on distance (0.000055 ETH per km)
-        fare = round(distance * 0.000055, 6)
+        distance = float(ride.distance)
+        fare = round(distance * 0.000055, 6)  # 0.000055 ETH per km
         
         context = {
             'rideId': ride.id,
@@ -96,16 +147,55 @@ def AcceptTheRide(request):
 def stateOFCompleted(request):
     if request.method == "POST":
         rideId = request.POST.get("rideId", 0)
-        userid = request.POST.get("userId2", 0)
-        ride = RidePoint.objects.get(id=int(rideId))
-        if ride:
-            ride.status = "Ride Completed"
-            ride.save()
-            messages.info(request, "Ride Completed")
-        else:
-            messages.info(request, "Sorry Some Error In Accepting the Ride")
-    return redirect("acceptance",userid=userid)
+        driverId = request.session.get('driver_id')
+        if not driverId:
+            messages.error(request, "Please login as a driver")
+            return redirect('login')
+            
+        try:
+            ride = RidePoint.objects.get(id=int(rideId))
+            if ride:
+                if not ride.distance:
+                    messages.error(request, "Distance information not available for this ride")
+                    return redirect("acceptance", userid=driverId)
+                    
+                ride.status = "Ride Completed"
+                ride.save()
+                
+                # Use the stored distance from the ride object
+                distance = float(ride.distance)
+                fare = round(distance * 0.000055, 6)  # 0.000055 ETH per km
+                
+                Transaction.objects.create(
+                    ride=ride,
+                    driver=User.objects.get(id=driverId),
+                    source=ride.fromCity,
+                    destination=ride.toCity,
+                    distance=distance,
+                    fare=fare,
+                    status='pending'
+                )
+                
+                messages.info(request, "Ride Completed")
+            else:
+                messages.info(request, "Sorry Some Error In Accepting the Ride")
+        except Exception as e:
+            messages.error(request, f"Error completing ride: {str(e)}")
+            
+    return redirect("acceptance", userid=driverId)
 
+def driverTransactions(request):
+    if not request.session.get('driver_id') or request.session.get('driver_type') != 'driver':
+        messages.error(request, "Please login as a driver")
+        return redirect('login')
+        
+    transactions = Transaction.objects.filter(
+        driver_id=request.session['driver_id']
+    ).order_by('-created_at')
+    
+    return render(request, "driver/transactions.html", {
+        "transactions": transactions
+    })
 
 def getJoinPool(request):
     search = request.GET.get("search", "")
@@ -124,6 +214,7 @@ def getJoinPool(request):
         "driverId",
         "applyOn",
         "payment",
+        "distance"
     )
     data = list(data)
     result = []
@@ -150,12 +241,8 @@ def joinPool(request):
     return render(request, "user/joinpool.html")
 
 
-def profiledriver(request):
-    return render(request, "driver/profile.html")
-
-
 def stateOF(request):
-    if not request.session.get('user_id') or request.session.get('user_type') != 'driver':
+    if not request.session.get('driver_id') or request.session.get('driver_type') != 'driver':
         messages.error(request, "Please login as a driver")
         return redirect('login')
         
@@ -214,13 +301,10 @@ def rejectRide(request):
 
 
 def acceptance(request, userid=0):
-    # Check if user is logged in as driver
-    if not request.session.get('user_id') or request.session.get('user_type') != 'driver':
+    if not request.session.get('driver_id') or request.session.get('driver_type') != 'driver':
         messages.error(request, "Please login as a driver")
         return redirect('login')
-        
-    # Verify that the userid in URL matches the logged in user
-    if str(request.session['user_id']) != str(userid):
+    if str(request.session['driver_id']) != str(userid):
         messages.error(request, "Unauthorized access")
         return redirect('driverHome')
         
@@ -264,7 +348,7 @@ def acceptance(request, userid=0):
 
 
 def driverHome(request):
-    if not request.session.get('user_id') or request.session.get('user_type') != 'driver':
+    if not request.session.get('driver_id') or request.session.get('driver_type') != 'driver':
         messages.error(request, "Please login as a driver")
         return redirect('login')
         
@@ -272,7 +356,7 @@ def driverHome(request):
     data = RidePoint.objects.filter(
         Q(driverId="") & 
         ~Q(userid="") &
-        ~Q(id__in=RejectedRide.objects.filter(driverId=str(request.session['user_id'])).values_list('rideId', flat=True))
+        ~Q(id__in=RejectedRide.objects.filter(driverId=str(request.session['driver_id'])).values_list('rideId', flat=True))
     ).values(
         "id",
         "fromCity",
@@ -294,11 +378,15 @@ def profileDetails(request):
 
 
 def profile(request):
+    if not request.session.get('user_id') or request.session.get('user_type') != 'user':
+        messages.error(request, "Please login as a user")
+        return redirect('login')
     return render(request, "user/profile.html")
 
 
 def getRequestFromUsers(request):
     userid = request.GET.get("userid", "")
+    print(f"Fetching rides for user: {userid}")  # Debug log
     
     ride_fields = [
         "fromCity",
@@ -309,40 +397,76 @@ def getRequestFromUsers(request):
         "driverId",
         "applyOn",
         "id",
+        "distance"  # Add distance field
     ]
     
-    user_rides = list(RidePoint.objects.filter(userid=userid).values(*ride_fields))
+    # Convert userid to string for comparison
+    user_rides = list(RidePoint.objects.filter(userid=str(userid)).values(*ride_fields))
+    print(f"Found {len(user_rides)} direct rides")  # Debug log
 
-    joint_rides = JointRide.objects.filter(userid=userid).values("id", "userid", "rideId")
+    joint_rides = JointRide.objects.filter(userid=str(userid)).values("id", "userid", "rideId")
     if joint_rides.exists():
         ride_ids = [int(d["rideId"]) for d in joint_rides]
         associated_rides = RidePoint.objects.filter(id__in=ride_ids).values(*ride_fields)
         user_rides.extend(list(associated_rides))
+        print(f"Added {len(associated_rides)} joint rides")  # Debug log
     
+    print(f"Total rides: {len(user_rides)}")  # Debug log
     return JsonResponse({"data": user_rides})
 
 def addPool(request):
+    # Check if user is logged in via session
+    if not request.session.get('user_id'):
+        messages.error(request, "Please login to add a pool")
+        return redirect('login')
+        
     if request.method == "POST":
-        formPoint = request.POST.get("formPoint", "").strip()
-        toPoint = request.POST.get("toPoint", "").strip()
+        fromCity = request.POST.get("formPoint", "").strip()
+        toCity = request.POST.get("toPoint", "").strip()
         datePoint = request.POST.get("datePoint", "").strip()
-        userId = request.POST.get("userId", "").strip()
         contactPoint = request.POST.get("contactPoint", "").strip()
-        now = datetime.now()
-
-        output = now.strftime("%Y-%m-%d %H:%M:%S")
-        RidePoint.objects.create(
-            fromCity=formPoint,
-            toCity=toPoint,
-            datePoint=datePoint,
-            contactPoint=contactPoint,
-            status="Pending To Accept By Delivery",
-            userid=userId,
-            driverId="",
-            applyOn=output,
-        )
-        messages.info(request, "Added SuccessFully !!")
-        return render(request, "user/add_pool.html")
+        userId = str(request.session.get("user_id"))  # Ensure user ID is string
+        output = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        print(f"Creating pool for user: {userId}")  # Debug log
+        
+        if not fromCity or not toCity:
+            messages.error(request, "Pickup and destination locations are required")
+            return redirect('userHome')
+            
+        # Get distance from session
+        distance = request.session.get('current_ride_distance')
+        print(f"Distance from session: {distance}")  # Debug log
+        
+        if not distance:
+            # Redirect to maps to calculate distance
+            return redirect(f'/maps?source={fromCity}&destination={toCity}')
+            
+        try:
+            print(f"Creating pool with distance: {distance}")  # Debug log
+            pool = RidePoint.objects.create(
+                fromCity=fromCity,
+                toCity=toCity,
+                datePoint=datePoint,
+                contactPoint=contactPoint,
+                status="Pending To Accept By Delivery",
+                userid=userId,  # Using string user ID
+                driverId="",
+                applyOn=output,
+                distance=float(distance)  # Ensure distance is a float
+            )
+            print(f"Pool created successfully with ID: {pool.id}")  # Debug log
+            
+            # Clear the distance from session after successful creation
+            if 'current_ride_distance' in request.session:
+                del request.session['current_ride_distance']
+            messages.success(request, "Pool added successfully!")
+            return redirect('userHome')
+        except Exception as e:
+            print(f"Error creating pool: {str(e)}")  # Debug log
+            messages.error(request, f"Error adding pool: {str(e)}")
+            return redirect('userHome')
+            
     return render(request, "user/add_pool.html")
 
 
@@ -357,30 +481,39 @@ def index(request):
     if request.method == "POST":
         email = request.POST.get("email", "").strip()
         password = request.POST.get("password", "").strip()
+
+        # Find user by email and password
         data = User.objects.filter(email=email, password=password)
 
         if data.exists():
-            user = data.last()
-            request.session['user_id'] = str(user.id)
-            request.session['user_type'] = user.typeView
+            user = data.first()
+            
+            # Store user info in session based on type
+            if user.typeView == "driver":
+                request.session['driver_id'] = str(user.id)
+                request.session['driver_type'] = user.typeView
+            else:
+                request.session['user_id'] = str(user.id)
+                request.session['user_type'] = user.typeView
+                
             request.session.set_expiry(86400)  # 24 hours
-            
-            messages.success(request, "Successfully Logged in")
-            
+
+            messages.success(request, f"Successfully logged in as {user.typeView}")
+
+            # Redirect based on user type
             if user.typeView == "driver":
                 return redirect("driverHome")
             elif user.typeView == "user":
                 return redirect("userHome")
-            
+
         messages.error(request, "Invalid credentials")
         return redirect("login")
-        
+
     return render(request, "login.html")
 
 
 def signup(request):
     if request.method == "POST":
-        print("sdfsfdfl i am in ")
         name = request.POST.get("name", "").strip()
         email = request.POST.get("email", "").strip()
         password = request.POST.get("password", "").strip()
@@ -390,7 +523,7 @@ def signup(request):
 
         User.objects.create(name=name, email=email, password=password, typeView="user")
         messages.info(request, "Success")
-        return redirect("")
+        return redirect("login")
 
     return render(request, "signup.html")
 
@@ -416,3 +549,99 @@ def logout(request):
     request.session.flush()
     messages.success(request, "Successfully logged out")
     return redirect('login')
+
+def updateTransaction(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            ride_id = data.get('rideId')
+            tx_hash = data.get('transactionHash')
+            
+            print(f"Updating transaction for ride {ride_id} with hash {tx_hash}")
+            
+            if not ride_id or not tx_hash:
+                print("Missing required fields")
+                return JsonResponse({'success': False, 'error': 'Missing required fields'})
+                
+            # Find the transaction for this ride
+            transaction = Transaction.objects.get(ride_id=ride_id)
+            print(f"Found transaction: {transaction.id}")
+            
+            transaction.transaction_hash = tx_hash
+            transaction.status = 'completed'
+            transaction.save()
+            
+            print(f"Transaction updated successfully: {transaction.id}")
+            return JsonResponse({'success': True})
+        except Transaction.DoesNotExist:
+            print(f"Transaction not found for ride {ride_id}")
+            return JsonResponse({'success': False, 'error': 'Transaction not found'})
+        except Exception as e:
+            print(f"Error updating transaction: {str(e)}")
+            return JsonResponse({'success': False, 'error': str(e)})
+            
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+def payment_success(request):
+    try:
+        hash = request.GET.get('hash', '')
+        distance = request.GET.get('distance', '')
+        amount = request.GET.get('amount', '')
+        
+        if not all([hash, distance, amount]):
+            messages.error(request, "Missing transaction details")
+            return redirect('userHome')
+        
+        context = {
+            'hash': hash,
+            'distance': distance,
+            'amount': amount
+        }
+        
+        return render(request, 'payment_success.html', context)
+    except Exception as e:
+        messages.error(request, f"Error displaying payment success: {str(e)}")
+        return redirect('userHome')
+
+def update_distance(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            distance = data.get('distance')
+            if distance is not None:
+                # Store the distance in session
+                request.session['current_ride_distance'] = float(distance)
+                print(f"Stored distance in session: {distance}")  # Debug log
+                return JsonResponse({'success': True, 'distance': distance})
+            else:
+                return JsonResponse({'success': False, 'error': 'No distance provided'})
+        except Exception as e:
+            print(f"Error updating distance: {str(e)}")  # Debug log
+            return JsonResponse({'success': False, 'error': str(e)})
+            
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+def deletePool(request, pool_id):
+    if not request.session.get('user_id') or request.session.get('user_type') != 'user':
+        messages.error(request, "Please login as a user")
+        return redirect('login')
+        
+    try:
+        pool = RidePoint.objects.get(id=pool_id)
+        if str(pool.userid) != str(request.session['user_id']):
+            messages.error(request, "You do not have permission to delete this pool")
+            return redirect('userHome')
+            
+        # Only allow deletion if the pool is not completed or accepted
+        if pool.status in ["Ride Completed", "Accepted By Driver"]:
+            messages.error(request, "Cannot delete a completed or accepted ride")
+            return redirect('userHome')
+            
+        pool.delete()
+        messages.success(request, "Pool deleted successfully")
+    except RidePoint.DoesNotExist:
+        messages.error(request, "Pool not found")
+    except Exception as e:
+        messages.error(request, f"Error deleting pool: {str(e)}")
+        
+    return redirect('userHome')

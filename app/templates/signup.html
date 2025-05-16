@@ -1,74 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <script>
-        const {id,type}=JSON.parse(sessionStorage.getItem('Store'))
-        if(type=="user"){
-            window.location.href='/userHome'
-        }else if(type=="driver"){
-            window.location.href='/driverHome'
-        }else if(type=="admin"){
-            window.location.href='/adminHome'
-        }
-    </script>
-    <meta charset="UTF-8">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User Registration - CarPool</title>
     <link
-        href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
-        rel="stylesheet">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign up</title>
-    <link rel="stylesheet" href="/static/css/login.css">
-</head>
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="/static/css/login.css" />
+  </head>
 
-<body>
-    <style>
-        body {
-
-            background-image:
-                linear-gradient(rgba(53, 53, 8, 0.616), rgba(15, 14, 14, 0.863)),
-                url('/static/img/spee.jpg');
-        }
-      
-    </style>
-    <div class="nothing">
-        
-    </div>
-    {% if messages %}
-    {%for review in messages %}
-    <input type="text" value="{{review.message}}" id="point">
-    {% endfor %}
-    <script>
-         const view=document.getElementById('point')
-            view.className="dialog"
-        setTimeout(()=>{
-            view.className="nothing"
-        },1000)
-    </script>
-
-    {% endif %}
+  <body>
     <div class="container">
-        <div>
-            <p class="head">Create A/c</p>
-            <p class="head2">Welcome to CarPooling App ?</p>
-            <form action="/signup/" method="post">
-                {% csrf_token %}
-            
-            <input type="text" name="name" placeholder="Full Name" required> <br>
-            <input type="text"name="email" pattern="[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$" placeholder="Email" title="Invalid Email Need in @gmail.com" required> <br>
-            <input type="password" name="password" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" placeholder="Password" required> <br>
+      <p class="head">User Registration</p>
+      <p class="head2">Join Our CarPool Community</p>
 
-            <button>SIGN UP</button>
-        </form>
-            <div style="display: flex;margin-top: 30px;justify-content: center;align-items: center;color: white;">
-                <p>Already have an account ?</p>
-                <h3 style="margin-left: 10px;color: #ffd700;"  onclick="history.back()">Login</h3>
-            </div>
+      {% if messages %} {% for review in messages %}
+      <input type="text" value="{{review.message}}" id="point" />
+      {% endfor %}
+      <script>
+        const view = document.getElementById("point");
+        view.className = "dialog";
+        setTimeout(() => {
+          view.className = "nothing";
+        }, 3000);
+      </script>
+      {% endif %}
+
+      <form action="/signup/" method="post">
+        {% csrf_token %}
+        <div class="input-icon">
+          <i class="fas fa-user"></i>
+          <input type="text" name="name" placeholder="Full Name" required />
         </div>
 
-    </div>
-</body>
+        <div class="input-icon">
+          <i class="fas fa-envelope"></i>
+          <input
+            type="email"
+            name="email"
+            pattern="[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$"
+            placeholder="Email Address"
+            title="Invalid Email Format"
+            required
+          />
+        </div>
 
+        <div class="input-icon">
+          <i class="fas fa-lock"></i>
+          <input
+            type="password"
+            name="password"
+            pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
+            placeholder="Create Password"
+            required
+          />
+        </div>
+
+        <button>REGISTER NOW</button>
+      </form>
+
+      <div class="login-link">
+        <p>Already have an account?</p>
+        <h3 onclick="window.location.href='/login'">Sign In</h3>
+      </div>
+    </div>
+  </body>
 </html>

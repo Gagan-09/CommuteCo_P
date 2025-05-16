@@ -1,200 +1,192 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <head>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-        href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
-        rel="stylesheet">
+      href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet"
+    />
 
-    <link rel="stylesheet" href="/static/css/all.css">
-    {%if messages%}
+    <link rel="stylesheet" href="/static/css/all.css" />
+    {%if messages%} {%for me in messages %}
+    <input type="hidden" value="{{me}}" id="successpoint" />
+    {% endfor %} {% endif %}
 
-    {%for me in messages %}
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User Profile</title>
+  </head>
 
-    <input type="hidden" value="{{me}}" id="successpoint">
-
-
-    {% endfor %}
-
-    {% endif %}
-
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Home</title>
-</head>
-
-<body>
+  <body>
     <style>
-        .profile-container {
-            max-width: 800px;
-            margin: 0 auto;
-            background-color: #fff;
-            border-radius: 12px;
-            padding: 2rem;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
+      .profile-container {
+        max-width: 800px;
+        margin: 0 auto;
+        background-color: #fff;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      }
 
-        .profile-header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
+      .profile-header {
+        text-align: center;
+        margin-bottom: 2rem;
+      }
 
-        .profile-header h2 {
-            margin: 0;
-            color: #333;
-        }
+      .profile-header h2 {
+        margin: 0;
+        color: #333;
+      }
 
-        .profile-info {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            padding: 1rem;
-            background-color: #f9f9f9;
-            border-radius: 10px;
-        }
+      .profile-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 1rem;
+        background-color: #f9f9f9;
+        border-radius: 10px;
+      }
 
-        .profile-info p {
-            margin: 0;
-            font-size: 16px;
-            color: #555;
-        }
+      .profile-info p {
+        margin: 0;
+        font-size: 16px;
+        color: #555;
+      }
 
-        .results-section {
-            margin-top: 2rem;
-        }
+      .results-section {
+        margin-top: 2rem;
+      }
 
-        .results-section h3 {
-            color: #007bff;
-        }
+      .results-section h3 {
+        color: #007bff;
+      }
 
-        .result-card {
-            background-color: #eef6ff;
-            border-left: 4px solid #007bff;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-        }
+      .result-card {
+        background-color: #eef6ff;
+        border-left: 4px solid #007bff;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+      }
 
-        .result-card p {
-            margin: 0.2rem 0;
-        }
+      .result-card p {
+        margin: 0.2rem 0;
+      }
 
-        button {
-            font-size: 18px;
-            color: #000;
-            font-family: inherit;
-            font-weight: 800;
-            cursor: pointer;
-            position: relative;
-            border: none;
-            background: none;
-            text-transform: uppercase;
-            transition-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
-            transition-duration: 400ms;
-            transition-property: color;
-        }
+      button {
+        font-size: 18px;
+        color: #000;
+        font-family: inherit;
+        font-weight: 800;
+        cursor: pointer;
+        position: relative;
+        border: none;
+        background: none;
+        text-transform: uppercase;
+        transition-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
+        transition-duration: 400ms;
+        transition-property: color;
+      }
 
-        button:focus,
-        button:hover {
-            color: #afac00;
-        }
+      button:focus,
+      button:hover {
+        color: #afac00;
+      }
 
-        button:focus:after,
-        button:hover:after {
-            width: 100%;
-            left: 0%;
-        }
+      button:focus:after,
+      button:hover:after {
+        width: 100%;
+        left: 0%;
+      }
 
-        button:after {
-            content: "";
-            pointer-events: none;
-            bottom: -2px;
-            left: 50%;
-            position: absolute;
-            width: 0%;
-            height: 2px;
-            background-color: #000;
-            transition-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
-            transition-duration: 400ms;
-            transition-property: width, left;
-        }
+      button:after {
+        content: "";
+        pointer-events: none;
+        bottom: -2px;
+        left: 50%;
+        position: absolute;
+        width: 0%;
+        height: 2px;
+        background-color: #000;
+        transition-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
+        transition-duration: 400ms;
+        transition-property: width, left;
+      }
     </style>
-    </head>
-    </style>
+
     <div class="nothing" id="messagePoint"></div>
     <div class="headerSelction">
-        <div class="titlePoint">CAR POOL</div>
-        <div class="navPoint">
-            <a href="/">My Pool</a>
-            <a href="/addPool">Add Pool</a>
-            <a href="/joinPool">Join Pool</a>
-            <a href="" id="activac">Profile</a>
-        </div>
+      <div class="titlePoint">CAR POOL</div>
+      <div class="navPoint">
+        <a href="/userHome">My Pool</a>
+        <a href="/addPool">Add Pool</a>
+        <a href="/joinPool">Join Pool</a>
+        <a href="/profile" id="activac">Profile</a>
+        <a href="/logout">Logout</a>
+      </div>
     </div>
+
     <div class="profile-container">
-        <div class="profile-header">
-            <h2>User Profile</h2>
-        </div>
+      <div class="profile-header">
+        <h2>User Profile</h2>
+      </div>
 
-        <div class="profile-info" id="profile-info">
-
-        </div>
-
-
+      <div class="profile-info" id="profile-info">
+        <!-- Profile info will be loaded here -->
+      </div>
     </div>
-</body>
 
-<script>
-    window.addEventListener('DOMContentLoaded', () => {
-        const store = sessionStorage.getItem('Store')
-        if (store == null) {
-            window.location.href = '/'
-        } else {
-            const { id, type } = JSON.parse(store)
-            if (type != "user") {
-                window.location.href = '/'
-            } else {
-         
-                const profile = document.getElementById('profile-info')
+    <script>
+      window.addEventListener("DOMContentLoaded", () => {
+        const userId = "{{ request.session.user_id }}";
+        const userType = "{{ request.session.user_type }}";
 
-                fetch(`/profileDetails?userid=${id}`).then(view => view.json()).then(point => {
-                    var text = ''
-                    point.profile.forEach(element => {
-                        text = `<p><strong>Name:</strong> ${element.name}</p>
-          <p><strong>Email:</strong> ${element.email}</p>
-          <p><strong>Type:</strong> ${element.typeView}</p>
-           <div style="display: flex;justify-content: end;">
-            <button onclick='pointLogout()'>
-                Logout ?
-            </button>
-    
-        </div>`
-                    });
-                    profile.innerHTML = text
-                })
-            }
-
+        if (!userId || userType !== "user") {
+          window.location.href = "/login";
+          return;
         }
 
-    })
-    function pointLogout() {
-        sessionStorage.clear();
-        window.location.href = '/'
-    }
-</script>
+        const profile = document.getElementById("profile-info");
+        fetch(`/profileDetails?userid=${userId}`)
+          .then((view) => view.json())
+          .then((point) => {
+            if (point.profile && point.profile.length > 0) {
+              const element = point.profile[0];
+              const text = `
+                            <p><strong>Name:</strong> ${element.name}</p>
+                            <p><strong>Email:</strong> ${element.email}</p>
+                            <p><strong>Type:</strong> ${element.typeView}</p>
+                            <div style="display: flex;justify-content: end;">
+                                <a href="/logout" style="text-decoration: none;">
+                                    <button>Logout</button>
+                                </a>
+                            </div>
+                        `;
+              profile.innerHTML = text;
+            } else {
+              profile.innerHTML = "<p>Error loading profile information</p>";
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            profile.innerHTML = "<p>Error loading profile information</p>";
+          });
+      });
+    </script>
 
-{%if messages%}
-<script>
-    const success = document.getElementById('successpoint').value
-    const vali = document.getElementById('messagePoint')
-    vali.className = "dialog"
-    vali.innerText = success
-    setTimeout(() => {
-        vali.className = "nothing"
-    }, 3000)
-</script>
-{% endif %}
-
+    {%if messages%}
+    <script>
+      const success = document.getElementById("successpoint")?.value;
+      if (success) {
+        const vali = document.getElementById("messagePoint");
+        vali.className = "dialog";
+        vali.innerText = success;
+        setTimeout(() => {
+          vali.className = "nothing";
+        }, 3000);
+      }
+    </script>
+    {% endif %}
+  </body>
 </html>

@@ -1,230 +1,225 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <head>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-        href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
-        rel="stylesheet">
+      href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet"
+    />
 
-    <link rel="stylesheet" href="/static/css/all.css">
+    <link rel="stylesheet" href="/static/css/all.css" />
 
-    {%if messages%}
+    {%if messages%} {%for me in messages %} {%if me.tags in "success" %}
+    <input type="hidden" value="{{me}}" id="successpoint" />
 
-    {%for me in messages %}
+    {% endif %} {%if me.tags in "info" %}
+    <input type="hidden" value="{{me}}" id="infoPoint" />
+    {% endif %} {% endfor %} {% endif %}
 
-    {%if me.tags in "success" %}
-    <input type="hidden" value="{{me}}" id="successpoint">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Join Pool</title>
+  </head>
 
-    {% endif %}
-
-    {%if me.tags in "info" %}
-    <input type="hidden" value="{{me}}" id="infoPoint">
-    {% endif %}
-    {% endfor %}
-
-    {% endif %}
-
-
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pooling request....</title>
-</head>
-
-<body>
+  <body>
     <style>
-        .carpool-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
+      .carpool-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+      }
+
+      .carpool-card {
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        transition: 0.3s ease;
+      }
+
+      .carpool-card:hover {
+        transform: translateY(-5px);
+      }
+
+      .carpool-header {
+        font-size: 18px;
+        font-weight: bold;
+        color: #333;
+      }
+
+      .carpool-info {
+        margin-top: 10px;
+        font-size: 14px;
+        color: #555;
+      }
+
+      .join-btn {
+        display: inline-block;
+        margin-top: 15px;
+        padding: 10px 20px;
+        background-color: #4caf50;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        text-decoration: none;
+      }
+
+      .join-btn:hover {
+        background-color: #45a049;
+      }
+
+      .searchInput {
+        align-items: center;
+        display: flex;
+        justify-content: center;
+        padding: 10px;
+      }
+
+      .searchInput div {
+        background-color: white;
+        padding: 10px;
+        justify-content: center;
+        align-items: center;
+        display: flex;
+        gap: 10px;
+        border-radius: 20px;
+      }
+
+      .searchInput input {
+        outline: none;
+        border: transparent;
+        width: 0px;
+        border-style: none;
+        border-color: transparent;
+      }
+
+      .searchInput input:focus {
+        animation: tran 700ms forwards;
+      }
+
+      @keyframes tran {
+        0% {
+          width: 0px;
         }
 
-        .carpool-card {
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            transition: 0.3s ease;
+        100% {
+          font-size: 25px;
+          padding: 10px;
+          width: 500px;
         }
-
-        .carpool-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .carpool-header {
-            font-size: 18px;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .carpool-info {
-            margin-top: 10px;
-            font-size: 14px;
-            color: #555;
-        }
-
-        .join-btn {
-            display: inline-block;
-            margin-top: 15px;
-            padding: 10px 20px;
-            background-color: #4CAF50;
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            text-decoration: none;
-        }
-
-        .join-btn:hover {
-            background-color: #45a049;
-        }
-
-        .searchInput {
-            align-items: center;
-            display: flex;
-            justify-content: center;
-            padding: 10px;
-        }
-
-        .searchInput div {
-            background-color: white;
-            padding: 10px;
-            justify-content: center;
-            align-items: center;
-            display: flex;
-            gap: 10px;
-            border-radius: 20px;
-
-        }
-
-        .searchInput input {
-            outline: none;
-            border: transparent;
-            width: 0px;
-            border-style: none;
-            border-color: transparent;
-        }
-
-        .searchInput input:focus {
-            animation: tran 700ms forwards;
-        }
-
-        @keyframes tran {
-            0% {
-                width: 0px;
-            }
-
-            100% {
-                font-size: 25px;
-                padding: 10px;
-                width: 500px;
-            }
-        }
+      }
     </style>
     <div class="nothing" id="messagePoint"></div>
     <div class="headerSelction">
-        <div class="titlePoint">CAR POOL</div>
-        <div class="navPoint">
-            <a href="/">My Pool</a>
-            <a href="/addPool">Add Pool</a>
-            <a href="#" id="activac">Join Pool</a>
-            <a href="/profile">Profile</a>
-        </div>
+      <div class="titlePoint">CAR POOL</div>
+      <div class="navPoint">
+        <a href="/userHome">My Pool</a>
+        <a href="/addPool">Add Pool</a>
+        <a href="/joinPool" id="activac">Join Pool</a>
+        <a href="/profile">Profile</a>
+        <a href="/logout">Logout</a>
+      </div>
     </div>
 
-    <div class="searchInput">
-        <div id="pointView">
-            <img src="https://cdn-icons-png.flaticon.com/512/149/149852.png" width="24px" height="24px" alt=""
-                onmouseover="openSearch()" srcset="">
-            <input type="text" id="searchPoint" oninput="setPoint(this)" title="Search">
-        </div>
+    <div class="search-container">
+      <input type="text" id="searchInput" placeholder="Search by location..." />
+      <button onclick="searchRides()">Search</button>
     </div>
-    <div class="carpool-container" id="containerCard">
-        =
+
+    <div id="rideResults" class="ride-results">
+      <!-- Ride results will be displayed here -->
     </div>
-</body>
 
-{%if messages %}
-<script>
+    <script>
+      window.addEventListener("DOMContentLoaded", () => {
+        const userId = "{{ request.session.user_id }}";
+        const userType = "{{ request.session.user_type }}";
 
-
-    const data = document.getElementById('infoPoint').value
-    if (data.length != 0) {
-        const view = String(data).split(',')
-        sessionStorage.setItem("Store", JSON.stringify({ 'id': view[0], 'type': view[1] }))
-    }
-    const success = document.getElementById('successpoint').value
-    if (screen.length != 0) {
-        const vali = document.getElementById('messagePoint')
-        vali.className = "dialog"
-        vali.innerText = success
-        setTimeout(() => {
-            vali.className = "nothing"
-        }, 3000)
-    }
-</script>
-{% endif %}
-
-
-<script>
-
-    var idView = ""
-    window.addEventListener('DOMContentLoaded', () => {
-        const store = sessionStorage.getItem('Store')
-        if (store == null) {
-            window.location.href = '/'
-
-        } else {
-            const { id, type } = JSON.parse(store)
-            idView = id;
-            if (type != "user") {
-                
-                window.location.href = '/'
-            }
+        if (!userId || userType !== "user") {
+          window.location.href = "/login";
+          return;
         }
-    })
 
-    const ff = document.getElementById('searchPoint')
-    const containerCard = document.getElementById('containerCard')
-    function openSearch() {
-        ff.focus()
-    }
-    async function setPoint(t) {
-        var torken=`{%csrf_token%}`
-        var text = ''
-        fetch(`/getJoinPool?id=${idView}&search=${t.value}`).then(view => view.json()).then(point => {
-            point.data.forEach(element => {
-                text += `<div class="carpool-card">
-            <div class="carpool-header">🚗  Ride</div>
-            <div class="carpool-info">From: ${element.fromCity}</div>
-            <div class="carpool-info">To: ${element.toCity}</div>
-            <div class="carpool-info">Status: ${element.status}</div>
-            <div class="carpool-info">Start Date: ${element.datePoint}</div>
-            <div class="carpool-info">Appiled On: ${element.applyOn}</div>
-            <div class="carpool-info">Already Joined: ${element.Joined}</div>
-            <form action='/AcceptTheRide/' method='post'>
-            ${torken}
-            <input type='hidden' value='${element.id}' name='rideId'>
-            <input type='hidden' value='${idView}' name='userId'>
-              <button type="submit" class="join-btn">Join Now</button>
-            </form>
-        </div>`   
-            });
-            if(point.data.length==0){
-                text = `<div class="carpool-card" style='width:fit-content'>
-                    <img src='/static/img/empty-box.png'/>
-                    <div class="carpool-header" style='display:flex;justify-content:center;color:black'>No Pooling Details</div>
-                    </div>`
-            }else{
-                    if(t.value==""){
-                        containerCard.innerHTML=""
-                    }
+        // Initial load of rides
+        searchRides();
+      });
+
+      function searchRides() {
+        const searchInput = document.getElementById("searchInput");
+        const userId = "{{ request.session.user_id }}";
+
+        fetch(`/getJoinPool?search=${searchInput.value}&id=${userId}`)
+          .then((response) => response.json())
+          .then((data) => {
+            const resultsDiv = document.getElementById("rideResults");
+            let html = "";
+
+            if (data.data && data.data.length > 0) {
+              data.data.forEach((ride) => {
+                html += `
+                                <div class="ride-card">
+                                    <h3>Ride #${ride.id}</h3>
+                                    <p><strong>From:</strong> ${
+                                      ride.fromCity
+                                    }</p>
+                                    <p><strong>To:</strong> ${ride.toCity}</p>
+                                    <p><strong>Distance:</strong> ${
+                                      ride.distance
+                                        ? ride.distance.toFixed(2)
+                                        : "N/A"
+                                    } km</p>
+                                    <p><strong>Date:</strong> ${
+                                      ride.datePoint
+                                    }</p>
+                                    <p><strong>Contact:</strong> ${
+                                      ride.contactPoint
+                                    }</p>
+                                    <p><strong>Status:</strong> ${
+                                      ride.status
+                                    }</p>
+                                    <p><strong>Joined:</strong> ${
+                                      ride.Joined || 0
+                                    }/2</p>
+                                    <form action="/AcceptTheRide/" method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="rideId" value="${
+                                          ride.id
+                                        }">
+                                        <input type="hidden" name="userId" value="${userId}">
+                                        <button type="submit" class="join-btn">Join Ride</button>
+                                    </form>
+                                </div>
+                            `;
+              });
+            } else {
+              html =
+                '<p class="no-rides">No rides found matching your search criteria.</p>';
             }
-            containerCard.innerHTML=text   
-        })
-    }
 
-</script>
+            resultsDiv.innerHTML = html;
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            document.getElementById("rideResults").innerHTML =
+              '<p class="error">Error loading rides. Please try again.</p>';
+          });
+      }
+    </script>
 
+    {%if messages%}
+    <script>
+      const success = document.getElementById("successpoint")?.value;
+      if (success) {
+        const vali = document.getElementById("messagePoint");
+        vali.className = "dialog";
+        vali.innerText = success;
+        setTimeout(() => {
+          vali.className = "nothing";
+        }, 3000);
+      }
+    </script>
+    {% endif %}
+  </body>
 </html>

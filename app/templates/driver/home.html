@@ -126,10 +126,10 @@
       <div class="titlePoint">CAR POOL</div>
       <div class="navPoint">
         <a href="/driverHome" id="activac">Available Rides</a>
-        <a href="/acceptance/{{ request.session.user_id }}/" id="activac"
+        <a href="/acceptance/{{ request.session.driver_id }}/" id="activac"
           >Accepted Rides</a
         >
-        <a href="/profile" id="activac">Profile</a>
+        <a href="/driver/transactions/" id="activac">Transactions</a>
         <a href="/logout" id="activac">Logout</a>
       </div>
     </div>
@@ -157,10 +157,10 @@
           <input
             type="hidden"
             name="driverId"
-            value="{{ request.session.user_id }}"
+            value="{{ request.session.driver_id }}"
           />
           <p><strong>Applied on :</strong> {{view.applyOn}}</p>
-          <p><strong>Estimaeted Date:</strong> {{view.datePoint}}</p>
+          <p><strong>Estimated Date:</strong> {{view.datePoint}}</p>
 
           <div class="wallet-section">
             <input
