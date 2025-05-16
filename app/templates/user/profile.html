@@ -4,29 +4,75 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
       rel="stylesheet"
     />
 
-    <link rel="stylesheet" href="/static/css/all.css" />
-    {%if messages%} {%for me in messages %}
+    {%if messages%} {%for me in messages %} {%if me.tags in "success" %}
     <input type="hidden" value="{{me}}" id="successpoint" />
-    {% endfor %} {% endif %}
+    {% endif %} {%if me.tags in "info" %}
+    <input type="hidden" value="{{me}}" id="infoPoint" />
+    {% endif %} {% endfor %} {% endif %}
 
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>User Profile</title>
+    <title>Profile - Car Pool</title>
   </head>
 
   <body>
     <style>
+      body {
+        font-family: "Roboto", sans-serif;
+        background-color: #f4f6f8;
+        margin: 0;
+        padding: 0;
+      }
+
+      .headerSelction {
+        background: #004aad;
+        padding: 1rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .titlePoint {
+        color: white;
+        font-size: 1.5rem;
+        font-weight: bold;
+      }
+
+      .navPoint {
+        display: flex;
+        gap: 1.5rem;
+      }
+
+      .navPoint a {
+        color: white;
+        text-decoration: none;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        transition: 0.3s;
+      }
+
+      .navPoint a:hover {
+        background: #ffcc00;
+        color: #000;
+      }
+
+      .navPoint a#activac {
+        background: #ffcc00;
+        color: #000;
+      }
+
       .profile-container {
-        max-width: 800px;
-        margin: 0 auto;
-        background-color: #fff;
-        border-radius: 12px;
+        max-width: 600px;
+        margin: 2rem auto;
         padding: 2rem;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
       }
 
       .profile-header {
@@ -34,94 +80,104 @@
         margin-bottom: 2rem;
       }
 
-      .profile-header h2 {
-        margin: 0;
-        color: #333;
+      .profile-header h1 {
+        color: #004aad;
+        margin-bottom: 0.5rem;
       }
 
       .profile-info {
         display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        padding: 1rem;
-        background-color: #f9f9f9;
-        border-radius: 10px;
+        justify-content: center;
       }
 
-      .profile-info p {
-        margin: 0;
-        font-size: 16px;
-        color: #555;
-      }
-
-      .results-section {
-        margin-top: 2rem;
-      }
-
-      .results-section h3 {
-        color: #007bff;
-      }
-
-      .result-card {
-        background-color: #eef6ff;
-        border-left: 4px solid #007bff;
-        padding: 1rem;
+      .info-card {
+        background: #a6d4f4;
+        padding: 2rem;
         border-radius: 8px;
-        margin-bottom: 1rem;
-      }
-
-      .result-card p {
-        margin: 0.2rem 0;
-      }
-
-      button {
-        font-size: 18px;
-        color: #000;
-        font-family: inherit;
-        font-weight: 800;
-        cursor: pointer;
-        position: relative;
-        border: none;
-        background: none;
-        text-transform: uppercase;
-        transition-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
-        transition-duration: 400ms;
-        transition-property: color;
-      }
-
-      button:focus,
-      button:hover {
-        color: #afac00;
-      }
-
-      button:focus:after,
-      button:hover:after {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         width: 100%;
-        left: 0%;
+        max-width: 400px;
       }
 
-      button:after {
-        content: "";
-        pointer-events: none;
-        bottom: -2px;
-        left: 50%;
-        position: absolute;
-        width: 0%;
-        height: 2px;
-        background-color: #000;
-        transition-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
-        transition-duration: 400ms;
-        transition-property: width, left;
+      .info-card h3 {
+        color: #004aad;
+        margin-bottom: 1.5rem;
+        font-size: 1.2rem;
+        text-align: center;
+      }
+
+      .info-item {
+        margin-bottom: 1.5rem;
+        text-align: center;
+      }
+
+      .info-item label {
+        display: block;
+        color: #666;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+      }
+
+      .info-item p {
+        color: #333;
+        font-size: 1.1rem;
+        margin: 0;
+        font-weight: 500;
+      }
+
+      .edit-btn {
+        background: #004aad;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        font-size: 1rem;
+        margin-top: 1rem;
+      }
+
+      .edit-btn:hover {
+        background: #003d8f;
+      }
+
+      .dialog {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #4caf50;
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+        animation: slideIn 0.3s ease-out;
+      }
+
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      .nothing {
+        display: none;
       }
     </style>
 
     <div class="nothing" id="messagePoint"></div>
     <div class="headerSelction">
-      <div class="titlePoint">CAR POOL</div>
+      <div class="titlePoint">CommuteCo</div>
       <div class="navPoint">
         <a href="/userHome">My Pool</a>
         <a href="/addPool">Add Pool</a>
         <a href="/joinPool">Join Pool</a>
+        <a href="/transaction-history">Transaction History</a>
         <a href="/profile" id="activac">Profile</a>
         <a href="/logout">Logout</a>
       </div>
@@ -129,13 +185,41 @@
 
     <div class="profile-container">
       <div class="profile-header">
-        <h2>User Profile</h2>
+        <h1>Profile Information</h1>
       </div>
 
-      <div class="profile-info" id="profile-info">
-        <!-- Profile info will be loaded here -->
+      <div class="profile-info">
+        <div class="info-card">
+          <h3>Personal Details</h3>
+          <div class="info-item">
+            <label>Name</label>
+            <p id="userName"></p>
+          </div>
+          <div class="info-item">
+            <label>Email</label>
+            <p id="userEmail"></p>
+          </div>
+          <div class="info-item">
+            <label>Type</label>
+            <p id="userType"></p>
+          </div>
+        </div>
       </div>
     </div>
+
+    {%if messages%}
+    <script>
+      const success = document.getElementById("successpoint")?.value || "";
+      if (success.length != 0) {
+        const vali = document.getElementById("messagePoint");
+        vali.className = "dialog";
+        vali.innerText = success;
+        setTimeout(() => {
+          vali.className = "nothing";
+        }, 3000);
+      }
+    </script>
+    {% endif %}
 
     <script>
       window.addEventListener("DOMContentLoaded", () => {
@@ -147,46 +231,32 @@
           return;
         }
 
-        const profile = document.getElementById("profile-info");
         fetch(`/profileDetails?userid=${userId}`)
           .then((view) => view.json())
           .then((point) => {
             if (point.profile && point.profile.length > 0) {
               const element = point.profile[0];
-              const text = `
-                            <p><strong>Name:</strong> ${element.name}</p>
-                            <p><strong>Email:</strong> ${element.email}</p>
-                            <p><strong>Type:</strong> ${element.typeView}</p>
-                            <div style="display: flex;justify-content: end;">
-                                <a href="/logout" style="text-decoration: none;">
-                                    <button>Logout</button>
-                                </a>
-                            </div>
-                        `;
-              profile.innerHTML = text;
+              document.getElementById("userName").textContent = element.name;
+              document.getElementById("userEmail").textContent = element.email;
+              document.getElementById("userType").textContent =
+                element.typeView;
             } else {
-              profile.innerHTML = "<p>Error loading profile information</p>";
+              document.getElementById("userName").textContent = "Not available";
+              document.getElementById("userEmail").textContent =
+                "Not available";
+              document.getElementById("userType").textContent = "Not available";
             }
           })
           .catch((error) => {
             console.error("Error:", error);
-            profile.innerHTML = "<p>Error loading profile information</p>";
+            document.getElementById("userName").textContent =
+              "Error loading data";
+            document.getElementById("userEmail").textContent =
+              "Error loading data";
+            document.getElementById("userType").textContent =
+              "Error loading data";
           });
       });
     </script>
-
-    {%if messages%}
-    <script>
-      const success = document.getElementById("successpoint")?.value;
-      if (success) {
-        const vali = document.getElementById("messagePoint");
-        vali.className = "dialog";
-        vali.innerText = success;
-        setTimeout(() => {
-          vali.className = "nothing";
-        }, 3000);
-      }
-    </script>
-    {% endif %}
   </body>
 </html>

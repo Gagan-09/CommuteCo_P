@@ -7,14 +7,53 @@
     <script src="https://cdn.jsdelivr.net/npm/web3@1.5.2/dist/web3.min.js"></script>
     <style>
       body {
-        font-family: "Arial", sans-serif;
-        background: linear-gradient(135deg, #f3e7ff, #d9c7ff);
+        font-family: "Roboto", sans-serif;
+        background-color: #f4f6f8;
         margin: 0;
-        padding: 20px;
+        padding: 0;
       }
+
+      .headerSelction {
+        background: #004aad;
+        padding: 1rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .titlePoint {
+        color: white;
+        font-size: 1.5rem;
+        font-weight: bold;
+      }
+
+      .navPoint {
+        display: flex;
+        gap: 1.5rem;
+      }
+
+      .navPoint a {
+        color: white;
+        text-decoration: none;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        transition: 0.3s;
+      }
+
+      .navPoint a:hover {
+        background: #ffcc00;
+        color: #000;
+      }
+
+      .navPoint a#activac {
+        background: #ffcc00;
+        color: #000;
+      }
+
       .container {
         max-width: 600px;
-        margin: 0 auto;
+        margin: 2rem auto;
         background: #ffffff;
         border-radius: 15px;
         box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);

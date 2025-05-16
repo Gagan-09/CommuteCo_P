@@ -24,6 +24,51 @@
 
   <body>
     <style>
+      body {
+        font-family: "Roboto", sans-serif;
+        background-color: #f4f6f8;
+        margin: 0;
+        padding: 0;
+      }
+
+      .headerSelction {
+        background: #004aad;
+        padding: 1rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .titlePoint {
+        color: white;
+        font-size: 1.5rem;
+        font-weight: bold;
+      }
+
+      .navPoint {
+        display: flex;
+        gap: 1.5rem;
+      }
+
+      .navPoint a {
+        color: white;
+        text-decoration: none;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        transition: 0.3s;
+      }
+
+      .navPoint a:hover {
+        background: #ffcc00;
+        color: #000;
+      }
+
+      .navPoint a#activac {
+        background: #ffcc00;
+        color: #000;
+      }
+
       .ride-cards-container {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
@@ -123,7 +168,7 @@
     </style>
     <div class="nothing" id="messagePoint"></div>
     <div class="headerSelction">
-      <div class="titlePoint">CAR POOL</div>
+      <div class="titlePoint">CommuteCo</div>
       <div class="navPoint">
         <a href="/driverHome" id="activac">Available Rides</a>
         <a href="/acceptance/{{ request.session.driver_id }}/" id="activac"

@@ -4,11 +4,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
       rel="stylesheet"
     />
-
-    <link rel="stylesheet" href="/static/css/all.css" />
 
     {%if messages%} {%for me in messages %} {%if me.tags in "success" %}
     <input type="hidden" value="{{me}}" id="successpoint" />
@@ -24,58 +22,148 @@
 
   <body>
     <style>
-      h2 {
-        text-align: center;
-        color: #333;
+      body {
+        font-family: "Roboto", sans-serif;
+        background-color: #ffffff;
+        margin: 0;
+        padding: 0;
+      }
+
+      .headerSelction {
+        background: #004aad;
+        padding: 1rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .titlePoint {
+        color: white;
+        font-size: 1.5rem;
+        font-weight: bold;
+      }
+
+      .navPoint {
+        display: flex;
+        gap: 1.5rem;
+      }
+
+      .navPoint a {
+        color: white;
+        text-decoration: none;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        transition: 0.3s;
+      }
+
+      .navPoint a:hover {
+        background: #ffcc00;
+        color: #000;
+      }
+
+      .navPoint a#activac {
+        background: #ffcc00;
+        color: #000;
       }
 
       .request-list {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
         gap: 1.5rem;
-        margin-top: 2rem;
+        margin: 2rem;
+        padding: 0 1rem;
+        background-color: #ffffff;
       }
 
       .card {
-        background: #fff;
-        padding: 1rem 1.5rem;
+        background: #ffffff;
+        padding: 1.5rem;
         border-radius: 10px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
         transition: 0.3s;
+        border: 1px solid #eef2f7;
       }
 
       .card:hover {
         transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
       }
 
       .card h3 {
-        margin: 0;
+        margin: 0 0 1rem 0;
         font-size: 1.2rem;
-        color: #007bff;
+        color: #004aad;
+        border-bottom: 2px solid #f0f0f0;
+        padding-bottom: 0.5rem;
       }
 
       .card p {
-        margin: 0.4rem 0;
+        margin: 0.5rem 0;
         color: #555;
       }
+
       .accept-btn,
       .reject-btn {
-        padding: 10px 15px;
+        padding: 0.75rem 1.5rem;
         border: none;
         border-radius: 5px;
         font-size: 14px;
         cursor: pointer;
         transition: background-color 0.2s;
+        margin-top: 1rem;
+        width: 100%;
       }
 
       .accept-btn {
         background-color: #4caf50;
         color: white;
       }
+
+      .accept-btn:hover {
+        background-color: #45a049;
+      }
+
+      .reject-btn {
+        background-color: #e74c3c;
+        color: white;
+      }
+
+      .reject-btn:hover {
+        background-color: #c0392b;
+      }
+
+      .dialog {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #4caf50;
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+        animation: slideIn 0.3s ease-out;
+      }
+
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      .nothing {
+        display: none;
+      }
     </style>
     <div class="nothing" id="messagePoint"></div>
     <div class="headerSelction">
-      <div class="titlePoint">CAR POOL</div>
+      <div class="titlePoint">CommuteCo</div>
       <div class="navPoint">
         <a href="/userHome" id="activac">My Pool</a>
         <a href="/addPool">Add Pool</a>
@@ -93,7 +181,7 @@
             href="{% url 'transaction_history' %}"
             class="btn btn-primary mb-3"
           >
-            View Transaction History
+            <!-- View Transaction History -->
           </a>
         </div>
       </div>
@@ -123,25 +211,24 @@
           var text = "";
           point.data.forEach((element) => {
             text += `<div class="card">
-          <h3>${element.fromCity} ➜ ${element.toCity}</h3>
-          <p><strong>Date:</strong> ${element.datePoint}</p>
-          <p><strong>Contact:</strong> ${element.contactPoint}</p>
-          <p><strong>Raised On:</strong> ${element.applyOn}</p>
-          <p><strong>Status :</strong> ${element.status}</p>
-        <button class="accept-btn" style='color:white;' onclick="setString('${
-          element.toCity
-        }','${
-              element.fromCity
-            }')"><img src='/static/img/point.png' style='width:24px;height:24px;'></img>Directions</button>
-    
-                    ${checkAndUpdate(element.status, element.id)}
-          <form method='post' action='/deletePool/${
-            element.id
-          }/' style='margin-top:10px;'>
-            {% csrf_token %}
-            <button type='submit' class='reject-btn' style='background:#e74c3c;color:white;'>Delete</button>
-          </form>
-          </div>`;
+              <h3>${element.fromCity} ➜ ${element.toCity}</h3>
+              <p><strong>Date:</strong> ${element.datePoint}</p>
+              <p><strong>Contact:</strong> ${element.contactPoint}</p>
+              <p><strong>Raised On:</strong> ${element.applyOn}</p>
+              <p><strong>Status:</strong> ${element.status}</p>
+              <button class="accept-btn" onclick="setString('${
+                element.toCity
+              }','${element.fromCity}')">
+                <i class="fas fa-directions"></i> Directions
+              </button>
+              ${checkAndUpdate(element.status, element.id)}
+              <form method='post' action='/deletePool/${
+                element.id
+              }/' style='margin-top:10px;'>
+                {% csrf_token %}
+                <button type='submit' class='reject-btn'>Delete</button>
+              </form>
+            </div>`;
           });
           myRequest.innerHTML = text;
         });
