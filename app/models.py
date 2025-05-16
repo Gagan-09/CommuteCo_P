@@ -23,4 +23,13 @@ class JointRide(models.Model):
     id=models.AutoField(primary_key=True)
     userid=models.CharField(max_length=1000)
     rideId=models.CharField(max_length=1000)
+
+class RejectedRide(models.Model):
+    id = models.AutoField(primary_key=True)
+    rideId = models.CharField(max_length=1000)
+    driverId = models.CharField(max_length=1000)
+    rejectedAt = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('rideId', 'driverId')
                                                                                                       

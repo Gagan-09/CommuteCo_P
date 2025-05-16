@@ -1,86 +1,212 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment Success</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Payment - Car Pool</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.5.2/dist/web3.min.js"></script>
     <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #f3e7ff, #d9c7ff);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            overflow: hidden;
-        }
-        .container {
-            background: #ffffff;
-            border-radius: 15px;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
-            padding: 40px;
-            text-align: center;
-            max-width: 400px;
-            width: 90%;
-            animation: fadeIn 0.5s ease-in-out;
-        }
-        .checkmark {
-            font-size: 60px;
-            color: #4caf50;
-            margin-bottom: 20px;
-            animation: scaleIn 0.3s ease-in-out;
-        }
-        h1 {
-            font-size: 24px;
-            color: #333;
-            margin-bottom: 10px;
-        }
-        p {
-            font-size: 16px;
-            color: #666;
-            margin-bottom: 20px;
-        }
-        .premium-badge {
-            display: inline-block;
-            background: #ffd700;
-            color: #333;
-            font-weight: bold;
-            padding: 8px 16px;
-            border-radius: 20px;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-        .btn {
-            background: #4caf50;
-            color: #fff;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 25px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-        }
-        .btn:hover {
-            background: #45a049;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes scaleIn {
-            from { transform: scale(0); }
-            to { transform: scale(1); }
-        }
+      body {
+        font-family: "Arial", sans-serif;
+        background: linear-gradient(135deg, #f3e7ff, #d9c7ff);
+        margin: 0;
+        padding: 20px;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background: #ffffff;
+        border-radius: 15px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+        padding: 40px;
+        text-align: center;
+      }
+      .payment-details {
+        text-align: left;
+        margin: 20px 0;
+        padding: 20px;
+        background: #f9f9f9;
+        border-radius: 10px;
+      }
+      .payment-details p {
+        margin: 10px 0;
+        color: #333;
+      }
+      .wallet-section {
+        margin: 20px 0;
+      }
+      .wallet-input {
+        width: 100%;
+        padding: 12px;
+        margin: 10px 0;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 14px;
+      }
+      .wallet-input:disabled {
+        background: #f5f5f5;
+        cursor: not-allowed;
+      }
+      .pay-btn {
+        background: #4caf50;
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 25px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+      }
+      .pay-btn:hover {
+        background: #45a049;
+      }
+      .pay-btn:disabled {
+        background: #cccccc;
+        cursor: not-allowed;
+      }
+      .balance-display {
+        margin-top: 10px;
+        padding: 10px;
+        background: #f5f5f5;
+        border-radius: 5px;
+        display: none;
+      }
+      .balance-display.show {
+        display: block;
+      }
+      .success-message {
+        display: none;
+        margin-top: 20px;
+        padding: 15px;
+        background: #e8f5e9;
+        border-radius: 5px;
+        color: #2e7d32;
+      }
+      .success-message.show {
+        display: block;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <div class="checkmark">✔</div>
-        <h1>Payment Successful!</h1>
-        <a href="/" class="btn">Go to Dashboard</a>
+      <h1>Payment Details</h1>
+      <div class="payment-details">
+        <p><strong>Ride ID:</strong> <span id="rideId">{{ rideId }}</span></p>
+        <p>
+          <strong>Driver Name:</strong>
+          <span id="driverName">{{ driverName }}</span>
+        </p>
+        <p>
+          <strong>Driver Wallet:</strong>
+          <span id="driverWallet">{{ driverWallet }}</span>
+        </p>
+        <p>
+          <strong>Distance:</strong>
+          <span id="distance">{{ distance }}</span> km
+        </p>
+        <p><strong>Fare:</strong> <span id="fare">{{ fare }}</span> ETH</p>
+      </div>
+
+      <div class="wallet-section">
+        <input
+          type="text"
+          class="wallet-input"
+          id="userWallet"
+          placeholder="Enter your blockchain wallet address"
+          required
+        />
+        <div class="balance-display" id="balanceDisplay"></div>
+        <button class="pay-btn" onclick="checkBalance()">Check Balance</button>
+      </div>
+
+      <button class="pay-btn" id="payButton" onclick="makePayment()" disabled>
+        Pay Now
+      </button>
+
+      <div class="success-message" id="successMessage">
+        <h3>Payment Successful!</h3>
+        <p>Transaction Hash: <span id="transactionHash"></span></p>
+        <p>Distance: <span id="successDistance"></span> km</p>
+        <p>Amount Paid: <span id="successAmount"></span> ETH</p>
+      </div>
     </div>
-</body>
+
+    <script>
+      // Initialize Web3 with Ganache
+      const web3 = new Web3("http://127.0.0.1:7545");
+
+      // Get ride details from DOM elements
+      const rideId = document.getElementById("rideId").textContent;
+      const driverName = document.getElementById("driverName").textContent;
+      const driverWallet = document.getElementById("driverWallet").textContent;
+      const distance = document.getElementById("distance").textContent;
+      const fare = document.getElementById("fare").textContent;
+
+      function checkBalance() {
+        const userWallet = document.getElementById("userWallet").value;
+        const balanceDisplay = document.getElementById("balanceDisplay");
+        const payButton = document.getElementById("payButton");
+
+        if (!userWallet) {
+          alert("Please enter your wallet address");
+          return;
+        }
+
+        if (!web3.utils.isAddress(userWallet)) {
+          alert("Please enter a valid Ethereum wallet address");
+          return;
+        }
+
+        balanceDisplay.textContent = "Checking balance...";
+        balanceDisplay.classList.add("show");
+        balanceDisplay.style.color = "#666";
+
+        web3.eth
+          .getBalance(userWallet)
+          .then((balance) => {
+            const ethBalance = web3.utils.fromWei(balance, "ether");
+            balanceDisplay.textContent = `Wallet Balance: ${parseFloat(
+              ethBalance
+            ).toFixed(4)} ETH`;
+
+            if (parseFloat(ethBalance) >= parseFloat(fare)) {
+              balanceDisplay.style.color = "#4CAF50";
+              payButton.disabled = false;
+            } else {
+              balanceDisplay.style.color = "#f44336";
+              payButton.disabled = true;
+              balanceDisplay.textContent += " (Insufficient balance)";
+            }
+          })
+          .catch((error) => {
+            balanceDisplay.textContent =
+              "Error checking balance. Please try again.";
+            balanceDisplay.style.color = "#f44336";
+            console.error("Error checking balance:", error);
+          });
+      }
+
+      function makePayment() {
+        const userWallet = document.getElementById("userWallet").value;
+        const payButton = document.getElementById("payButton");
+        const successMessage = document.getElementById("successMessage");
+
+        payButton.disabled = true;
+        payButton.textContent = "Processing Payment...";
+
+        // In a real implementation, this would create and send a transaction
+        // For now, we'll simulate a successful transaction
+        setTimeout(() => {
+          const txHash = "0x" + Math.random().toString(16).substr(2, 40);
+
+          document.getElementById("transactionHash").textContent = txHash;
+          document.getElementById("successDistance").textContent = distance;
+          document.getElementById("successAmount").textContent = fare;
+
+          successMessage.classList.add("show");
+          payButton.textContent = "Payment Successful";
+        }, 2000);
+      }
+    </script>
+  </body>
 </html>

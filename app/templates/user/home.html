@@ -77,10 +77,11 @@
     <div class="headerSelction">
       <div class="titlePoint">CAR POOL</div>
       <div class="navPoint">
-        <a href="/" id="activac">My Pool</a>
+        <a href="/userHome" id="activac">My Pool</a>
         <a href="/addPool">Add Pool</a>
         <a href="/joinPool">Join Pool</a>
         <a href="/profile">Profile</a>
+        <a href="/logout">Logout</a>
       </div>
     </div>
     <div class="request-list" id="myRequest"></div>
@@ -88,16 +89,8 @@
 
   {%if messages%}
   <script>
-    const data = document.getElementById("infoPoint").value;
-    if (data.length != 0) {
-      const view = String(data).split(",");
-      sessionStorage.setItem(
-        "Store",
-        JSON.stringify({ id: view[0], type: view[1] })
-      );
-    }
-    const success = document.getElementById("successpoint").value;
-    if (screen.length != 0) {
+    const success = document.getElementById("successpoint")?.value || "";
+    if (success.length != 0) {
       const vali = document.getElementById("messagePoint");
       vali.className = "dialog";
       vali.innerText = success;
@@ -110,23 +103,13 @@
 
   <script>
     window.addEventListener("DOMContentLoaded", () => {
-      const store = sessionStorage.getItem("Store");
-      if (store == null) {
-        window.location.href = "/";
-      } else {
-        const { id, type } = JSON.parse(store);
-
-        if (type != "user") {
-          window.location.href = "/";
-        }
-
-        const myRequest = document.getElementById("myRequest");
-        fetch(`/getRequestFromUsers?userid=${id}`)
-          .then((view) => view.json())
-          .then((point) => {
-            var text = "";
-            point.data.forEach((element) => {
-              text += `<div class="card">
+      const myRequest = document.getElementById("myRequest");
+      fetch(`/getRequestFromUsers?userid={{ request.session.user_id }}`)
+        .then((view) => view.json())
+        .then((point) => {
+          var text = "";
+          point.data.forEach((element) => {
+            text += `<div class="card">
           <h3>${element.fromCity} ➜ ${element.toCity}</h3>
           <p><strong>Date:</strong> ${element.datePoint}</p>
           <p><strong>Contact:</strong> ${element.contactPoint}</p>
@@ -135,23 +118,23 @@
         <button class="accept-btn" style='color:white;' onclick="setString('${
           element.toCity
         }','${
-                element.fromCity
-              }')"><img src='/static/img/point.png' style='width:24px;height:24px;'></img>Directions</button>
+              element.fromCity
+            }')"><img src='/static/img/point.png' style='width:24px;height:24px;'></img>Directions</button>
     
-                    ${checkAndUpdate(element.status)}
+                    ${checkAndUpdate(element.status, element.id)}
           </div>`;
-            });
-            myRequest.innerHTML = text;
           });
-      }
+          myRequest.innerHTML = text;
+        });
     });
+
     function setString(toCity, fromCity) {
       window.location.href = `/maps?source=${fromCity}'&destination=${toCity}`;
     }
 
-    function checkAndUpdate(status) {
+    function checkAndUpdate(status, rideId) {
       if (status == "Ride Completed") {
-        return "    <div class='navPoint'><a id='activac' href='/payment'> Payment</a></div>";
+        return `<div class='navPoint'><a id='activac' href='/payment?rideId=${rideId}'>Payment</a></div>`;
       } else {
         return "";
       }

@@ -6,9 +6,81 @@ from datetime import datetime
 from django.db.models import Q
 from django.urls import reverse
 import json
+import requests
+from math import radians, sin, cos, sqrt, atan2
+
+def calculate_distance(lat1, lon1, lat2, lon2):
+    # Convert latitude and longitude from degrees to radians
+    lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
+    
+    # Haversine formula
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+    c = 2 * atan2(sqrt(a), sqrt(1-a))
+    radius = 6371  # Earth's radius in kilometers
+    distance = radius * c
+    
+    return round(distance, 2)
+
+def get_coordinates(city):
+    # Use Nominatim API to get coordinates
+    url = f"https://nominatim.openstreetmap.org/search?q={city}&format=json"
+    headers = {'User-Agent': 'CarPool/1.0'}
+    try:
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            data = response.json()
+            if data:
+                return float(data[0]['lat']), float(data[0]['lon'])
+    except Exception as e:
+        print(f"Error getting coordinates for {city}: {str(e)}")
+    return None
+
 def maps(request):return render(request,'maps.html')
 
-def payment(request):return render(request,'payment.html')
+def payment(request):
+    ride_id = request.GET.get('rideId')
+    if not ride_id:
+        messages.error(request, "No ride selected for payment")
+        return redirect('userHome')
+        
+    try:
+        ride = RidePoint.objects.get(id=ride_id)
+        driver = User.objects.get(id=ride.driverId)
+        
+        # Get coordinates for source and destination cities
+        from_coords = get_coordinates(ride.fromCity)
+        to_coords = get_coordinates(ride.toCity)
+        
+        if from_coords and to_coords:
+            # Calculate actual distance using coordinates
+            distance = calculate_distance(
+                from_coords[0], from_coords[1],
+                to_coords[0], to_coords[1]
+            )
+        else:
+            # Fallback to default distance if coordinates not found
+            distance = 50
+            messages.warning(request, "Could not calculate exact distance, using default value")
+            
+        # Calculate fare based on distance (0.000055 ETH per km)
+        fare = round(distance * 0.000055, 6)
+        
+        context = {
+            'rideId': ride.id,
+            'driverName': driver.name,
+            'driverWallet': ride.payment,
+            'distance': distance,
+            'fare': fare,
+            'fromCity': ride.fromCity,
+            'toCity': ride.toCity
+        }
+        
+        return render(request, 'payment.html', context)
+    except (RidePoint.DoesNotExist, User.DoesNotExist):
+        messages.error(request, "Invalid ride or driver information")
+        return redirect('userHome')
 
 def AcceptTheRide(request):
     if request.method == "POST":
@@ -83,17 +155,75 @@ def profiledriver(request):
 
 
 def stateOF(request):
-    rideId = request.POST.get("rideId", 0).strip()
-    driverId = request.POST.get("driverId", "").strip()
-    RidePoint.objects.filter(id=int(rideId)).update(
-        driverId=driverId, status="Accepted By Driver"
-    )
-    messages.success(request, "SuccessFully Accepted")
-
+    if not request.session.get('user_id') or request.session.get('user_type') != 'driver':
+        messages.error(request, "Please login as a driver")
+        return redirect('login')
+        
+    if request.method == "POST":
+        rideId = request.POST.get("rideId", 0).strip()
+        driverId = request.POST.get("driverId", "").strip()
+        walletAddress = request.POST.get("walletAddress", "").strip()
+        
+        if not walletAddress:
+            messages.error(request, "Please enter your blockchain wallet address")
+            return redirect("driverHome")
+            
+        try:
+            # Update ride with driver info and wallet address
+            ride = RidePoint.objects.get(id=int(rideId))
+            if ride.driverId:  # Check if ride is already accepted
+                messages.error(request, "This ride has already been accepted by another driver")
+                return redirect("driverHome")
+                
+            ride.driverId = driverId
+            ride.status = "Accepted By Driver"
+            ride.payment = walletAddress  # Store wallet address in payment field
+            ride.save()
+            
+            messages.success(request, "Successfully Accepted")
+            return redirect("driverHome")
+        except RidePoint.DoesNotExist:
+            messages.error(request, "Invalid ride ID")
+            return redirect("driverHome")
+        except Exception as e:
+            messages.error(request, f"Error accepting ride: {str(e)}")
+            return redirect("driverHome")
+            
     return redirect("driverHome")
 
 
-def acceptance(request,userid=0):
+def rejectRide(request):
+    if request.method == "POST":
+        rideId = request.POST.get("rideId", 0).strip()
+        driverId = request.POST.get("driverId", "").strip()
+        
+        # Only allow rejection if this driver hasn't already accepted
+        ride = RidePoint.objects.get(id=int(rideId))
+        if ride.driverId == "":
+            # Mark this driver as having rejected this ride
+            # This prevents the same driver from seeing this ride again
+            RejectedRide.objects.create(
+                rideId=rideId,
+                driverId=driverId
+            )
+            messages.success(request, "Ride rejected successfully")
+        else:
+            messages.error(request, "This ride has already been accepted")
+            
+    return redirect("driverHome")
+
+
+def acceptance(request, userid=0):
+    # Check if user is logged in as driver
+    if not request.session.get('user_id') or request.session.get('user_type') != 'driver':
+        messages.error(request, "Please login as a driver")
+        return redirect('login')
+        
+    # Verify that the userid in URL matches the logged in user
+    if str(request.session['user_id']) != str(userid):
+        messages.error(request, "Unauthorized access")
+        return redirect('driverHome')
+        
     data = RidePoint.objects.filter(
         Q(driverId=userid)
         & (Q(status="Accepted By Driver") | Q(status="Ride Completed"))
@@ -117,6 +247,7 @@ def acceptance(request,userid=0):
 
     for ride in rideDate:
         ride["userDetails"] = usermap.get(ride["userid"], {})
+
     completed = list()
     accepted = list()
     for ride2 in rideDate:
@@ -128,12 +259,21 @@ def acceptance(request,userid=0):
     return render(
         request,
         "driver/accepted.html",
-        context={"accepted": accepted, "completed": completed, "accepted": accepted},
+        context={"accepted": accepted, "completed": completed},
     )
 
 
 def driverHome(request):
-    data = RidePoint.objects.filter(Q(driverId="") & ~Q(userid="")).values(
+    if not request.session.get('user_id') or request.session.get('user_type') != 'driver':
+        messages.error(request, "Please login as a driver")
+        return redirect('login')
+        
+    # Get rides that haven't been accepted and haven't been rejected by this driver
+    data = RidePoint.objects.filter(
+        Q(driverId="") & 
+        ~Q(userid="") &
+        ~Q(id__in=RejectedRide.objects.filter(driverId=str(request.session['user_id'])).values_list('rideId', flat=True))
+    ).values(
         "id",
         "fromCity",
         "toCity",
@@ -207,31 +347,34 @@ def addPool(request):
 
 
 def userHome(request):
+    if not request.session.get('user_id') or request.session.get('user_type') != 'user':
+        messages.error(request, "Please login as a user")
+        return redirect('login')
     return render(request, "user/home.html")
 
 
 def index(request):
-
     if request.method == "POST":
         email = request.POST.get("email", "").strip()
         password = request.POST.get("password", "").strip()
         data = User.objects.filter(email=email, password=password)
 
-        if data:
-            if data.exists():
-                if data.last().typeView == "driver":
-                    messages.success(request, "SuccessFully Loggedin")
-                    messages.info(request, f"{data.last().id},{data.last().typeView}")
-                    return redirect("driverHome")
-                elif data.last().typeView == "user":
-                    messages.info(request, f"{data.last().id},{data.last().typeView}")
-                    messages.success(request, "SuccessFully Loggedin")
-                    return redirect("userHome")
-                messages.info(request, "Invalid Character Involved as a user")
-                return redirect("")
-
-        messages.info(request, "Invalid user")
-        return redirect("")
+        if data.exists():
+            user = data.last()
+            request.session['user_id'] = str(user.id)
+            request.session['user_type'] = user.typeView
+            request.session.set_expiry(86400)  # 24 hours
+            
+            messages.success(request, "Successfully Logged in")
+            
+            if user.typeView == "driver":
+                return redirect("driverHome")
+            elif user.typeView == "user":
+                return redirect("userHome")
+            
+        messages.error(request, "Invalid credentials")
+        return redirect("login")
+        
     return render(request, "login.html")
 
 
@@ -268,3 +411,8 @@ def dregister(request):
         return redirect("")
 
     return render(request, "driverRegister.html")
+
+def logout(request):
+    request.session.flush()
+    messages.success(request, "Successfully logged out")
+    return redirect('login')
