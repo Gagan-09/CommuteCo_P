@@ -1,6 +1,4 @@
-{% extends 'base.html' %}
-
-{% block content %}
+{% extends 'base.html' %} {% block content %}
 <div class="headerSelction">
   <div class="titlePoint">CommuteCo</div>
   <div class="navPoint">
@@ -34,8 +32,14 @@
           </p>
           {% if transaction.transaction_hash %}
           <p>
-            <strong>Transaction Hash:</strong> {{ transaction.transaction_hash
-            }}
+            <strong>Transaction Hash:</strong>
+            <a
+              href="https://sepolia.etherscan.io/tx/{{ transaction.transaction_hash }}"
+              target="_blank"
+              class="text-primary"
+            >
+              {{ transaction.transaction_hash|truncatechars:20 }}
+            </a>
           </p>
           {% endif %}
         </div>
@@ -96,22 +100,22 @@
     transform: translateY(-5px);
   }
 
-  .btn-primary {
-    background: #004aad;
-    border: none;
+  .text-primary {
+    color: #004aad !important;
+    text-decoration: none;
   }
 
-  .btn-primary:hover {
-    background: #00338d;
+  .text-primary:hover {
+    text-decoration: underline;
   }
 
-  .btn-success {
-    background: #28a745;
-    border: none;
+  .card-body p {
+    margin-bottom: 0.5rem;
   }
 
-  .btn-success:hover {
-    background: #218838;
+  .card-title {
+    color: #004aad;
+    margin-bottom: 1rem;
   }
 </style>
 
