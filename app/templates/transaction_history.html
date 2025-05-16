@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Transaction History</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/css/all.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+    />
+    <style>
+      body {
+        font-family: "Roboto", sans-serif;
+        background-color: #f4f6f8;
+        margin: 0;
+        padding: 0;
+      }
+
+      .headerSelction {
+        background-color: #2c3e50;
+        color: white;
+        padding: 1rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .titlePoint {
+        font-size: 1.5rem;
+        font-weight: bold;
+      }
+
+      .navPoint a {
+        color: white;
+        margin-left: 20px;
+        text-decoration: none;
+        font-weight: 500;
+      }
+
+      .navPoint a:hover {
+        text-decoration: underline;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 30px auto;
+        padding: 0 20px;
+      }
+
+      h2 {
+        font-weight: 600;
+        margin-bottom: 20px;
+      }
+
+      .filter-section {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        margin-bottom: 25px;
+      }
+
+      .filter-section .form-label {
+        font-weight: 500;
+        margin-bottom: 8px;
+        display: block;
+      }
+
+      .form-control {
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        padding: 10px;
+        width: 100%;
+      }
+
+      .btn-primary,
+      .btn-secondary,
+      .clear-history-btn {
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-weight: 500;
+        cursor: pointer;
+        border: none;
+        margin-right: 10px;
+        transition: background-color 0.3s ease;
+      }
+
+      .btn-primary {
+        background-color: #3498db;
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background-color: #2980b9;
+      }
+
+      .btn-secondary {
+        background-color: #7f8c8d;
+        color: white;
+      }
+
+      .btn-secondary:hover {
+        background-color: #626e70;
+      }
+
+      .clear-history-btn {
+        background-color: #e74c3c;
+        color: white;
+        margin-bottom: 20px;
+      }
+
+      .clear-history-btn:hover {
+        background-color: #c0392b;
+      }
+
+      .transaction-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: transform 0.3s;
+      }
+
+      .transaction-card:hover {
+        transform: translateY(-3px);
+      }
+
+      .transaction-card .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+      }
+
+      .transaction-card .col-md-2,
+      .transaction-card .col-md-3 {
+        flex: 1;
+        min-width: 150px;
+      }
+
+      .transaction-card strong {
+        display: block;
+        margin-bottom: 4px;
+        color: #2c3e50;
+      }
+
+      .transaction-card p {
+        margin: 0;
+        color: #555;
+      }
+      .transaction-hash {
+        white-space: nowrap;
+        overflow-x: auto;
+        font-family: "Courier New", Courier, monospace;
+        font-size: 0.9rem;
+        background-color: #f9f9f9;
+        padding: 4px 8px;
+        border-radius: 5px;
+        max-width: 100%;
+        display: block;
+        color: #007bff; /* Bootstrap Blue */
+        word-break: break-all;
+        font-weight: 500;
+      }
+      .status-completed {
+        color: #2ecc71; /* Green */
+        font-weight: bold;
+      }
+
+      .status-pending {
+        color: #e67e22; /* Orange */
+        font-weight: bold;
+      }
+      .no-transactions {
+        background: white;
+        border-radius: 10px;
+        padding: 40px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+        text-align: center;
+        color: #777;
+      }
+
+      @media (max-width: 768px) {
+        .headerSelction {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .navPoint a {
+          display: inline-block;
+          margin: 10px 10px 0 0;
+        }
+
+        .transaction-card .row {
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="headerSelction">
+      <div class="titlePoint">CAR POOL</div>
+      <div class="navPoint">
+        <a href="/userHome">My Pool</a>
+        <a href="/addPool">Add Pool</a>
+        <a href="/joinPool">Join Pool</a>
+        <a href="/profile">Profile</a>
+        <a href="/logout">Logout</a>
+      </div>
+    </div>
+
+    <div class="container">
+      <h2>Transaction History</h2>
+
+      <!-- Filter Section -->
+      <div class="filter-section">
+        <form id="filterForm" class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label">ETH Range</label>
+            <div class="input-group">
+              <input
+                type="number"
+                class="form-control"
+                id="minEth"
+                placeholder="Min ETH"
+                step="0.000001"
+              />
+              <input
+                type="number"
+                class="form-control"
+                id="maxEth"
+                placeholder="Max ETH"
+                step="0.000001"
+              />
+            </div>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Distance Range (km)</label>
+            <div class="input-group">
+              <input
+                type="number"
+                class="form-control"
+                id="minDistance"
+                placeholder="Min km"
+                step="0.1"
+              />
+              <input
+                type="number"
+                class="form-control"
+                id="maxDistance"
+                placeholder="Max km"
+                step="0.1"
+              />
+            </div>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Date Range</label>
+            <input
+              type="text"
+              class="form-control"
+              id="dateRange"
+              placeholder="Select date range"
+            />
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Sort By</label>
+            <select class="form-control" id="sortBy">
+              <option value="">Select sort option</option>
+              <option value="eth_asc">ETH (Low to High)</option>
+              <option value="eth_desc">ETH (High to Low)</option>
+              <option value="distance_asc">Distance (Low to High)</option>
+              <option value="distance_desc">Distance (High to Low)</option>
+              <option value="date_desc">Date (Newest First)</option>
+              <option value="date_asc">Date (Oldest First)</option>
+            </select>
+          </div>
+          <div class="col-12" style="margin-top: 15px">
+            <button type="submit" class="btn-primary">Apply Filters</button>
+            <button
+              type="button"
+              class="btn-secondary"
+              onclick="resetFilters()"
+            >
+              Reset
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <button class="clear-history-btn" onclick="clearHistory()">
+        Clear Transaction History
+      </button>
+
+      <!-- Transactions Container -->
+      <div id="transactionsContainer"></div>
+
+      <!-- No Transactions Message -->
+      <div id="noTransactions" class="no-transactions" style="display: none">
+        <h4>No transactions found</h4>
+        <p>
+          Try adjusting your filters or check back later for new transactions.
+        </p>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+      flatpickr("#dateRange", {
+        mode: "range",
+        dateFormat: "Y-m-d",
+        altInput: true,
+        altFormat: "F j, Y",
+        placeholder: "Select date range",
+      });
+
+      function loadTransactions(filters = {}) {
+        fetch(`/get_transactions/?${new URLSearchParams(filters)}`)
+          .then((response) => response.json())
+          .then((data) => {
+            const container = document.getElementById("transactionsContainer");
+            const noTransactions = document.getElementById("noTransactions");
+
+            if (data.transactions.length === 0) {
+              container.innerHTML = "";
+              noTransactions.style.display = "block";
+              return;
+            }
+
+            noTransactions.style.display = "none";
+            container.innerHTML = data.transactions
+              .map(
+                (transaction) => `
+      <div class="transaction-card">
+        <div class="row">
+          <div class="col-md-3">
+            <strong>Transaction Hash:</strong>
+            <p class="transaction-hash">${transaction.transaction_hash}</p>
+          </div>
+          <div class="col-md-2">
+            <strong>Amount:</strong>
+            <p>${transaction.fare} ETH</p>
+          </div>
+          <div class="col-md-2">
+            <strong>Distance:</strong>
+            <p>${transaction.distance} km</p>
+          </div>
+          <div class="col-md-3">
+            <strong>Date:</strong>
+            <p>${new Date(transaction.created_at).toLocaleString()}</p>
+          </div>
+          <div class="col-md-2">
+            <strong>Status:</strong>
+            <p class="${
+              transaction.status === "completed"
+                ? "status-completed"
+                : "status-pending"
+            }">${transaction.status}</p>
+          </div>
+        </div>
+      </div>
+    `
+              )
+              .join("");
+          })
+          .catch((error) => {
+            console.error("Error loading transactions:", error);
+            alert("Failed to load transactions. Please try again.");
+          });
+      }
+
+      function resetFilters() {
+        document.getElementById("filterForm").reset();
+        document.getElementById("dateRange").value = "";
+        loadTransactions();
+      }
+
+      function clearHistory() {
+        if (
+          confirm(
+            "Are you sure you want to clear all transaction history? This action cannot be undone."
+          )
+        ) {
+          fetch("/clear_transactions/", {
+            method: "POST",
+            headers: {
+              "X-CSRFToken": getCookie("csrftoken"),
+              "Content-Type": "application/json",
+            },
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                alert("Transaction history cleared successfully");
+                loadTransactions();
+              } else {
+                alert("Failed to clear transaction history");
+              }
+            })
+            .catch((error) => {
+              console.error("Error clearing transactions:", error);
+              alert("Failed to clear transaction history");
+            });
+        }
+      }
+
+      document
+        .getElementById("filterForm")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+          const filters = {
+            min_eth: document.getElementById("minEth").value,
+            max_eth: document.getElementById("maxEth").value,
+            min_distance: document.getElementById("minDistance").value,
+            max_distance: document.getElementById("maxDistance").value,
+            date_range: document.getElementById("dateRange").value,
+            sort_by: document.getElementById("sortBy").value,
+          };
+          loadTransactions(filters);
+        });
+
+      function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== "") {
+          const cookies = document.cookie.split(";");
+          for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === name + "=") {
+              cookieValue = decodeURIComponent(
+                cookie.substring(name.length + 1)
+              );
+              break;
+            }
+          }
+        }
+        return cookieValue;
+      }
+
+      // Load on page ready
+      loadTransactions();
+    </script>
+  </body>
+</html>

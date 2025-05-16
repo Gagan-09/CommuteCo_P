@@ -27,5 +27,8 @@ urlpatterns = [
     path('logout/', view=logout, name="logout"),
     path('payment-success/', view=payment_success, name='payment_success'),
     path('deletePool/<int:pool_id>/', view=deletePool, name='deletePool'),
+    path('get_transactions/', view=get_transactions, name='get_transactions'),
+    path('clear_transactions/', view=clear_transactions, name='clear_transactions'),
+    path('transaction-history/', view=transaction_history, name='transaction_history'),
     path("", view=index, name="index"),
 ]

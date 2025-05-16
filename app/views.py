@@ -8,6 +8,7 @@ from django.urls import reverse
 import json
 import requests
 from math import radians, sin, cos, sqrt, atan2
+from django.views.decorators.http import require_http_methods
 
 def calculate_distance(lat1, lon1, lat2, lon2):
     print(f"Calculating driving distance between ({lat1}, {lon1}) and ({lat2}, {lon2})")
@@ -656,3 +657,92 @@ def deletePool(request, pool_id):
         messages.error(request, f"Error deleting pool: {str(e)}")
         
     return redirect('userHome')
+
+@require_http_methods(["GET"])
+def get_transactions(request):
+    try:
+        # Get filter parameters
+        min_eth = request.GET.get('min_eth')
+        max_eth = request.GET.get('max_eth')
+        min_distance = request.GET.get('min_distance')
+        max_distance = request.GET.get('max_distance')
+        date_range = request.GET.get('date_range')
+        sort_by = request.GET.get('sort_by')
+
+        # Start with base queryset
+        transactions = Transaction.objects.all()
+
+        # Apply filters
+        if min_eth:
+            transactions = transactions.filter(fare__gte=float(min_eth))
+        if max_eth:
+            transactions = transactions.filter(fare__lte=float(max_eth))
+        if min_distance:
+            transactions = transactions.filter(distance__gte=float(min_distance))
+        if max_distance:
+            transactions = transactions.filter(distance__lte=float(max_distance))
+        if date_range:
+            start_date, end_date = date_range.split(' to ')
+            transactions = transactions.filter(
+                created_at__date__gte=datetime.strptime(start_date, '%Y-%m-%d').date(),
+                created_at__date__lte=datetime.strptime(end_date, '%Y-%m-%d').date()
+            )
+
+        # Apply sorting
+        if sort_by:
+            sort_mapping = {
+                'eth_asc': 'fare',
+                'eth_desc': '-fare',
+                'distance_asc': 'distance',
+                'distance_desc': '-distance',
+                'date_desc': '-created_at',
+                'date_asc': 'created_at'
+            }
+            transactions = transactions.order_by(sort_mapping.get(sort_by, '-created_at'))
+        else:
+            transactions = transactions.order_by('-created_at')
+
+        # Convert to list of dictionaries
+        transactions_list = list(transactions.values(
+            'transaction_hash',
+            'fare',
+            'distance',
+            'created_at',
+            'status'
+        ))
+
+        return JsonResponse({
+            'success': True,
+            'transactions': transactions_list
+        })
+
+    except Exception as e:
+        print(f"Error in get_transactions: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=400)
+
+@require_http_methods(["POST"])
+def clear_transactions(request):
+    try:
+        # Delete all transactions
+        Transaction.objects.all().delete()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Transaction history cleared successfully'
+        })
+    except Exception as e:
+        print(f"Error in clear_transactions: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=400)
+
+def transaction_history(request):
+    if not request.session.get('user_id') or request.session.get('user_type') != 'user':
+        messages.error(request, "Please login as a user")
+        return redirect('login')
+        
+    return render(request, 'transaction_history.html')
