@@ -607,29 +607,29 @@ def payment_success(request):
         messages.error(request, f"Error displaying payment success: {str(e)}")
         return redirect('userHome')
 
+@require_http_methods(["POST"])
 def update_distance(request):
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            distance = data.get('distance')
-            if distance is not None:
-                # Store the road distance in session
-                request.session['current_ride_distance'] = float(distance)
-                print(f"Stored road distance in session: {distance} km")  # Debug log
-                
-                # Store the distance in a new model called DistanceCalculation
-                DistanceCalculation.objects.create(
-                    distance=float(distance),
-                    calculated_at=datetime.now()
-                )
-                print(f"Stored road distance in database: {distance} km")  # Debug log
-                
-                return JsonResponse({'success': True, 'distance': distance})
-            else:
-                return JsonResponse({'success': False, 'error': 'No distance provided'})
-        except Exception as e:
-            print(f"Error updating distance: {str(e)}")  # Debug log
-            return JsonResponse({'success': False, 'error': str(e)})
+    try:
+        data = json.loads(request.body)
+        distance = data.get('distance')
+        if distance is not None:
+            # Store the road distance in session
+            request.session['current_ride_distance'] = float(distance)
+            print(f"Stored road distance in session: {distance} km")  # Debug log
+            
+            # Store the distance in a new model called DistanceCalculation
+            DistanceCalculation.objects.create(
+                distance=float(distance),
+                calculated_at=datetime.now()
+            )
+            print(f"Stored road distance in database: {distance} km")  # Debug log
+            
+            return JsonResponse({'success': True, 'distance': distance})
+        else:
+            return JsonResponse({'success': False, 'error': 'No distance provided'})
+    except Exception as e:
+        print(f"Error updating distance: {str(e)}")  # Debug log
+        return JsonResponse({'success': False, 'error': str(e)})
             
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
 

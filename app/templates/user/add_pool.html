@@ -1,92 +1,136 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
-      rel="stylesheet"
-    />
-
-    <link rel="stylesheet" href="/static/css/all.css" />
-    {%if messages%} {%for me in messages %}
-    <input type="hidden" value="{{me}}" id="successpoint" />
-    {% endfor %} {% endif %}
-
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Add Pool - Car Pool</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
   </head>
-
   <body>
+    <div class="nothing" id="messagePoint"></div>
+
+    <div class="navbar">
+      <div class="nav-left">CAR POOL</div>
+      <div class="nav-right">
+        <a href="/userHome">My Pool</a>
+        <a href="/addPool" id="activac" class="active">Add Pool</a>
+        <a href="/joinPool">Join Pool</a>
+        <a href="/profile">Profile</a>
+      </div>
+    </div>
+
+    <main>
+      <section id="request-form" class="form-section">
+        <h2>Request a Ride</h2>
+        <form id="poolForm" action="/addPool/" method="post">
+          {% csrf_token %}
+          <div class="form-group">
+            <label for="pickup">Pickup Location</label>
+            <input
+              type="text"
+              id="pickup"
+              name="formPoint"
+              placeholder="e.g., Tirupati"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="destination">Destination</label>
+            <input
+              type="text"
+              id="destination"
+              name="toPoint"
+              placeholder="e.g., Chennai"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="date">Date</label>
+            <input type="date" id="date" name="datePoint" required />
+          </div>
+
+          <input
+            type="hidden"
+            name="userId"
+            id="userId"
+            value="{{ request.session.user_id }}"
+          />
+          <input type="hidden" name="distance" id="distance" value="10" />
+
+          <div class="form-group">
+            <label for="contact">Contact Info</label>
+            <input
+              type="text"
+              id="contact"
+              name="contactPoint"
+              placeholder="Phone or Email"
+              required
+            />
+          </div>
+
+          <button type="submit" class="btn-submit">Submit Request</button>
+        </form>
+      </section>
+    </main>
+
     <style>
       body {
         font-family: "Roboto", sans-serif;
-        background-color: #ffffff;
         margin: 0;
         padding: 0;
+        background-color: #f4f4f4;
       }
 
-      .headerSelction {
-        background: #004aad;
-        padding: 1rem 2rem;
+      /* Navbar Styles */
+      .navbar {
         display: flex;
         justify-content: space-between;
         align-items: center;
+        background-color: #004aad;
+        padding: 1rem 2rem;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
       }
 
-      .titlePoint {
+      .nav-left {
         color: white;
-        font-size: 1.5rem;
+        font-size: 1.8rem;
         font-weight: bold;
       }
 
-      .navPoint {
+      .nav-right {
         display: flex;
         gap: 1.5rem;
       }
 
-      .navPoint a {
+      .nav-right a {
         color: white;
         text-decoration: none;
-        padding: 0.5rem 1rem;
-        border-radius: 20px;
-        transition: 0.3s;
+        font-size: 1rem;
+        padding: 0.4rem 0.8rem;
+        border-radius: 5px;
+        transition: 0.3s ease;
       }
 
-      .navPoint a:hover {
-        background: #ffcc00;
+      .nav-right a:hover,
+      .nav-right a.active,
+      .nav-right a#activac {
+        background-color: #ffcc00;
         color: #000;
       }
 
-      .navPoint a#activac {
-        background: #ffcc00;
-        color: #000;
-      }
-
-      .tab-btn {
-        padding: 0.5rem 1rem;
-        border: none;
-        background: #ffffff33;
-        color: white;
-        border-radius: 20px;
-        cursor: pointer;
-        font-weight: bold;
-        transition: 0.3s;
-      }
-
-      .tab-btn:hover,
-      .tab-btn.active {
-        background: #ffcc00;
-        color: #000;
-      }
-
+      /* Form Styles */
       main {
         padding: 2rem;
         display: flex;
-        flex-direction: column;
-        align-items: center;
+        justify-content: center;
       }
 
       .form-section {
@@ -96,12 +140,12 @@
         width: 100%;
         max-width: 600px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        margin-bottom: 2rem;
       }
 
       .form-section h2 {
         margin-bottom: 1.5rem;
         text-align: center;
+        color: #333;
       }
 
       .form-group {
@@ -113,6 +157,7 @@
       label {
         margin-bottom: 0.5rem;
         font-weight: 600;
+        color: #333;
       }
 
       input {
@@ -120,6 +165,12 @@
         border: 1px solid #ccc;
         border-radius: 6px;
         font-size: 1rem;
+        transition: border-color 0.3s;
+      }
+
+      input:focus {
+        outline: none;
+        border-color: #004aad;
       }
 
       .btn-submit {
@@ -132,117 +183,142 @@
         border-radius: 6px;
         cursor: pointer;
         transition: 0.3s;
+        margin-top: 1rem;
       }
 
       .btn-submit:hover {
         background: #00338d;
       }
 
-      footer {
-        background: #e9e9e9;
-        padding: 1rem;
-        text-align: center;
-        font-size: 0.9rem;
-        margin-top: auto;
-      }
-
-      .hidden {
+      .nothing {
         display: none;
       }
+
+      .dialog {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #4caf50;
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+        animation: slideIn 0.3s ease-out;
+      }
+
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
     </style>
-    <div class="nothing" id="messagePoint"></div>
-    <div class="headerSelction">
-      <div class="titlePoint">CommuteCo</div>
-      <div class="navPoint">
-        <a href="/userHome">My Pool</a>
-        <a href="/addPool" id="activac">Add Pool</a>
-        <a href="/joinPool">Join Pool</a>
-        <a href="/profile">Profile</a>
-        <a href="/logout">Logout</a>
-      </div>
-    </div>
-    <main>
-      <section id="request-form" class="form-section">
-        <h2>Request a Ride</h2>
-        <form action="/addPool/" method="post" id="addPoolForm">
-          {% csrf_token %}
-          <div class="form-group">
-            <label for="pickup">Pickup Location</label>
-            <input
-              type="text"
-              id="pickup"
-              placeholder="e.g., Tirupati"
-              name="formPoint"
-              required
-            />
-          </div>
 
-          <div class="form-group">
-            <label for="destination">Destination</label>
-            <input
-              type="text"
-              id="destination"
-              placeholder="e.g., Chennai"
-              name="toPoint"
-              required
-            />
-          </div>
+    {% if messages %}
+    <script>
+      const success = document.getElementById("successpoint")?.value || "";
+      if (success.length !== 0) {
+        const vali = document.getElementById("messagePoint");
+        vali.className = "dialog";
+        vali.innerText = success;
+        setTimeout(() => {
+          vali.className = "nothing";
+        }, 3000);
+      }
+    </script>
+    {% endif %}
 
-          <div class="form-group">
-            <label for="date">Date</label>
-            <input type="date" id="date" required name="datePoint" />
-          </div>
-          <input
-            type="hidden"
-            name="userId"
-            value="{{ request.session.user_id }}"
-          />
+    <script>
+      window.addEventListener("DOMContentLoaded", () => {
+        // Handle form submission
+        const form = document.getElementById("poolForm");
+        form.addEventListener("submit", function (e) {
+          e.preventDefault();
 
-          <div class="form-group">
-            <label for="contact">Contact Info</label>
-            <input
-              type="text"
-              id="contact"
-              placeholder="Phone or Email"
-              name="contactPoint"
-              required
-            />
-          </div>
+          const formData = new FormData(form);
+          const csrfToken = document.querySelector(
+            "[name=csrfmiddlewaretoken]"
+          ).value;
 
-          <button type="submit" class="btn-submit" id="submitBtn">
-            Submit Request
-          </button>
-        </form>
-      </section>
-    </main>
-  </body>
+          // First store the distance in session
+          fetch("{% url 'update_distance' %}", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": csrfToken,
+            },
+            body: JSON.stringify({
+              distance: formData.get("distance"),
+            }),
+          })
+            .then((response) => {
+              if (!response.ok) {
+                throw new Error("Network response was not ok");
+              }
+              return response.json();
+            })
+            .then((data) => {
+              if (data.success) {
+                // Now submit the form data
+                return fetch("/addPool/", {
+                  method: "POST",
+                  headers: {
+                    "X-CSRFToken": csrfToken,
+                  },
+                  body: formData,
+                });
+              } else {
+                throw new Error(data.error || "Error saving distance");
+              }
+            })
+            .then((response) => {
+              if (!response.ok) {
+                throw new Error("Network response was not ok");
+              }
+              return response.text().then((text) => {
+                try {
+                  return JSON.parse(text);
+                } catch (e) {
+                  // If the response is not JSON, it's probably a redirect
+                  window.location.href = "/userHome";
+                  return { success: true };
+                }
+              });
+            })
+            .then((data) => {
+              if (data.success) {
+                // Show success message
+                const vali = document.getElementById("messagePoint");
+                vali.className = "dialog";
+                vali.innerText = "Pool added successfully!";
 
-  <script>
-    // Handle form submission
-    document
-      .getElementById("addPoolForm")
-      .addEventListener("submit", function (e) {
-        e.preventDefault();
+                // Clear form
+                form.reset();
 
-        const pickup = document.getElementById("pickup").value;
-        const destination = document.getElementById("destination").value;
-
-        // First redirect to maps to calculate distance
-        window.location.href = `/maps?source=${pickup}&destination=${destination}`;
+                // Redirect to My Pool page after 2 seconds
+                setTimeout(() => {
+                  window.location.href = "/userHome";
+                }, 2000);
+              } else {
+                // Show error message
+                const vali = document.getElementById("messagePoint");
+                vali.className = "dialog";
+                vali.innerText = data.error || "Error adding pool";
+              }
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              const vali = document.getElementById("messagePoint");
+              vali.className = "dialog";
+              vali.innerText = "Error adding pool request. Please try again.";
+            });
+        });
       });
-  </script>
-
-  {%if messages%}
-  <script>
-    const success = document.getElementById("successpoint")?.value || "";
-    if (success.length != 0) {
-      const vali = document.getElementById("messagePoint");
-      vali.className = "dialog";
-      vali.innerText = success;
-      setTimeout(() => {
-        vali.className = "nothing";
-      }, 3000);
-    }
-  </script>
-  {% endif %}
+    </script>
+  </body>
 </html>

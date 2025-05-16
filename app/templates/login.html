@@ -59,10 +59,71 @@
       <div class="register-links">
         <p>Don't have an account?</p>
         <div class="register-buttons">
-          <a href="/signup" class="register-btn">Sign Up as User</a>
-          <a href="/dregister" class="register-btn">Sign Up as Driver</a>
+          <a href="/signup" class="register-btn user-btn">
+            <i class="fas fa-user"></i>
+            Sign Up as User
+          </a>
+          <a href="/dregister" class="register-btn driver-btn">
+            <i class="fas fa-car"></i>
+            Sign Up as Driver
+          </a>
         </div>
       </div>
     </div>
   </body>
+
+  <style>
+    .register-links {
+      text-align: center;
+      margin-top: 2rem;
+    }
+
+    .register-links p {
+      color: #666;
+      margin-bottom: 1rem;
+    }
+
+    .register-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+    }
+
+    .register-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      width: 180px;
+      justify-content: center;
+    }
+
+    .user-btn {
+      background-color: #004aad;
+      color: white;
+    }
+
+    .user-btn:hover {
+      background-color: #003d8f;
+      transform: translateY(-2px);
+    }
+
+    .driver-btn {
+      background-color: #ffcc00;
+      color: #000;
+    }
+
+    .driver-btn:hover {
+      background-color: #e6b800;
+      transform: translateY(-2px);
+    }
+
+    .register-btn i {
+      font-size: 1.1rem;
+    }
+  </style>
 </html>

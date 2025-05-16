@@ -216,18 +216,17 @@
               <p><strong>Contact:</strong> ${element.contactPoint}</p>
               <p><strong>Raised On:</strong> ${element.applyOn}</p>
               <p><strong>Status:</strong> ${element.status}</p>
-              <button class="accept-btn" onclick="setString('${
-                element.toCity
-              }','${element.fromCity}')">
-                <i class="fas fa-directions"></i> Directions
-              </button>
-              ${checkAndUpdate(element.status, element.id)}
-              <form method='post' action='/deletePool/${
-                element.id
-              }/' style='margin-top:10px;'>
-                {% csrf_token %}
-                <button type='submit' class='reject-btn'>Delete</button>
-              </form>
+              <div class="button-group" style="display: flex; gap: 10px; margin-top: 15px;">
+                <button class="accept-btn" onclick="setString('${
+                  element.toCity
+                }','${element.fromCity}')" style="flex: 1;">
+                  <i class="fas fa-directions"></i> Directions
+                </button>
+                ${checkAndUpdate(element.status, element.id)}
+                <button onclick="deletePool(${
+                  element.id
+                })" class='reject-btn' style="flex: 1;">Delete</button>
+              </div>
             </div>`;
           });
           myRequest.innerHTML = text;
@@ -240,10 +239,50 @@
 
     function checkAndUpdate(status, rideId) {
       if (status == "Ride Completed") {
-        return `<div class='navPoint'><a id='activac' href='/payment?rideId=${rideId}'>Payment</a></div>`;
+        return `<button onclick="window.location.href='/payment?rideId=${rideId}'" class='accept-btn' style='flex: 1; background-color: #ffcc00; color: #000;'>
+          <i class="fas fa-money-bill"></i> Payment
+        </button>`;
       } else {
         return "";
       }
+    }
+
+    function deletePool(poolId) {
+      if (confirm("Are you sure you want to delete this pool?")) {
+        fetch(`/deletePool/${poolId}/`, {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": getCookie("csrftoken"),
+            "Content-Type": "application/json",
+          },
+        })
+          .then((response) => {
+            if (response.ok) {
+              window.location.reload();
+            } else {
+              alert("Failed to delete pool. Please try again.");
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            alert("An error occurred while deleting the pool.");
+          });
+      }
+    }
+
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== "") {
+        const cookies = document.cookie.split(";");
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === name + "=") {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
     }
   </script>
 </html>
