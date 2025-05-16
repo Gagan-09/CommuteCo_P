@@ -1,3 +1,5 @@
+{% extends 'base.html' %} {% block title %} My Pools - Car Pool {% endblock %}
+{% block content %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -7,12 +9,10 @@
       href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
       rel="stylesheet"
     />
-
     <link rel="stylesheet" href="/static/css/all.css" />
 
     {%if messages%} {%for me in messages %} {%if me.tags in "success" %}
     <input type="hidden" value="{{me}}" id="successpoint" />
-
     {% endif %} {%if me.tags in "info" %}
     <input type="hidden" value="{{me}}" id="infoPoint" />
     {% endif %} {% endfor %} {% endif %}
@@ -34,6 +34,7 @@
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
         gap: 1.5rem;
         margin-top: 2rem;
+        padding: 20px;
       }
 
       .card {
@@ -58,6 +59,7 @@
         margin: 0.4rem 0;
         color: #555;
       }
+
       .accept-btn,
       .reject-btn {
         padding: 10px 15px;
@@ -72,12 +74,47 @@
         background-color: #4caf50;
         color: white;
       }
+
+      .accept-btn:hover {
+        background-color: #45a049;
+      }
+
+      .headerSelction {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+        background-color: #fff;
+        margin: 30px;
+        border-radius: 20px;
+        box-shadow: 0 0 6px 3px #f3cf06, 0 0 9px 6px rgb(255, 246, 118),
+          0 0 10px 9px rgb(238, 255, 0);
+        padding: 20px 40px;
+      }
+
+      .navPoint a {
+        color: #333;
+        text-decoration: none;
+        font-size: 16px;
+        padding: 8px 15px;
+        border-radius: 4px;
+        transition: background-color 0.2s;
+      }
+
+      .navPoint a:hover {
+        background-color: rgba(0, 0, 0, 0.1);
+      }
+
+      .navPoint a.active {
+        background-color: #0078a8;
+        color: white;
+      }
     </style>
+
     <div class="nothing" id="messagePoint"></div>
     <div class="headerSelction">
       <div class="titlePoint">CAR POOL</div>
       <div class="navPoint">
-        <a href="/" id="activac">My Pool</a>
+        <a href="/userHome" id="activac" class="active">My Pool</a>
         <a href="/addPool">Add Pool</a>
         <a href="/joinPool">Join Pool</a>
         <a href="/profile">Profile</a>
@@ -88,16 +125,17 @@
 
   {%if messages%}
   <script>
-    const data = document.getElementById("infoPoint").value;
-    if (data.length != 0) {
+    const data = document.getElementById("infoPoint")?.value || "";
+    if (data.length !== 0) {
       const view = String(data).split(",");
       sessionStorage.setItem(
         "Store",
         JSON.stringify({ id: view[0], type: view[1] })
       );
     }
-    const success = document.getElementById("successpoint").value;
-    if (screen.length != 0) {
+
+    const success = document.getElementById("successpoint")?.value || "";
+    if (success.length !== 0) {
       const vali = document.getElementById("messagePoint");
       vali.className = "dialog";
       vali.innerText = success;
@@ -111,50 +149,67 @@
   <script>
     window.addEventListener("DOMContentLoaded", () => {
       const store = sessionStorage.getItem("Store");
-      if (store == null) {
+      if (!store) {
         window.location.href = "/";
-      } else {
-        const { id, type } = JSON.parse(store);
-
-        if (type != "user") {
-          window.location.href = "/";
-        }
-
-        const myRequest = document.getElementById("myRequest");
-        fetch(`/getRequestFromUsers?userid=${id}`)
-          .then((view) => view.json())
-          .then((point) => {
-            var text = "";
-            point.data.forEach((element) => {
-              text += `<div class="card">
-          <h3>${element.fromCity} ➜ ${element.toCity}</h3>
-          <p><strong>Date:</strong> ${element.datePoint}</p>
-          <p><strong>Contact:</strong> ${element.contactPoint}</p>
-          <p><strong>Raised On:</strong> ${element.applyOn}</p>
-          <p><strong>Status :</strong> ${element.status}</p>
-        <button class="accept-btn" style='color:white;' onclick="setString('${
-          element.toCity
-        }','${
-                element.fromCity
-              }')"><img src='/static/img/point.png' style='width:24px;height:24px;'></img>Directions</button>
-    
-                    ${checkAndUpdate(element.status)}
-          </div>`;
-            });
-            myRequest.innerHTML = text;
-          });
+        return;
       }
+
+      const { id, type } = JSON.parse(store);
+      if (type !== "user") {
+        window.location.href = "/";
+        return;
+      }
+
+      const myRequest = document.getElementById("myRequest");
+      fetch(`/getRequestFromUsers?userid=${id}`)
+        .then((view) => view.json())
+        .then((point) => {
+          if (!point.data || point.data.length === 0) {
+            myRequest.innerHTML = `
+              <div class="card" style="width: fit-content; margin: 0 auto;">
+                <img src="/static/img/empty-box.png" alt="No pools" style="width: 100px; height: 100px; margin: 0 auto; display: block">
+                <h3 style="text-align: center; color: #666">No Active Pools</h3>
+                <p style="text-align: center; color: #666">Add a new pool or join an existing one to get started!</p>
+              </div>`;
+            return;
+          }
+
+          let text = "";
+          point.data.forEach((element) => {
+            text += `
+              <div class="card">
+                <h3>${element.fromCity} ➜ ${element.toCity}</h3>
+                <p><strong>Date:</strong> ${element.datePoint}</p>
+                <p><strong>Contact:</strong> ${element.contactPoint}</p>
+                <p><strong>Raised On:</strong> ${element.applyOn}</p>
+                <p><strong>Status:</strong> ${element.status}</p>
+                <button class="accept-btn" onclick="setString('${
+                  element.toCity
+                }','${element.fromCity}')">
+                  <img src='/static/img/point.png' style='width:24px;height:24px;'> Directions
+                </button>
+                ${checkAndUpdate(element.status, element.id)}
+              </div>`;
+          });
+          myRequest.innerHTML = text;
+        })
+        .catch((error) => {
+          console.error("Error fetching pools:", error);
+          myRequest.innerHTML =
+            "<p style='color: red; text-align: center;'>Error loading pools. Please try again.</p>";
+        });
     });
+
     function setString(toCity, fromCity) {
-      window.location.href = `/maps?source=${fromCity}'&destination=${toCity}`;
+      window.location.href = `/maps?source=${fromCity}&destination=${toCity}`;
     }
 
-    function checkAndUpdate(status) {
-      if (status == "Ride Completed") {
-        return "    <div class='navPoint'><a id='activac' href='/payment'> Payment</a></div>";
-      } else {
-        return "";
+    function checkAndUpdate(status, rideId) {
+      if (status === "Ride Completed") {
+        return `<div class='navPoint'><a id='activac' href='/payment?ride_id=${rideId}'>Payment</a></div>`;
       }
+      return "";
     }
   </script>
 </html>
+{% endblock content %}

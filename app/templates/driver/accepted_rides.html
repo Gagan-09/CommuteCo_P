@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Available Pools - Car Pool
+{% endblock %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Accepted Rides</title>
+
+    <!-- Fonts and Styles -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/css/all.css" />
+    <link rel="stylesheet" href="/static/css/driver.css" />
+
+    <!-- Message Handling -->
+    {% if messages %} {% for me in messages %} {% if me.tags in "success" %}
+    <input type="hidden" value="{{ me }}" id="successpoint" />
+    {% endif %} {% if me.tags in "info" %}
+    <input type="hidden" value="{{ me }}" id="infoPoint" />
+    {% endif %} {% endfor %} {% endif %}
+  </head>
+
+  <body>
+    <!-- Header Section -->
+    <div class="nothing" id="messagePoint"></div>
+    <div class="headerSelction">
+      <div class="titlePoint">CAR POOL</div>
+      <div class="navPoint">
+        <a href="/driver/home" id="activac">Pending Rides</a>
+        <a id="acceptedPoint" class="active">Accepted Pool</a>
+        <a href="/driver_transactions">Transactions</a>
+        <a href="/profiledriver">Profile</a>
+      </div>
+    </div>
+
+    <!-- Title -->
+    <h1 class="page-title">Accepted Rides</h1>
+
+    <!-- Accepted Rides Content -->
+    <div class="container mt-4">
+      {% if accepted_rides %}
+      <div class="table-responsive">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>From</th>
+              <th>To</th>
+              <th>Date</th>
+              <th>Contact</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ride in accepted_rides %}
+            <tr>
+              <td>{{ ride.fromCity }}</td>
+              <td>{{ ride.toCity }}</td>
+              <td>{{ ride.datePoint }}</td>
+              <td>{{ ride.contactPoint }}</td>
+              <td>{{ ride.status }}</td>
+              <td>
+                <button
+                  class="btn btn-primary btn-sm"
+                  onclick="viewDirections('{{ ride.fromCity }}', '{{ ride.toCity }}')"
+                >
+                  <i class="fas fa-directions"></i> Directions
+                </button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="alert alert-info">No accepted rides found.</div>
+      {% endif %}
+    </div>
+
+    <!-- Message Display Script -->
+    {% if messages %}
+    <script>
+      const data = document.getElementById("infoPoint")?.value || "";
+      if (data.length !== 0) {
+        const view = String(data).split(",");
+        sessionStorage.setItem(
+          "Store",
+          JSON.stringify({ id: view[0], type: view[1] })
+        );
+      }
+
+      const success = document.getElementById("successpoint")?.value || "";
+      if (success.length !== 0) {
+        const vali = document.getElementById("messagePoint");
+        vali.className = "dialog";
+        vali.innerText = success;
+        setTimeout(() => {
+          vali.className = "nothing";
+        }, 3000);
+      }
+    </script>
+    {% endif %}
+
+    <!-- Driver ID and Access Control Script -->
+    <script>
+      window.addEventListener("DOMContentLoaded", () => {
+        const store = sessionStorage.getItem("Store");
+        if (!store) {
+          window.location.href = "/";
+        } else {
+          const { id, type } = JSON.parse(store);
+          if (type !== "driver") {
+            window.location.href = "/";
+          }
+        }
+      });
+
+      function viewDirections(fromCity, toCity) {
+        window.location.href = `/maps?source=${fromCity}&destination=${toCity}`;
+      }
+    </script>
+  </body>
+</html>
+{% endblock %}

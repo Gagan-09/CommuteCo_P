@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="header">
+        <h2>My Completed Rides</h2>
+        <a href="/userHome" class="btn btn-primary">Back to Dashboard</a>
+    </div>
+
+    <div class="sort-options mb-3">
+        <label for="sort-select">Sort by:</label>
+        <select id="sort-select" class="form-select" onchange="window.location.href=this.value">
+            <option value="?sort_by=date" {% if sort_by == 'date' %}selected{% endif %}>Date (Newest First)</option>
+            <option value="?sort_by=distance_max_min" {% if sort_by == 'distance_max_min' %}selected{% endif %}>Distance (High to Low)</option>
+            <option value="?sort_by=distance_min_max" {% if sort_by == 'distance_min_max' %}selected{% endif %}>Distance (Low to High)</option>
+            <option value="?sort_by=eth_max_min" {% if sort_by == 'eth_max_min' %}selected{% endif %}>ETH Amount (High to Low)</option>
+            <option value="?sort_by=eth_min_max" {% if sort_by == 'eth_min_max' %}selected{% endif %}>ETH Amount (Low to High)</option>
+        </select>
+    </div>
+
+    {% if rides %}
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Driver</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Distance</th>
+                    <th>ETH Amount</th>
+                    <th>Date</th>
+                    <th>Payment Status</th>
+                    <th>Transaction Hash</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ride in rides %}
+                <tr>
+                    <td>{{ ride.driver_name }}</td>
+                    <td>{{ ride.fromCity }}</td>
+                    <td>{{ ride.toCity }}</td>
+                    <td>{{ ride.payment_details.distance|floatformat:2 }} km</td>
+                    <td>{{ ride.payment_details.amount|floatformat:8 }} ETH</td>
+                    <td>{{ ride.payment_details.timestamp|date:"Y-m-d H:i" }}</td>
+                    <td>
+                        {% if ride.payment_details.status == 'Completed' %}
+                            <span class="badge bg-success">Paid</span>
+                        {% else %}
+                            <span class="badge bg-warning">Pending</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if ride.payment_details.tx_hash != 'Pending' %}
+                            <small class="text-muted">{{ ride.payment_details.tx_hash }}</small>
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        No completed rides found.
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    .sort-options {
+        max-width: 300px;
+    }
+    .table th {
+        background-color: #f8f9fa;
+    }
+    .badge {
+        font-size: 0.9em;
+    }
+    .text-muted {
+        font-size: 0.85em;
+    }
+</style>
+{% endblock %} 

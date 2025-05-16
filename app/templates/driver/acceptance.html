@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Accepted Pools</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: #f5f5f5;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      h1 {
+        color: #333;
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      .delete-completed-btn {
+        display: inline-block;
+        margin: 20px auto;
+        background: #f44336;
+        color: #fff;
+        padding: 10px 20px;
+        border-radius: 5px;
+        text-decoration: none;
+        transition: background 0.3s;
+      }
+      .delete-completed-btn:hover {
+        background: #d32f2f;
+      }
+      .ride-section {
+        margin-bottom: 40px;
+      }
+      .ride-section h2 {
+        color: #444;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #ddd;
+      }
+      .ride-card {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .ride-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 15px;
+      }
+      .info-item {
+        display: flex;
+        flex-direction: column;
+      }
+      .info-label {
+        font-weight: bold;
+        color: #666;
+        margin-bottom: 5px;
+      }
+      .info-value {
+        color: #333;
+      }
+      .user-details {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        margin-top: 10px;
+      }
+      .action-btn {
+        display: inline-block;
+        padding: 8px 16px;
+        border-radius: 4px;
+        text-decoration: none;
+        color: white;
+        margin-top: 10px;
+        cursor: pointer;
+        border: none;
+      }
+      .complete-btn {
+        background: #4caf50;
+      }
+      .complete-btn:hover {
+        background: #45a049;
+      }
+      .no-rides {
+        text-align: center;
+        color: #666;
+        padding: 20px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Accepted Pools</h1>
+      <a href="/delete_completed_rides/" class="delete-completed-btn"
+        >Delete Completed Rides</a
+      >
+
+      <!-- Active Rides Section -->
+      <div class="ride-section">
+        <h2>Active Rides</h2>
+        {% if accepted %} {% for ride in accepted %}
+        <div class="ride-card">
+          <div class="ride-info">
+            <div class="info-item">
+              <span class="info-label">From:</span>
+              <span class="info-value">{{ ride.fromCity }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">To:</span>
+              <span class="info-value">{{ ride.toCity }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Date:</span>
+              <span class="info-value">{{ ride.datePoint }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Status:</span>
+              <span class="info-value">{{ ride.status }}</span>
+            </div>
+          </div>
+          <div class="user-details">
+            <div class="info-item">
+              <span class="info-label">Passenger Name:</span>
+              <span class="info-value">{{ ride.userDetails.name }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Contact:</span>
+              <span class="info-value">{{ ride.contactPoint }}</span>
+            </div>
+          </div>
+          <form method="POST" action="/stateOFCompleted/">
+            {% csrf_token %}
+            <input type="hidden" name="rideId" value="{{ ride.id }}" />
+            <input
+              type="hidden"
+              name="userId2"
+              value="{{ request.session.user_id }}"
+            />
+            <button type="submit" class="action-btn complete-btn">
+              Mark as Completed
+            </button>
+          </form>
+        </div>
+        {% endfor %} {% else %}
+        <div class="no-rides">No active rides found.</div>
+        {% endif %}
+      </div>
+
+      <!-- Completed Rides Section -->
+      <div class="ride-section">
+        <h2>Completed Rides</h2>
+        {% if completed %} {% for ride in completed %}
+        <div class="ride-card">
+          <div class="ride-info">
+            <div class="info-item">
+              <span class="info-label">From:</span>
+              <span class="info-value">{{ ride.fromCity }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">To:</span>
+              <span class="info-value">{{ ride.toCity }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Date:</span>
+              <span class="info-value">{{ ride.datePoint }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Status:</span>
+              <span class="info-value">{{ ride.status }}</span>
+            </div>
+          </div>
+          <div class="user-details">
+            <div class="info-item">
+              <span class="info-label">Passenger Name:</span>
+              <span class="info-value">{{ ride.userDetails.name }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Contact:</span>
+              <span class="info-value">{{ ride.contactPoint }}</span>
+            </div>
+          </div>
+        </div>
+        {% endfor %} {% else %}
+        <div class="no-rides">No completed rides found.</div>
+        {% endif %}
+      </div>
+    </div>
+  </body>
+</html>

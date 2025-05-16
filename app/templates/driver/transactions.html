@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ page_title }}</title>
+    <style>
+      body {
+        font-family: "Arial", sans-serif;
+        background: linear-gradient(135deg, #f3e7ff, #d9c7ff);
+        min-height: 100vh;
+        margin: 0;
+      }
+      .container {
+        background: #fff;
+        border-radius: 15px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+        padding: 40px;
+        max-width: 1100px;
+        margin: 40px auto;
+        overflow-x: auto;
+        position: relative;
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+      }
+      h1 {
+        margin: 0;
+        color: #333;
+      }
+      .error-message {
+        background: #ffebee;
+        color: #c62828;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+      .update-wallet-btn {
+        display: inline-block;
+        background: #2196f3;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 25px;
+        text-decoration: none;
+        margin-bottom: 20px;
+        transition: background 0.3s;
+      }
+      .update-wallet-btn:hover {
+        background: #1976d2;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        table-layout: fixed;
+      }
+      th, td {
+        padding: 12px 8px;
+        border-bottom: 1px solid #eee;
+        text-align: left;
+        word-wrap: break-word;
+      }
+      th {
+        background: #f3e7ff;
+        color: #333;
+      }
+      /* Set specific column widths */
+      th:nth-child(1), td:nth-child(1) { width: 15%; }  /* Passenger */
+      th:nth-child(2), td:nth-child(2) { width: 15%; }  /* Source */
+      th:nth-child(3), td:nth-child(3) { width: 15%; }  /* Destination */
+      th:nth-child(4), td:nth-child(4) { width: 10%; }  /* Amount */
+      th:nth-child(5), td:nth-child(5) { width: 10%; }  /* Distance */
+      th:nth-child(6), td:nth-child(6) { width: 20%; }  /* Transaction Hash */
+      th:nth-child(7), td:nth-child(7) { width: 10%; }  /* Date/Time */
+      th:nth-child(8), td:nth-child(8) { width: 5%; }   /* Status */
+      .hash {
+        font-family: monospace;
+        font-size: 13px;
+        color: #4caf50;
+        word-break: break-all;
+      }
+      .status-pending {
+        color: #f39c12;
+      }
+      .status-completed {
+        color: #27ae60;
+      }
+      .back-btn {
+        display: inline-block;
+        background: #4caf50;
+        color: #fff;
+        padding: 10px 20px;
+        border-radius: 25px;
+        text-decoration: none;
+        transition: background 0.3s;
+      }
+      .back-btn:hover {
+        background: #45a049;
+      }
+      .filter-form {
+        margin-bottom: 20px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        align-items: flex-end;
+      }
+      .filter-form div {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .filter-form label {
+        font-weight: bold;
+        color: #333;
+      }
+      .filter-form select,
+      .filter-form input {
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+      }
+      .btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        color: white;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background 0.3s;
+      }
+      .btn:hover {
+        opacity: 0.9;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>{{ page_title }}</h1>
+        <a href="/driverHome" class="back-btn">Back to Dashboard</a>
+      </div>
+      
+      {% if error %}
+      <div class="error-message">
+        {{ error }}
+        {% if show_update_wallet %}
+        <br><br>
+        <a href="/update_driver_wallet" class="update-wallet-btn">Update Wallet Address</a>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <form method="get" class="filter-form">
+        <div>
+          <label>Sort By</label>
+          <select name="sort_by">
+            <option value="" {% if not sort_by %}selected{% endif %}>Date (Newest First)</option>
+            <option value="eth_max_min" {% if sort_by == 'eth_max_min' %}selected{% endif %}>ETH (Max to Min)</option>
+            <option value="eth_min_max" {% if sort_by == 'eth_min_max' %}selected{% endif %}>ETH (Min to Max)</option>
+            <option value="distance_max_min" {% if sort_by == 'distance_max_min' %}selected{% endif %}>Distance (Max to Min)</option>
+            <option value="distance_min_max" {% if sort_by == 'distance_min_max' %}selected{% endif %}>Distance (Min to Max)</option>
+          </select>
+        </div>
+        <div>
+          <label>Start Date</label>
+          <input type="date" name="start_date" value="{{ request.GET.start_date }}" />
+        </div>
+        <div>
+          <label>End Date</label>
+          <input type="date" name="end_date" value="{{ request.GET.end_date }}" />
+        </div>
+        <button type="submit" class="btn" style="background: #0078a8">Filter</button>
+      </form>
+
+      <form method="post" style="margin-bottom: 20px" id="clearForm">
+        {% csrf_token %}
+        <input type="hidden" name="clear_all" value="1" />
+        <input type="hidden" name="user_id" id="clearUserIdInput" />
+        <button type="submit" class="btn" style="background: #e53935">
+          Clear All Transactions
+        </button>
+      </form>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Passenger</th>
+            <th>Source</th>
+            <th>Destination</th>
+            <th>Amount (ETH)</th>
+            <th>Distance (km)</th>
+            <th>Transaction Hash</th>
+            <th>Date/Time</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for payment in payments %}
+          <tr>
+            <td>{{ payment.user_name }}</td>
+            <td>{{ payment.ride_details.from_city }}</td>
+            <td>{{ payment.ride_details.to_city }}</td>
+            <td>{{ payment.formatted_amount }}</td>
+            <td>{{ payment.formatted_distance }}</td>
+            <td class="hash">{{ payment.tx_hash|default:"Pending" }}</td>
+            <td>{{ payment.timestamp|date:"Y-m-d H:i" }}</td>
+            <td class="status-{{ payment.status|lower }}">{{ payment.status }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8" style="text-align: center; color: #888; font-weight: bold;">
+              No transactions found.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <script>
+      window.addEventListener('DOMContentLoaded', () => {
+        const store = sessionStorage.getItem('Store');
+        if (store == null) {
+          window.location.href = '/';
+        } else {
+          const { id, type } = JSON.parse(store);
+          if (type != "driver") {
+            window.location.href = '/';
+          }
+          // Set user ID in hidden inputs
+          document.getElementById('userIdInput').value = id;
+          document.getElementById('clearUserIdInput').value = id;
+        }
+      });
+    </script>
+  </body>
+</html>

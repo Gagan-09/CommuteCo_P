@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Update Wallet Address</title>
+    <style>
+      body {
+        font-family: "Arial", sans-serif;
+        background: linear-gradient(135deg, #f3e7ff, #d9c7ff);
+        min-height: 100vh;
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .container {
+        background: #fff;
+        border-radius: 15px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+        padding: 40px;
+        max-width: 500px;
+        width: 90%;
+      }
+      h1 {
+        text-align: center;
+        color: #333;
+        margin-bottom: 30px;
+      }
+      .form-group {
+        margin-bottom: 20px;
+      }
+      label {
+        display: block;
+        margin-bottom: 8px;
+        color: #333;
+        font-weight: bold;
+      }
+      input[type="text"] {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: border-color 0.3s;
+      }
+      input[type="text"]:focus {
+        border-color: #4caf50;
+        outline: none;
+      }
+      .submit-btn {
+        background: #4caf50;
+        color: #fff;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 25px;
+        font-size: 16px;
+        cursor: pointer;
+        width: 100%;
+        transition: background 0.3s;
+      }
+      .submit-btn:hover {
+        background: #45a049;
+      }
+      .back-btn {
+        display: block;
+        text-align: center;
+        margin-top: 20px;
+        color: #666;
+        text-decoration: none;
+      }
+      .back-btn:hover {
+        color: #333;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Update Wallet Address</h1>
+      <form method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+          <label for="wallet_address">Your ETH Wallet Address</label>
+          <input
+            type="text"
+            id="wallet_address"
+            name="wallet_address"
+            placeholder="Enter your ETH wallet address"
+            required
+          />
+        </div>
+        <button type="submit" class="submit-btn">Update Wallet Address</button>
+      </form>
+      <a href="/driver_transactions" class="back-btn">Back to Transactions</a>
+    </div>
+  </body>
+</html>

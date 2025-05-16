@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Delete Previous Rides</title>
+    <style>
+      body {
+        font-family: "Arial", sans-serif;
+        background: linear-gradient(135deg, #f3e7ff, #d9c7ff);
+        min-height: 100vh;
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .container {
+        background: #fff;
+        border-radius: 15px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+        padding: 40px;
+        max-width: 500px;
+        width: 90%;
+        text-align: center;
+      }
+      h1 {
+        color: #333;
+        margin-bottom: 20px;
+      }
+      .warning {
+        color: #c62828;
+        margin-bottom: 30px;
+        font-weight: bold;
+      }
+      .delete-btn {
+        background: #f44336;
+        color: #fff;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 25px;
+        font-size: 16px;
+        cursor: pointer;
+        width: 100%;
+        transition: background 0.3s;
+        margin-bottom: 20px;
+      }
+      .delete-btn:hover {
+        background: #d32f2f;
+      }
+      .back-btn {
+        display: block;
+        color: #666;
+        text-decoration: none;
+        margin-top: 20px;
+      }
+      .back-btn:hover {
+        color: #333;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Delete Previous Rides</h1>
+      <p class="warning">
+        Warning: This will permanently delete all your previous rides and their
+        associated payment history. This action cannot be undone.
+      </p>
+      <form method="POST">
+        {% csrf_token %}
+        <button type="submit" class="delete-btn">
+          Delete All Previous Rides
+        </button>
+      </form>
+      <a href="/driver_transactions" class="back-btn">Back to Transactions</a>
+    </div>
+  </body>
+</html>

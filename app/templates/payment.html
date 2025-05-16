@@ -1,86 +1,117 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment Success</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #f3e7ff, #d9c7ff);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            overflow: hidden;
-        }
-        .container {
-            background: #ffffff;
-            border-radius: 15px;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
-            padding: 40px;
-            text-align: center;
-            max-width: 400px;
-            width: 90%;
-            animation: fadeIn 0.5s ease-in-out;
-        }
-        .checkmark {
-            font-size: 60px;
-            color: #4caf50;
-            margin-bottom: 20px;
-            animation: scaleIn 0.3s ease-in-out;
-        }
-        h1 {
-            font-size: 24px;
-            color: #333;
-            margin-bottom: 10px;
-        }
-        p {
-            font-size: 16px;
-            color: #666;
-            margin-bottom: 20px;
-        }
-        .premium-badge {
-            display: inline-block;
-            background: #ffd700;
-            color: #333;
-            font-weight: bold;
-            padding: 8px 16px;
-            border-radius: 20px;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-        .btn {
-            background: #4caf50;
-            color: #fff;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 25px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-        }
-        .btn:hover {
-            background: #45a049;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes scaleIn {
-            from { transform: scale(0); }
-            to { transform: scale(1); }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="checkmark">✔</div>
-        <h1>Payment Successful!</h1>
-        <a href="/" class="btn">Go to Dashboard</a>
+{% extends 'base.html' %}
+
+{% block title %}
+  My Pools - Car Pool
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="header d-flex justify-content-between align-items-center mb-4">
+    <h2>My Pools</h2>
+    <div>
+      <a href="/add" class="btn btn-primary">Add New Pool</a>
+      <a href="/joinPool" class="btn btn-success ms-2">Join Pool</a>
     </div>
-</body>
-</html>
+  </div>
+
+  <!-- Active Pools Section -->
+  <div class="section mb-4">
+    <h3>Active Pools</h3>
+    {% if active_pools %}
+    <div class="table-responsive">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>From</th>
+            <th>To</th>
+            <th>Date</th>
+            <th>Contact</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for pool in active_pools %}
+          <tr>
+            <td>{{ pool.fromCity }}</td>
+            <td>{{ pool.toCity }}</td>
+            <td>{{ pool.datePoint }}</td>
+            <td>{{ pool.contactPoint }}</td>
+            <td>{{ pool.status }}</td>
+            <td>
+              {% if pool.status == "Accepted By Driver" %}
+              <a href="/payment?ride_id={{ pool.id }}" class="btn btn-primary btn-sm">Make Payment</a>
+              {% else %}
+              <button class="btn btn-secondary btn-sm" disabled>Pending</button>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">No active pools found.</div>
+    {% endif %}
+  </div>
+
+  <!-- Completed Pools Section -->
+  <div class="section">
+    <h3>Completed Pools</h3>
+    {% if completed_pools %}
+    <div class="table-responsive">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>From</th>
+            <th>To</th>
+            <th>Date</th>
+            <th>Driver</th>
+            <th>Distance</th>
+            <th>ETH Amount</th>
+            <th>Payment Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for pool in completed_pools %}
+          <tr>
+            <td>{{ pool.fromCity }}</td>
+            <td>{{ pool.toCity }}</td>
+            <td>{{ pool.datePoint }}</td>
+            <td>{{ pool.driver_name }}</td>
+            <td>{{ pool.payment_details.distance|floatformat:2 }} km</td>
+            <td>{{ pool.payment_details.amount|floatformat:8 }} ETH</td>
+            <td>
+              {% if pool.payment_details.status == 'Completed' %}
+              <span class="badge bg-success">Paid</span>
+              {% else %}
+              <span class="badge bg-warning">Pending</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">No completed pools found.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .section {
+    background: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .section h3 {
+    margin-bottom: 15px;
+    color: #333;
+  }
+</style>
+{% endblock %}

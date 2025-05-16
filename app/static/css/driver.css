@@ -1,0 +1,60 @@
+/* 
+.headerSelction {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background-color: #1e1e1e;
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.titlePoint {
+  font-size: 24px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.navPoint {
+  display: flex;
+  gap: 20px;
+}
+
+.navPoint a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 16px;
+  padding: 8px 15px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.navPoint a:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.navPoint a.active {
+  background-color: #0078a8;
+}
+
+.page-title {
+  font-size: 30px;
+  color: white;
+  padding: 20px;
+  margin: 0;
+  background-color: #2c2c2c;
+}
+
+
+.dialog {
+  background-color: #d4edda;
+  color: #155724;
+  padding: 10px;
+  border-radius: 5px;
+  margin: 15px;
+  text-align: center;
+}
+
+.nothing {
+  display: none;
+} */

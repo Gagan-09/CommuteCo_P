@@ -171,6 +171,7 @@
         <div class="navPoint">
             <a href="/driverHome">Pending Rides</a>
             <a href="#" id="activac">Accepted Pool</a>
+            <a href="/driver_transactions">Transactions</a>
             <a href="/profiledriver">Profile</a>
         </div>
     </div>
@@ -185,6 +186,7 @@
                     <form action="/stateOFCompleted/" method="post">
                         {%csrf_token%}
                         <h3>Ride #{{view.id}}</h3>
+                        <p><strong>Ride ID:</strong> {{view.id}}</p>
                         <p><strong>Pickup Location:</strong> {{view.fromCity}}</p>
                         <p><strong>Dropoff Location:</strong> {{view.toCity}}</p>
                         <input type="hidden" name="rideId" value="{{view.id}}">

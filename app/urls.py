@@ -22,4 +22,13 @@ urlpatterns = [
     path("", view=index, name=""),
     path("signup/", view=signup, name="signup"),
     path("dregister/", view=dregister, name="dregister"),
+    path('completed_rides/', view=passenger_completed_rides, name='completed_rides'),
+    path('delete_pool/<int:pool_id>/', view=delete_pool, name='delete_pool'),
+    path('ajax_delete_pool/', view=ajax_delete_pool, name='ajax_delete_pool'),
+    path('reject_pool/', view=reject_pool, name='reject_pool'),
+    path('check_eth_balance/', view=check_eth_balance, name='check_eth_balance'),
+    path('driver_transactions/', view=driver_transactions, name='driver_transactions'),
+    path('update_driver_wallet/', view=update_driver_wallet, name='update_driver_wallet'),
+    path('delete_old_rides/', view=delete_old_rides, name='delete_old_rides'),
+    path('delete_completed_rides/', view=delete_completed_rides, name='delete_completed_rides'),
 ]
