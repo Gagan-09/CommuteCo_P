@@ -10,24 +10,30 @@ import requests
 from math import radians, sin, cos, sqrt, atan2
 
 def calculate_distance(lat1, lon1, lat2, lon2):
-    print(f"Calculating distance between ({lat1}, {lon1}) and ({lat2}, {lon2})")
+    print(f"Calculating driving distance between ({lat1}, {lon1}) and ({lat2}, {lon2})")
     
-    # Convert latitude and longitude from degrees to radians
-    lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
-    
-    # Haversine formula
-    dlat = lat2 - lat1
-    dlon = lon2 - lon1
-    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
-    c = 2 * atan2(sqrt(a), sqrt(1-a))
-    radius = 6371  # Earth's radius in kilometers
-    distance = radius * c
-    
-    print(f"Raw distance calculation: {distance} km")
-    rounded_distance = round(distance, 2)
-    print(f"Rounded distance: {rounded_distance} km")
-    
-    return rounded_distance
+    try:
+        # Use OSRM to get the actual driving route
+        url = f"http://router.project-osrm.org/route/v1/driving/{lon1},{lat1};{lon2},{lat2}?overview=false"
+        response = requests.get(url)
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data['code'] == 'Ok':
+                # Distance is returned in meters, convert to kilometers
+                distance = data['routes'][0]['distance'] / 1000
+                print(f"Driving distance: {distance} km")
+                return round(distance, 2)
+            else:
+                print(f"OSRM error: {data['code']}")
+                return None
+        else:
+            print(f"OSRM request failed with status: {response.status_code}")
+            return None
+            
+    except Exception as e:
+        print(f"Error calculating driving distance: {str(e)}")
+        return None
 
 def get_coordinates(city):
     # Use Nominatim API to get coordinates
@@ -65,40 +71,10 @@ def maps(request):
         messages.error(request, "Source and destination are required")
         return redirect('userHome')
         
-    try:
-        # Get coordinates for source and destination
-        from_coords = get_coordinates(source)
-        to_coords = get_coordinates(destination)
-        
-        print(f"Source coordinates: {from_coords}")
-        print(f"Destination coordinates: {to_coords}")
-        
-        if from_coords and to_coords:
-            # Calculate distance using coordinates
-            distance = calculate_distance(
-                from_coords[0], from_coords[1],
-                to_coords[0], to_coords[1]
-            )
-            print(f"Calculated distance: {distance} km")
-            
-            # Store distance in session
-            request.session['current_ride_distance'] = distance
-            messages.success(request, f"Distance calculated: {distance} km")
-            
-            # If this was called from add_pool, redirect back
-            if request.GET.get('from_add_pool'):
-                return redirect('addPool')
-        else:
-            print("Could not get coordinates for one or both locations")
-            messages.error(request, "Could not calculate distance. Please check the locations and try again.")
-            return redirect('userHome')
-            
-    except Exception as e:
-        print(f"Error in maps view: {str(e)}")
-        messages.error(request, f"Error calculating distance: {str(e)}")
-        return redirect('userHome')
-        
-    return render(request, 'maps.html')
+    return render(request, 'maps.html', {
+        'source': source,
+        'destination': destination
+    })
 
 def payment(request):
     ride_id = request.GET.get('rideId')
@@ -115,14 +91,16 @@ def payment(request):
             messages.error(request, "Distance information not available for this ride")
             return redirect('userHome')
             
-        distance = float(ride.distance)
-        fare = round(distance * 0.000055, 6)  # 0.000055 ETH per km
+        road_distance = float(ride.distance)
+        print(f"Using road distance for payment: {road_distance} km")  # Debug log
+        
+        fare = round(road_distance * 0.000055, 6)  # 0.000055 ETH per km
         
         context = {
             'rideId': ride.id,
             'driverName': driver.name,
             'driverWallet': ride.payment,
-            'distance': distance,
+            'distance': road_distance,
             'fare': fare,
             'fromCity': ride.fromCity,
             'toCity': ride.toCity
@@ -131,6 +109,10 @@ def payment(request):
         return render(request, 'payment.html', context)
     except (RidePoint.DoesNotExist, User.DoesNotExist):
         messages.error(request, "Invalid ride or driver information")
+        return redirect('userHome')
+    except Exception as e:
+        print(f"Error in payment view: {str(e)}")  # Debug log
+        messages.error(request, f"Error processing payment: {str(e)}")
         return redirect('userHome')
 
 def AcceptTheRide(request):
@@ -162,24 +144,31 @@ def stateOFCompleted(request):
                 ride.status = "Ride Completed"
                 ride.save()
                 
-                # Use the stored distance from the ride object
-                distance = float(ride.distance)
-                fare = round(distance * 0.000055, 6)  # 0.000055 ETH per km
+                # Use the actual road distance from the ride object
+                road_distance = float(ride.distance)
+                print(f"Using road distance for transaction: {road_distance} km")  # Debug log
                 
-                Transaction.objects.create(
+                # Calculate fare based on road distance (0.000055 ETH per km)
+                fare = round(road_distance * 0.000055, 6)
+                print(f"Calculated fare: {fare} ETH")  # Debug log
+                
+                # Create transaction with road distance
+                transaction = Transaction.objects.create(
                     ride=ride,
                     driver=User.objects.get(id=driverId),
                     source=ride.fromCity,
                     destination=ride.toCity,
-                    distance=distance,
+                    distance=road_distance,  # Use the actual road distance
                     fare=fare,
                     status='pending'
                 )
+                print(f"Created transaction with road distance: {transaction.distance} km")  # Debug log
                 
-                messages.info(request, "Ride Completed")
+                messages.success(request, f"Ride completed. Distance: {road_distance:.2f} km, Fare: {fare} ETH")
             else:
-                messages.info(request, "Sorry Some Error In Accepting the Ride")
+                messages.error(request, "Ride not found")
         except Exception as e:
+            print(f"Error completing ride: {str(e)}")  # Debug log
             messages.error(request, f"Error completing ride: {str(e)}")
             
     return redirect("acceptance", userid=driverId)
@@ -434,16 +423,16 @@ def addPool(request):
             messages.error(request, "Pickup and destination locations are required")
             return redirect('userHome')
             
-        # Get distance from session
+        # Get road distance from session
         distance = request.session.get('current_ride_distance')
-        print(f"Distance from session: {distance}")  # Debug log
+        print(f"Road distance from session: {distance}")  # Debug log
         
         if not distance:
-            # Redirect to maps to calculate distance
+            # Redirect to maps to calculate road distance
             return redirect(f'/maps?source={fromCity}&destination={toCity}')
             
         try:
-            print(f"Creating pool with distance: {distance}")  # Debug log
+            print(f"Creating pool with road distance: {distance}")  # Debug log
             pool = RidePoint.objects.create(
                 fromCity=fromCity,
                 toCity=toCity,
@@ -609,9 +598,17 @@ def update_distance(request):
             data = json.loads(request.body)
             distance = data.get('distance')
             if distance is not None:
-                # Store the distance in session
+                # Store the road distance in session
                 request.session['current_ride_distance'] = float(distance)
-                print(f"Stored distance in session: {distance}")  # Debug log
+                print(f"Stored road distance in session: {distance} km")  # Debug log
+                
+                # Store the distance in a new model called DistanceCalculation
+                DistanceCalculation.objects.create(
+                    distance=float(distance),
+                    calculated_at=datetime.now()
+                )
+                print(f"Stored road distance in database: {distance} km")  # Debug log
+                
                 return JsonResponse({'success': True, 'distance': distance})
             else:
                 return JsonResponse({'success': False, 'error': 'No distance provided'})

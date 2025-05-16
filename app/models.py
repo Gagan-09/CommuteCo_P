@@ -49,4 +49,13 @@ class RejectedRide(models.Model):
 
     class Meta:
         unique_together = ('rideId', 'driverId')
+
+class DistanceCalculation(models.Model):
+    id = models.AutoField(primary_key=True)
+    distance = models.FloatField()  # Distance in kilometers
+    calculated_at = models.DateTimeField(auto_now_add=True)
+    ride = models.ForeignKey(RidePoint, on_delete=models.CASCADE, null=True)  # Link to the ride if available
+
+    def __str__(self):
+        return f"{self.distance} km at {self.calculated_at}"
                                                                                                       

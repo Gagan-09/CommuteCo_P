@@ -8,6 +8,10 @@
       rel="stylesheet"
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css"
+    />
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -43,6 +47,12 @@
         margin-top: 20px;
         font-size: 18px;
       }
+      #ride-summary {
+        margin-top: 10px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        width: 300px;
+      }
     </style>
   </head>
   <body>
@@ -50,6 +60,14 @@
       <h1>Route Map</h1>
       <div id="map"></div>
       <div id="error" class="error-message"></div>
+    </div>
+
+    <div id="ride-summary" style="display: none">
+      <p><strong>Source:</strong> <span id="source-name"></span></p>
+      <p><strong>Destination:</strong> <span id="destination-name"></span></p>
+      <p><strong>Distance:</strong> <span id="distance"></span> km</p>
+      <p><strong>Fare:</strong> ₹<span id="fare"></span></p>
+      <button onclick="saveDistance()">Save Distance</button>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -111,18 +129,18 @@
           const destCoords = await geocode(destination);
 
           // Add markers
-          L.marker(sourceCoords)
+          const srcMarker = L.marker(sourceCoords)
             .addTo(map)
             .bindPopup("Source: " + source)
             .openPopup();
 
-          L.marker(destCoords)
+          const destMarker = L.marker(destCoords)
             .addTo(map)
             .bindPopup("Destination: " + destination)
             .openPopup();
 
           // Add routing control
-          L.Routing.control({
+          const control = L.Routing.control({
             waypoints: [
               L.latLng(sourceCoords[0], sourceCoords[1]),
               L.latLng(destCoords[0], destCoords[1]),
@@ -137,77 +155,163 @@
             addWaypoints: false,
             fitSelectedRoutes: true,
             show: false, // Hide default itinerary
-          })
-            .on("routesfound", function (e) {
-              const routes = e.routes;
-              const distance = routes[0].summary.totalDistance / 1000; // Convert to kilometers
+          });
 
-              // Get CSRF token
-              const csrftoken = getCookie("csrftoken");
-              if (!csrftoken) {
-                errorDiv.textContent =
-                  "Error: CSRF token not found. Please refresh the page.";
-                return;
-              }
+          control.on("routesfound", function (e) {
+            const routes = e.routes;
+            const roadDistance = routes[0].summary.totalDistance / 1000; // Convert to kilometers
+            console.log("Road distance calculated:", roadDistance, "km"); // Debug log
 
-              // Send distance to backend
-              fetch("{% url 'update_distance' %}", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  "X-CSRFToken": csrftoken,
-                },
-                body: JSON.stringify({
-                  distance: distance,
-                }),
-              })
-                .then((response) => {
-                  if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                  }
-                  return response.json();
-                })
-                .then((data) => {
-                  if (data.success) {
-                    errorDiv.className = "success-message";
-                    errorDiv.textContent = `Distance: ${distance.toFixed(
-                      2
-                    )} km`;
-                    // Add a button to go back to add pool
-                    const backButton = document.createElement("button");
-                    backButton.textContent = "Return to Add Pool";
-                    backButton.style.marginTop = "10px";
-                    backButton.style.padding = "10px 20px";
-                    backButton.style.backgroundColor = "#0078A8";
-                    backButton.style.color = "white";
-                    backButton.style.border = "none";
-                    backButton.style.borderRadius = "5px";
-                    backButton.style.cursor = "pointer";
-                    backButton.onclick = () => {
-                      window.location.href = "/addPool";
-                    };
-                    errorDiv.appendChild(backButton);
-                  } else {
-                    throw new Error(data.error || "Unknown error occurred");
-                  }
-                })
-                .catch((error) => {
-                  errorDiv.className = "error-message";
-                  errorDiv.textContent = `Error saving distance: ${error.message}`;
-                  console.error("Error:", error);
-                });
-            })
-            .on("routingerror", (e) => {
+            // Get CSRF token
+            const csrftoken = getCookie("csrftoken");
+            if (!csrftoken) {
               errorDiv.textContent =
-                "Failed to load route: " + (e.error.message || "Unknown error");
+                "Error: CSRF token not found. Please refresh the page.";
+              return;
+            }
+
+            // Send road distance to backend
+            fetch("{% url 'update_distance' %}", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrftoken,
+              },
+              body: JSON.stringify({
+                distance: roadDistance,
+              }),
             })
-            .addTo(map);
+              .then((response) => {
+                if (!response.ok) {
+                  throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+              })
+              .then((data) => {
+                if (data.success) {
+                  errorDiv.className = "success-message";
+                  errorDiv.textContent = `Road Distance: ${roadDistance.toFixed(
+                    2
+                  )} km`;
+
+                  // Store the road distance in localStorage as backup
+                  localStorage.setItem("roadDistance", roadDistance);
+
+                  // Add a button to go back to add pool
+                  const backButton = document.createElement("button");
+                  backButton.textContent = "Return to Add Pool";
+                  backButton.style.marginTop = "10px";
+                  backButton.style.padding = "10px 20px";
+                  backButton.style.backgroundColor = "#0078A8";
+                  backButton.style.color = "white";
+                  backButton.style.border = "none";
+                  backButton.style.borderRadius = "5px";
+                  backButton.style.cursor = "pointer";
+                  backButton.onclick = () => {
+                    // Ensure we're using the road distance
+                    const savedDistance = localStorage.getItem("roadDistance");
+                    if (savedDistance) {
+                      console.log(
+                        "Using saved road distance:",
+                        savedDistance,
+                        "km"
+                      );
+                    }
+                    window.location.href = "{% url 'add_pool' %}";
+                  };
+                  errorDiv.appendChild(backButton);
+                } else {
+                  throw new Error(data.error || "Unknown error occurred");
+                }
+              })
+              .catch((error) => {
+                errorDiv.className = "error-message";
+                errorDiv.textContent = `Error saving distance: ${error.message}`;
+                console.error("Error:", error);
+              });
+          });
+
+          control.on("routingerror", (e) => {
+            errorDiv.textContent =
+              "Failed to load route: " + (e.error.message || "Unknown error");
+          });
+
+          control.addTo(map);
         } catch (error) {
           errorDiv.textContent = "Error: " + error.message;
         }
       }
 
       window.onload = initMap;
+
+      function showRouteAndSummary() {
+        if (control) {
+          map.removeControl(control);
+        }
+
+        control = L.Routing.control({
+          waypoints: [srcLatLng, destLatLng],
+          routeWhileDragging: false,
+          createMarker: () => null,
+        })
+          .on("routesfound", function (e) {
+            const route = e.routes[0];
+            currentDistance = (route.summary.totalDistance / 1000).toFixed(2);
+            const fare = (currentDistance * 10).toFixed(2); // ₹10/km
+
+            document.getElementById("ride-summary").style.display = "block";
+            document.getElementById("distance").textContent = currentDistance;
+            document.getElementById("fare").textContent = fare;
+
+            // Reverse geocoding for place names
+            fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${srcLatLng.lat}&lon=${srcLatLng.lng}`
+            )
+              .then((res) => res.json())
+              .then(
+                (data) =>
+                  (document.getElementById("source-name").textContent =
+                    data.display_name || "Unknown")
+              );
+
+            fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${destLatLng.lat}&lon=${destLatLng.lng}`
+            )
+              .then((res) => res.json())
+              .then(
+                (data) =>
+                  (document.getElementById("destination-name").textContent =
+                    data.display_name || "Unknown")
+              );
+          })
+          .addTo(map);
+      }
+
+      function saveDistance() {
+        fetch("{% url 'update_distance' %}", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie("csrftoken"),
+          },
+          body: JSON.stringify({
+            distance: currentDistance,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              alert("Distance saved successfully!");
+              window.location.href = "{% url 'add_pool' %}";
+            } else {
+              alert("Error saving distance: " + data.error);
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            alert("Error saving distance");
+          });
+      }
     </script>
   </body>
 </html>

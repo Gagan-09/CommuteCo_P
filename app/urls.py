@@ -18,7 +18,7 @@ urlpatterns = [
     path('profileDetails/', view=profileDetails, name="profileDetails"),
     path('profile/', view=profile, name="profile"),
     path('getRequestFromUsers/', view=getRequestFromUsers, name="getRequestFromUsers"),
-    path('addPool/', view=addPool, name="add"),
+    path('addPool/', view=addPool, name="add_pool"),
     path('driverHome/', view=driverHome, name="driverHome"),
     path('userHome/', view=userHome, name="userHome"),
     path("login/", view=index, name="login"),
