@@ -9,6 +9,7 @@ import json
 import requests
 from math import radians, sin, cos, sqrt, atan2
 from django.views.decorators.http import require_http_methods
+from django.contrib.auth.decorators import login_required
 
 def calculate_distance(lat1, lon1, lat2, lon2):
     print(f"Calculating driving distance between ({lat1}, {lon1}) and ({lat2}, {lon2})")
@@ -200,17 +201,23 @@ def stateOFCompleted(request):
             
     return redirect("acceptance", userid=driverId)
 
-def driverTransactions(request):
-    if not request.session.get('driver_id') or request.session.get('driver_type') != 'driver':
-        messages.error(request, "Please login as a driver")
+def transactions(request):
+    if 'driver_id' in request.session:
+        # For drivers, show transactions where they are the driver
+        transactions = Transaction.objects.filter(
+            driver__id=request.session['driver_id']
+        ).order_by('-created_at')
+    elif 'user_id' in request.session:
+        # For users, show transactions where they are the passenger
+        transactions = Transaction.objects.filter(
+            ride__userid=request.session['user_id']
+        ).order_by('-created_at')
+    else:
+        messages.error(request, "Please login to view transactions")
         return redirect('login')
-        
-    transactions = Transaction.objects.filter(
-        driver_id=request.session['driver_id']
-    ).order_by('-created_at')
     
-    return render(request, "driver/transactions.html", {
-        "transactions": transactions
+    return render(request, 'driver/transactions.html', {
+        'transactions': transactions
     })
 
 def getJoinPool(request):
@@ -547,7 +554,7 @@ def addPool(request):
                 toCity=toCity,
                 datePoint=datePoint,
                 contactPoint=contactPoint,
-                status="Pending To Accept By Delivery",
+                status="Waiting for driver to accept",
                 userid=userId,
                 driverId="",
                 applyOn=output,

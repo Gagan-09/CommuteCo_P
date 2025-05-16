@@ -14,7 +14,7 @@ urlpatterns = [
     path('stateOF/', view=stateOF, name="stateOF"),
     path('rejectRide/', view=rejectRide, name="rejectRide"),
     path('acceptance/<int:userid>/', view=acceptance, name="acceptance"),
-    path('driver/transactions/', view=driverTransactions, name="driverTransactions"),
+    path('driver/transactions/', view=transactions, name="driverTransactions"),
     path('profileDetails/', view=profileDetails, name="profileDetails"),
     path('profile/', view=profile, name="profile"),
     path('getRequestFromUsers/', view=getRequestFromUsers, name="getRequestFromUsers"),

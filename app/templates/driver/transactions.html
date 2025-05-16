@@ -2,15 +2,21 @@
 <div class="headerSelction">
   <div class="titlePoint">CommuteCo</div>
   <div class="navPoint">
+    {% if request.session.driver_id %}
     <a href="/driverHome">Pending Rides</a>
     <a href="/acceptance/{{ request.session.driver_id }}/">Accepted Pool</a>
     <a href="/driver/transactions/" id="activac">Transactions</a>
+    {% else %}
+    <a href="/userHome">My Pool</a>
+    <a href="/joinPool">Join Pool</a>
+    <a href="/payment_history" id="activac">Payment History</a>
+    {% endif %}
     <a href="/logout">Logout</a>
   </div>
 </div>
 
 <div class="container mt-4">
-  <h2>Transaction History</h2>
+  <h2>{% if request.session.driver_id %}Driver{% else %}Payment{% endif %} History</h2>
   <div class="row">
     {% for transaction in transactions %}
     <div class="col-md-6 mb-4">
@@ -155,41 +161,24 @@
   }
 
   .status-badge {
-    padding: 4px 8px;
+    padding: 4px 10px;
     border-radius: 4px;
-    font-weight: 500;
+    font-weight: 600;
     display: inline-block;
+    font-size: 0.9rem;
   }
 
   .status-completed {
-    color: #28a745;
-    background-color: rgba(40, 167, 69, 0.1);
+    color: #155724;
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
   }
 
   .status-pending {
-    color: #fd7e14;
-    background-color: rgba(253, 126, 20, 0.1);
+    color: #856404;
+    background-color: #fff3cd;
+    border: 1px solid #ffeeba;
   }
-  .status-badge {
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-weight: 600;
-  display: inline-block;
-  font-size: 0.9rem;
-}
-
-.status-completed {
-  color: #155724;
-  background-color: #d4edda;
-  border: 1px solid #c3e6cb;
-}
-
-.status-pending {
-  color: #856404;
-  background-color: #fff3cd;
-  border: 1px solid #ffeeba;
-}
-
 </style>
 
 {% if messages %}
