@@ -88,34 +88,45 @@ def payment(request):
         return redirect('userHome')
         
     try:
-        ride = RidePoint.objects.get(id=ride_id)
+        # Get ride with its distance information
+        ride = RidePoint.objects.select_related('ride_distance').get(id=ride_id)
         driver = User.objects.get(id=ride.driverId)
         
-        # Get distance from the ride object
-        if not ride.distance:
-            messages.error(request, "Distance information not available for this ride")
+        # Get distance and fare from RideDistance model
+        try:
+            ride_distance = ride.ride_distance
+            road_distance = ride_distance.distance
+            fare = ride_distance.fare
+            
+            print(f"\n=== PAYMENT DETAILS ===")
+            print(f"Ride ID: {ride.id}")
+            print(f"From: {ride.fromCity} To: {ride.toCity}")
+            print(f"Distance: {road_distance:.2f} km")
+            print(f"Fare: {fare} ETH")
+            print("==============================\n")
+            
+            context = {
+                'rideId': ride.id,
+                'driverName': driver.name,
+                'driverWallet': ride.payment,  # This is the driver's wallet address
+                'distance': road_distance,
+                'fare': fare,
+                'fromCity': ride.fromCity,
+                'toCity': ride.toCity
+            }
+            
+            return render(request, 'payment.html', context)
+            
+        except RideDistance.DoesNotExist:
+            print("ERROR: No distance information available for this ride")
+            messages.error(request, "Cannot process payment: Distance information not available")
             return redirect('userHome')
             
-        road_distance = float(ride.distance)
-        print(f"Using road distance for payment: {road_distance} km")  # Debug log
-        
-        # Use the stored fare from the ride object
-        fare = float(ride.payment)
-        print(f"Using stored fare: {fare} ETH")  # Debug log
-        
-        context = {
-            'rideId': ride.id,
-            'driverName': driver.name,
-            'driverWallet': ride.payment,
-            'distance': road_distance,
-            'fare': fare,
-            'fromCity': ride.fromCity,
-            'toCity': ride.toCity
-        }
-        
-        return render(request, 'payment.html', context)
-    except (RidePoint.DoesNotExist, User.DoesNotExist):
-        messages.error(request, "Invalid ride or driver information")
+    except RidePoint.DoesNotExist:
+        messages.error(request, "Invalid ride information")
+        return redirect('userHome')
+    except User.DoesNotExist:
+        messages.error(request, "Driver information not found")
         return redirect('userHome')
     except Exception as e:
         print(f"Error in payment view: {str(e)}")  # Debug log
