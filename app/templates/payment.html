@@ -216,15 +216,52 @@
             console.log("Transaction hash received:", hash);
             payButton.textContent = "Payment Processing...";
 
-            // Redirect to success page after 2 seconds
-            setTimeout(() => {
-              const successUrl = `/payment-success/?hash=${encodeURIComponent(
-                hash
-              )}&distance=${encodeURIComponent(
-                distance
-              )}&amount=${encodeURIComponent(fare)}`;
-              window.location.href = successUrl;
-            }, 2000);
+            // Update transaction in database
+            fetch("{% url 'updateTransaction' %}", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCookie("csrftoken"),
+              },
+              body: JSON.stringify({
+                rideId: rideId,
+                transactionHash: hash,
+              }),
+            })
+              .then((response) => response.json())
+              .then((data) => {
+                console.log("Transaction update response:", data);
+                if (data.success) {
+                  // Show success message
+                  const successMessage =
+                    document.getElementById("successMessage");
+                  document.getElementById("transactionHash").textContent = hash;
+                  document.getElementById("successDistance").textContent =
+                    distance;
+                  document.getElementById("successAmount").textContent = fare;
+                  successMessage.classList.add("show");
+
+                  // Redirect to success page after 2 seconds
+                  setTimeout(() => {
+                    const successUrl = `/payment-success/?hash=${encodeURIComponent(
+                      hash
+                    )}&distance=${encodeURIComponent(
+                      distance
+                    )}&amount=${encodeURIComponent(fare)}`;
+                    window.location.href = successUrl;
+                  }, 2000);
+                } else {
+                  throw new Error(data.error || "Failed to update transaction");
+                }
+              })
+              .catch((error) => {
+                console.error("Error updating transaction:", error);
+                payButton.disabled = false;
+                payButton.textContent = "Pay Now";
+                alert(
+                  "Payment successful but failed to update transaction. Please contact support."
+                );
+              });
           })
           .on("error", function (error) {
             console.error("Transaction error:", error);
@@ -232,6 +269,24 @@
             payButton.textContent = "Pay Now";
             alert("Transaction failed. Please try again.");
           });
+      }
+
+      // Function to get CSRF token
+      function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== "") {
+          const cookies = document.cookie.split(";");
+          for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === name + "=") {
+              cookieValue = decodeURIComponent(
+                cookie.substring(name.length + 1)
+              );
+              break;
+            }
+          }
+        }
+        return cookieValue;
       }
 
       // Add this function to force UI updates

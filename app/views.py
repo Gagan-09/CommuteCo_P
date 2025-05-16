@@ -530,7 +530,7 @@ def dregister(request):
             name=name, email=email, password=password, typeView="driver"
         )
         messages.info(request, "Success")
-        return redirect("")
+        return redirect("login")
 
     return render(request, "driverRegister.html")
 
@@ -556,15 +556,29 @@ def updateTransaction(request):
             transaction = Transaction.objects.get(ride_id=ride_id)
             print(f"Found transaction: {transaction.id}")
             
+            # Update transaction details
             transaction.transaction_hash = tx_hash
             transaction.status = 'completed'
             transaction.save()
             
-            print(f"Transaction updated successfully: {transaction.id}")
-            return JsonResponse({'success': True})
+            # Update the ride status
+            ride = RidePoint.objects.get(id=ride_id)
+            ride.status = "Payment Completed"
+            ride.save()
+            
+            print(f"Transaction and ride updated successfully: {transaction.id}")
+            return JsonResponse({
+                'success': True,
+                'message': 'Transaction updated successfully',
+                'transaction_id': transaction.id,
+                'ride_id': ride_id
+            })
         except Transaction.DoesNotExist:
             print(f"Transaction not found for ride {ride_id}")
             return JsonResponse({'success': False, 'error': 'Transaction not found'})
+        except RidePoint.DoesNotExist:
+            print(f"Ride not found for ID {ride_id}")
+            return JsonResponse({'success': False, 'error': 'Ride not found'})
         except Exception as e:
             print(f"Error updating transaction: {str(e)}")
             return JsonResponse({'success': False, 'error': str(e)})

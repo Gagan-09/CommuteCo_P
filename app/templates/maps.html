@@ -197,29 +197,23 @@
                   // Store the road distance in localStorage as backup
                   localStorage.setItem("roadDistance", roadDistance);
 
-                  // Add a button to go back to add pool
+                  // Add a button to return to add pool page
                   const backButton = document.createElement("button");
-                  backButton.textContent = "Return to Add Pool";
-                  backButton.style.marginTop = "10px";
+                  backButton.textContent = "Return to My Pool";
+                  backButton.style.position = "absolute";
+                  backButton.style.top = "10px";
+                  backButton.style.left = "10px";
+                  backButton.style.zIndex = "1000";
                   backButton.style.padding = "10px 20px";
-                  backButton.style.backgroundColor = "#0078A8";
+                  backButton.style.backgroundColor = "#4CAF50";
                   backButton.style.color = "white";
                   backButton.style.border = "none";
                   backButton.style.borderRadius = "5px";
                   backButton.style.cursor = "pointer";
-                  backButton.onclick = () => {
-                    // Ensure we're using the road distance
-                    const savedDistance = localStorage.getItem("roadDistance");
-                    if (savedDistance) {
-                      console.log(
-                        "Using saved road distance:",
-                        savedDistance,
-                        "km"
-                      );
-                    }
-                    window.location.href = "{% url 'add_pool' %}";
+                  backButton.onclick = function () {
+                    window.location.href = "{% url 'userHome' %}";
                   };
-                  errorDiv.appendChild(backButton);
+                  document.body.appendChild(backButton);
                 } else {
                   throw new Error(data.error || "Unknown error occurred");
                 }
