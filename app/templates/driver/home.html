@@ -1,6 +1,4 @@
-{% extends 'base.html' %} 
-
-{% block content %}
+{% extends 'base.html' %} {% block content %}
 <div class="headerSelction">
   <div class="titlePoint">CommuteCo</div>
   <div class="navPoint">
@@ -39,6 +37,13 @@
             >
               Accept Ride
             </button>
+            <button
+              type="button"
+              class="btn btn-danger"
+              onclick="rejectRide('{{ ride.id }}')"
+            >
+              Reject Ride
+            </button>
           </div>
         </div>
       </div>
@@ -65,7 +70,11 @@
               aria-label="Close"
             ></button>
           </div>
-          <form action="{% url 'stateOF' %}" method="POST">
+          <form
+            action="{% url 'stateOF' %}"
+            method="POST"
+            id="acceptForm{{ ride.id }}"
+          >
             {% csrf_token %}
             <div class="modal-body">
               <input type="hidden" name="rideId" value="{{ ride.id }}" />
@@ -78,13 +87,26 @@
                 <label for="walletAddress{{ ride.id }}" class="form-label"
                   >Your Blockchain Wallet Address</label
                 >
-                <input
-                  type="text"
-                  class="form-control"
-                  id="walletAddress{{ ride.id }}"
-                  name="walletAddress"
-                  required
-                />
+                <div class="input-group">
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="walletAddress{{ ride.id }}"
+                    name="walletAddress"
+                    required
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-info"
+                    onclick="checkBalance('{{ ride.id }}')"
+                  >
+                    View Balance
+                  </button>
+                </div>
+                <div
+                  id="balanceDisplay{{ ride.id }}"
+                  class="mt-2 text-muted"
+                ></div>
               </div>
             </div>
             <div class="modal-footer">
@@ -147,13 +169,21 @@
   }
 
   .card {
-    border: none;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s;
+    border: 2px solid #004aad;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    background-color: #f8f9fa;
   }
 
   .card:hover {
     transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .card-body {
+    padding: 1.5rem;
+    background: linear-gradient(to bottom right, #ffffff, #f8f9fa);
   }
 
   .btn-primary {
@@ -174,6 +204,26 @@
     background: #218838;
   }
 
+  .btn-danger {
+    background: #dc3545;
+    border: none;
+  }
+
+  .btn-danger:hover {
+    background: #c82333;
+  }
+
+  .btn-info {
+    background: #17a2b8;
+    border: none;
+    color: white;
+  }
+
+  .btn-info:hover {
+    background: #138496;
+    color: white;
+  }
+
   .modal-content {
     border-radius: 10px;
   }
@@ -192,7 +242,91 @@
     border-color: #004aad;
     box-shadow: 0 0 0 0.2rem rgba(0, 74, 173, 0.25);
   }
+
+  .input-group {
+    margin-bottom: 0.5rem;
+  }
+
+  .input-group .btn {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+  }
 </style>
+
+<script src="https://cdn.jsdelivr.net/npm/web3@1.5.2/dist/web3.min.js"></script>
+<script>
+  // Initialize Web3 with Ganache
+  const web3 = new Web3("http://127.0.0.1:7545");
+
+  function checkBalance(rideId) {
+    const walletInput = document.getElementById(`walletAddress${rideId}`);
+    const balanceDisplay = document.getElementById(`balanceDisplay${rideId}`);
+
+    if (!walletInput.value) {
+      balanceDisplay.textContent = "Please enter a wallet address";
+      balanceDisplay.style.color = "#dc3545";
+      return;
+    }
+
+    if (!web3.utils.isAddress(walletInput.value)) {
+      balanceDisplay.textContent =
+        "Please enter a valid Ethereum wallet address";
+      balanceDisplay.style.color = "#dc3545";
+      return;
+    }
+
+    balanceDisplay.textContent = "Checking balance...";
+    balanceDisplay.style.color = "#6c757d";
+
+    web3.eth
+      .getBalance(walletInput.value)
+      .then((balance) => {
+        const ethBalance = web3.utils.fromWei(balance, "ether");
+        balanceDisplay.textContent = `Wallet Balance: ${parseFloat(
+          ethBalance
+        ).toFixed(4)} ETH`;
+        balanceDisplay.style.color = "#28a745";
+      })
+      .catch((error) => {
+        balanceDisplay.textContent =
+          "Error checking balance. Please try again.";
+        balanceDisplay.style.color = "#dc3545";
+        console.error("Error checking balance:", error);
+      });
+  }
+
+  function rejectRide(rideId) {
+    if (confirm("Are you sure you want to reject this ride?")) {
+      const formData = new FormData();
+      formData.append("rideId", rideId);
+      formData.append("driverId", "{{ request.session.driver_id }}");
+      formData.append(
+        "csrfmiddlewaretoken",
+        document.querySelector("[name=csrfmiddlewaretoken]").value
+      );
+
+      fetch("/rejectRide/", {
+        method: "POST",
+        body: formData,
+      })
+        .then((response) => {
+          if (response.ok) {
+            const rideCard = document
+              .querySelector(`#acceptModal${rideId}`)
+              .closest(".col-md-6");
+            rideCard.style.display = "none";
+            location.reload(); // Refresh to update the list
+          } else {
+            alert("Error rejecting ride. Please try again.");
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          alert("Error rejecting ride. Please try again.");
+        });
+    }
+  }
+</script>
 
 {% if messages %}
 <div class="nothing" id="messagePoint"></div>
