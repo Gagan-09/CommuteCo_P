@@ -23,18 +23,28 @@ class Transaction(models.Model):
     def __str__(self):
         return f"Transaction {self.id} - {self.ride.id} - {self.status}"
 
+class RideDistance(models.Model):
+    id = models.AutoField(primary_key=True)
+    ride = models.OneToOneField('RidePoint', on_delete=models.CASCADE, related_name='ride_distance')
+    distance = models.FloatField()  # in kilometers
+    fare = models.FloatField()  # in ETH
+    calculated_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Distance for Ride #{self.ride.id}: {self.distance} km"
+
 class RidePoint(models.Model):
-    id=models.IntegerField(auto_created=True,primary_key=True)
-    fromCity=models.CharField(max_length=1000)
-    toCity=models.CharField(max_length=1000)
-    datePoint=models.CharField(max_length=1000)
-    contactPoint=models.CharField(max_length=1000)
-    status=models.CharField(max_length=1000)
-    userid=models.CharField(max_length=1000)
-    driverId=models.CharField(max_length=1000)
-    applyOn=models.CharField(max_length=1000)
-    payment=models.CharField(max_length=1000)
-    distance=models.FloatField(null=True)  # Distance in kilometers, no default value
+    id = models.IntegerField(auto_created=True, primary_key=True)
+    fromCity = models.CharField(max_length=1000)
+    toCity = models.CharField(max_length=1000)
+    datePoint = models.CharField(max_length=1000)
+    contactPoint = models.CharField(max_length=1000)
+    status = models.CharField(max_length=1000)
+    userid = models.CharField(max_length=1000)
+    driverId = models.CharField(max_length=1000)
+    applyOn = models.CharField(max_length=1000)
+    payment = models.CharField(max_length=1000)
 
 class JointRide(models.Model):
     id=models.AutoField(primary_key=True)

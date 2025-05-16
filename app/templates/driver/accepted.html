@@ -1,245 +1,80 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
-        rel="stylesheet">
-
-    <link rel="stylesheet" href="/static/css/all.css">
-    {%if messages%}
-    {%for me in messages %}
-    <input type="hidden" value="{{me}}" id="successpoint">
+{% extends 'base.html' %} {% block content %}
+<div class="container mt-4">
+  <h2>Accepted Rides</h2>
+  <div class="row">
+    {% for ride in accepted %}
+    <div class="col-md-6 mb-4">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Ride #{{ ride.id }}</h5>
+          <p><strong>From:</strong> {{ ride.fromCity }}</p>
+          <p><strong>To:</strong> {{ ride.toCity }}</p>
+          <p><strong>Date:</strong> {{ ride.datePoint }}</p>
+          <p><strong>Contact:</strong> {{ ride.contactPoint }}</p>
+          {% if ride.distance %}
+          <p><strong>Distance:</strong> {{ ride.distance|floatformat:2 }} km</p>
+          <p>
+            <strong>Estimated Fare:</strong> {{ ride.fare|floatformat:6 }} ETH
+          </p>
+          {% else %}
+          <p class="text-warning">Distance information not available</p>
+          {% endif %}
+          <p><strong>Status:</strong> {{ ride.status }}</p>
+          <div class="mt-3">
+            <a
+              href="https://www.google.com/maps/dir/?api=1&origin={{ ride.fromCity }}&destination={{ ride.toCity }}"
+              target="_blank"
+              class="btn btn-primary"
+              >Get Directions</a
+            >
+            <form
+              method="POST"
+              action="{% url 'stateOFCompleted' %}"
+              class="d-inline"
+            >
+              {% csrf_token %}
+              <input type="hidden" name="rideId" value="{{ ride.id }}" />
+              <button type="submit" class="btn btn-success">
+                Complete Ride
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+      <p class="text-center">No accepted rides found.</p>
+    </div>
     {% endfor %}
-    {% endif %}
+  </div>
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Home</title>
-</head>
-
-<body>
-    <style>
-        .tab-btn {
-            padding: 0.5rem 1rem;
-            border: none;
-            background: #ffffff33;
-            color: white;
-            border-radius: 20px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.3s;
-        }
-
-        .tab-btn:hover,
-        .tab-btn.active {
-            background: #ffcc00;
-            color: #000;
-        }
-
-        main {
-            padding: 2rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .form-section {
-            background: white;
-            padding: 2rem;
-            border-radius: 10px;
-            width: 100%;
-            max-width: 600px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            margin-bottom: 2rem;
-        }
-
-        .form-section h2 {
-            margin-bottom: 1.5rem;
-            text-align: center;
-        }
-
-        .form-group {
-            margin-bottom: 1rem;
-            display: flex;
-            flex-direction: column;
-        }
-
-        label {
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-        }
-
-        input {
-            padding: 0.75rem;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 1rem;
-        }
-
-        .btn-submit {
-            background: #004aad;
-            color: white;
-            padding: 0.75rem;
-            width: 100%;
-            font-size: 1rem;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .btn-submit:hover {
-            background: #00338d;
-        }
-
-        footer {
-            background: #e9e9e9;
-            padding: 1rem;
-            text-align: center;
-            font-size: 0.9rem;
-            margin-top: auto;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        .ride-cards-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            padding: 20px;
-        }
-
-        .ride-card {
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            margin-bottom: 20px;
-            width: 300px;
-            transition: transform 0.2s;
-        }
-
-        .ride-card:hover {
-            transform: translateY(-5px);
-        }
-
-        h3 {
-            font-size: 18px;
-            margin-bottom: 10px;
-        }
-
-        p {
-            font-size: 14px;
-            margin-bottom: 8px;
-        }
-
-        .accept-btn,
-        .reject-btn {
-            padding: 10px 15px;
-            border: none;
-            border-radius: 5px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .accept-btn {
-            background-color: #4CAF50;
-            color: white;
-        }
-
-        .accept-btn:hover {
-            background-color: #45a049;
-        }
-
-        .reject-btn {
-            background-color: #f44336;
-            color: white;
-        }
-
-        .reject-btn:hover {
-            background-color: #e53935;
-        }
-    </style>
-    <div class="nothing" id="messagePoint"></div>
-    <div class="headerSelction">
-        <div class="titlePoint">CommuteCo</div>
-        <div class="navPoint">
-            <a href="/driverHome">Pending Rides</a>
-            <a href="/acceptance/{{ request.session.driver_id }}/" id="activac">Accepted Pool</a>
-            <a href="/driver/transactions/">Transactions</a>
-            <a href="/logout">Logout</a>
+  <h2 class="mt-5">Completed Rides</h2>
+  <div class="row">
+    {% for ride in completed %}
+    <div class="col-md-6 mb-4">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Ride #{{ ride.id }}</h5>
+          <p><strong>From:</strong> {{ ride.fromCity }}</p>
+          <p><strong>To:</strong> {{ ride.toCity }}</p>
+          <p><strong>Date:</strong> {{ ride.datePoint }}</p>
+          <p><strong>Contact:</strong> {{ ride.contactPoint }}</p>
+          {% if ride.distance %}
+          <p><strong>Distance:</strong> {{ ride.distance|floatformat:2 }} km</p>
+          <p><strong>Fare:</strong> {{ ride.fare|floatformat:6 }} ETH</p>
+          {% else %}
+          <p class="text-warning">Distance information not available</p>
+          {% endif %}
+          <p><strong>Status:</strong> {{ ride.status }}</p>
         </div>
+      </div>
     </div>
-    <div style="display: grid;grid-template-columns: repeat(2,1fr);">
-        <div>
-            <p style="color: white;font-size: 30px;">Accepted</p> 
-
-            <div class="ride-cards-container">
-                {% for view in accepted %}
-                <div class="ride-card">
-                    <form action="/stateOFCompleted/" method="post">
-                        {%csrf_token%}
-                        <h3>Ride #{{view.id}}</h3>
-                        <p><strong>Pickup Location:</strong> {{view.fromCity}}</p>
-                        <p><strong>Dropoff Location:</strong> {{view.toCity}}</p>
-                        <input type="hidden" name="rideId" value="{{view.id}}">
-                        <p><strong>Applied on :</strong> {{view.applyOn}}</p>
-                        <p><strong>Estimaeted Date:</strong> {{view.datePoint}}</p>
-                        <p><b>Customer Details :</b></p>
-                        <p><strong>Name :</strong> {{view.userDetails.name}}</p>
-                        <p><strong>Mobile :</strong> {{view.contactPoint}}</p>
-                        <p><strong>Status :</strong> {{view.status}}</p>
-                        {% if view.status == "Accepted By Driver" %}
-                        <button class="accept-btn" type="button" style='color:black' onclick="setString('{{view.toCity}}','{{view.fromCity}}')"><img src='/static/img/point.png' style='width:24px;height:24px;'></img>Directions</button>
-                        <button class="accept-btn" type="submit">Complete Ride</button>
-                        {% endif %}
-                    </form>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        <div>
-            <p style="color: white;font-size: 30px;">Completed</p>
-            <div class="ride-cards-container">
-                {% for view in completed %}
-                <div class="ride-card">
-                    <h3>Ride #{{view.id}}</h3>
-                    <p><strong>Pickup Location:</strong> {{view.fromCity}}</p>
-                    <p><strong>Dropoff Location:</strong> {{view.toCity}}</p>
-                    <p><strong>Applied on :</strong> {{view.applyOn}}</p>
-                    <p><strong>Estimaeted Date:</strong> {{view.datePoint}}</p>
-                    <p><b>Customer Details :</b></p>
-                    <p><strong>Name :</strong> {{view.userDetails.name}}</p>
-                    <p><strong>Mobile :</strong> {{view.contactPoint}}</p>
-                    <p><strong>Status :</strong> {{view.status}}</p>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
+    {% empty %}
+    <div class="col-12">
+      <p class="text-center">No completed rides found.</p>
     </div>
-    <script>
-        function setString(to, from) {
-            window.location.href = `/maps?source=${from}&destination=${to}`;
-        }
-    </script>
-
-    {%if messages%}
-    <script>
-        const success = document.getElementById('successpoint').value
-
-        const vali = document.getElementById('messagePoint')
-        vali.className = "dialog"
-        vali.innerText = success
-        setTimeout(() => {
-            vali.className = "nothing"
-        }, 3000)
-    </script>
-    {% endif %}
-
-</body>
-</html>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

@@ -72,6 +72,10 @@ def maps(request):
         messages.error(request, "Source and destination are required")
         return redirect('userHome')
         
+    # Store the locations in session for later use
+    request.session['current_source'] = source
+    request.session['current_destination'] = destination
+        
     return render(request, 'maps.html', {
         'source': source,
         'destination': destination
@@ -95,7 +99,9 @@ def payment(request):
         road_distance = float(ride.distance)
         print(f"Using road distance for payment: {road_distance} km")  # Debug log
         
-        fare = round(road_distance * 0.000055, 6)  # 0.000055 ETH per km
+        # Use the stored fare from the ride object
+        fare = float(ride.payment)
+        print(f"Using stored fare: {fare} ETH")  # Debug log
         
         context = {
             'rideId': ride.id,
@@ -136,40 +142,49 @@ def stateOFCompleted(request):
             return redirect('login')
             
         try:
-            ride = RidePoint.objects.get(id=int(rideId))
+            # Get ride with its distance information
+            ride = RidePoint.objects.select_related('ride_distance').get(id=int(rideId))
             if ride:
-                if not ride.distance:
-                    messages.error(request, "Distance information not available for this ride")
-                    return redirect("acceptance", userid=driverId)
+                print("\n=== RIDE COMPLETION DETAILS ===")
+                print(f"Ride ID: {ride.id}")
+                print(f"From: {ride.fromCity} To: {ride.toCity}")
+                
+                # Get the distance from RideDistance model
+                try:
+                    ride_distance = ride.ride_distance
+                    road_distance = ride_distance.distance
+                    fare = ride_distance.fare
                     
-                ride.status = "Ride Completed"
-                ride.save()
-                
-                # Use the actual road distance from the ride object
-                road_distance = float(ride.distance)
-                print(f"Using road distance for transaction: {road_distance} km")  # Debug log
-                
-                # Calculate fare based on road distance (0.000055 ETH per km)
-                fare = round(road_distance * 0.000055, 6)
-                print(f"Calculated fare: {fare} ETH")  # Debug log
-                
-                # Create transaction with road distance
-                transaction = Transaction.objects.create(
-                    ride=ride,
-                    driver=User.objects.get(id=driverId),
-                    source=ride.fromCity,
-                    destination=ride.toCity,
-                    distance=road_distance,  # Use the actual road distance
-                    fare=fare,
-                    status='pending'
-                )
-                print(f"Created transaction with road distance: {transaction.distance} km")  # Debug log
-                
-                messages.success(request, f"Ride completed. Distance: {road_distance:.2f} km, Fare: {fare} ETH")
+                    print(f"Road Distance: {road_distance:.2f} km")
+                    print(f"Calculated Fare: {fare} ETH")
+                    print("==============================\n")
+                    
+                    # Update ride status
+                    ride.status = "Ride Completed"
+                    ride.save()
+                    
+                    # Create transaction with the stored distance and fare
+                    transaction = Transaction.objects.create(
+                        ride=ride,
+                        driver=User.objects.get(id=driverId),
+                        source=ride.fromCity,
+                        destination=ride.toCity,
+                        distance=road_distance,
+                        fare=fare,
+                        status='pending'
+                    )
+                    print(f"Transaction created with ID: {transaction.id}")
+                    print(f"Transaction details - Distance: {transaction.distance:.2f} km, Fare: {transaction.fare} ETH")
+                    
+                    messages.success(request, f"Ride completed. Distance: {road_distance:.2f} km, Fare: {fare} ETH")
+                except RideDistance.DoesNotExist:
+                    print("ERROR: No distance information available for this ride")
+                    messages.error(request, "Cannot complete ride: Distance and fare information not available")
+                    return redirect("acceptance", userid=driverId)
             else:
                 messages.error(request, "Ride not found")
         except Exception as e:
-            print(f"Error completing ride: {str(e)}")  # Debug log
+            print(f"Error completing ride: {str(e)}")
             messages.error(request, f"Error completing ride: {str(e)}")
             
     return redirect("acceptance", userid=driverId)
@@ -258,7 +273,7 @@ def stateOF(request):
             ride.save()
             
             messages.success(request, "Successfully Accepted")
-            return redirect("driverHome")
+            return redirect("acceptance", userid=driverId)  # Redirect to accepted rides
         except RidePoint.DoesNotExist:
             messages.error(request, "Invalid ride ID")
             return redirect("driverHome")
@@ -298,43 +313,98 @@ def acceptance(request, userid=0):
         messages.error(request, "Unauthorized access")
         return redirect('driverHome')
         
-    data = RidePoint.objects.filter(
-        Q(driverId=userid)
-        & (Q(status="Accepted By Driver") | Q(status="Ride Completed"))
-    ).values(
-        "id",
-        "fromCity",
-        "toCity",
-        "datePoint",
-        "contactPoint",
-        "status",
-        "userid",
-        "driverId",
-        "applyOn",
-    )
-    rideDate = list(data)
-    users_ids = [ride["userid"] for ride in rideDate]
-    users = User.objects.filter(id__in=users_ids).values(
-        "id", "name", "email", "typeView"
-    )
-    usermap = {str(user["id"]): user for user in users}
+    print(f"\n=== FETCHING ACCEPTED RIDES ===")
+    print(f"Driver ID: {userid}")
+    
+    try:
+        # Get rides with their distance information
+        rides = RidePoint.objects.filter(
+            Q(driverId=userid)
+            & (Q(status="Accepted By Driver") | Q(status="Ride Completed"))
+        ).select_related('ride_distance')
+        
+        rideDate = []
+        for ride in rides:
+            # Get distance information
+            try:
+                distance = ride.ride_distance.distance
+                fare = ride.ride_distance.fare
+                print(f"Ride {ride.id}: Distance={distance}km, Fare={fare}ETH")
+            except RideDistance.DoesNotExist:
+                # If no distance record exists, try to calculate it
+                try:
+                    source_coords = get_coordinates(ride.fromCity)
+                    dest_coords = get_coordinates(ride.toCity)
+                    
+                    if source_coords and dest_coords:
+                        distance = calculate_distance(
+                            source_coords[0], source_coords[1],
+                            dest_coords[0], dest_coords[1]
+                        )
+                        fare = round(float(distance) * 0.000055, 6)
+                        
+                        # Create the distance record
+                        RideDistance.objects.create(
+                            ride=ride,
+                            distance=distance,
+                            fare=fare
+                        )
+                        print(f"Created new distance record: {distance}km, {fare}ETH")
+                    else:
+                        distance = None
+                        fare = None
+                        print(f"Could not get coordinates for ride {ride.id}")
+                except Exception as e:
+                    print(f"Error calculating distance for ride {ride.id}: {str(e)}")
+                    distance = None
+                    fare = None
+            
+            ride_data = {
+                "id": ride.id,
+                "fromCity": ride.fromCity,
+                "toCity": ride.toCity,
+                "datePoint": ride.datePoint,
+                "contactPoint": ride.contactPoint,
+                "status": ride.status,
+                "userid": ride.userid,
+                "driverId": ride.driverId,
+                "applyOn": ride.applyOn,
+                "payment": ride.payment,
+                "distance": distance,
+                "fare": fare
+            }
+            rideDate.append(ride_data)
+        
+        # Get user details
+        users_ids = [ride["userid"] for ride in rideDate]
+        users = User.objects.filter(id__in=users_ids).values(
+            "id", "name", "email", "typeView"
+        )
+        usermap = {str(user["id"]): user for user in users}
 
-    for ride in rideDate:
-        ride["userDetails"] = usermap.get(ride["userid"], {})
+        for ride in rideDate:
+            ride["userDetails"] = usermap.get(ride["userid"], {})
 
-    completed = list()
-    accepted = list()
-    for ride2 in rideDate:
-        if ride2["status"] == "Accepted By Driver":
-            accepted.append(ride2)
-        elif ride2["status"] == "Ride Completed":
-            completed.append(ride2)
+        completed = list()
+        accepted = list()
+        for ride2 in rideDate:
+            if ride2["status"] == "Accepted By Driver":
+                accepted.append(ride2)
+            elif ride2["status"] == "Ride Completed":
+                completed.append(ride2)
 
-    return render(
-        request,
-        "driver/accepted.html",
-        context={"accepted": accepted, "completed": completed},
-    )
+        print(f"Accepted rides: {len(accepted)}, Completed rides: {len(completed)}")
+        print("==============================\n")
+
+        return render(
+            request,
+            "driver/accepted.html",
+            context={"accepted": accepted, "completed": completed},
+        )
+    except Exception as e:
+        print(f"Error in acceptance view: {str(e)}")
+        messages.error(request, f"Error loading rides: {str(e)}")
+        return redirect("driverHome")
 
 
 def driverHome(request):
@@ -378,7 +448,8 @@ def getRequestFromUsers(request):
     userid = request.GET.get("userid", "")
     print(f"Fetching rides for user: {userid}")  # Debug log
     
-    ride_fields = [
+    # Get direct rides with their distance information
+    user_rides = list(RidePoint.objects.filter(userid=str(userid)).select_related('ride_distance').values(
         "fromCity",
         "toCity",
         "datePoint",
@@ -387,19 +458,34 @@ def getRequestFromUsers(request):
         "driverId",
         "applyOn",
         "id",
-        "distance"  # Add distance field
-    ]
-    
-    # Convert userid to string for comparison
-    user_rides = list(RidePoint.objects.filter(userid=str(userid)).values(*ride_fields))
+        "ride_distance__distance",  # Access distance through the relationship
+        "ride_distance__fare"  # Also get the fare
+    ))
     print(f"Found {len(user_rides)} direct rides")  # Debug log
 
+    # Get joint rides
     joint_rides = JointRide.objects.filter(userid=str(userid)).values("id", "userid", "rideId")
     if joint_rides.exists():
         ride_ids = [int(d["rideId"]) for d in joint_rides]
-        associated_rides = RidePoint.objects.filter(id__in=ride_ids).values(*ride_fields)
+        associated_rides = RidePoint.objects.filter(id__in=ride_ids).select_related('ride_distance').values(
+            "fromCity",
+            "toCity",
+            "datePoint",
+            "contactPoint",
+            "status",
+            "driverId",
+            "applyOn",
+            "id",
+            "ride_distance__distance",  # Access distance through the relationship
+            "ride_distance__fare"  # Also get the fare
+        )
         user_rides.extend(list(associated_rides))
         print(f"Added {len(associated_rides)} joint rides")  # Debug log
+    
+    # Rename the fields to match the expected format
+    for ride in user_rides:
+        ride['distance'] = ride.pop('ride_distance__distance', None)
+        ride['fare'] = ride.pop('ride_distance__fare', None)
     
     print(f"Total rides: {len(user_rides)}")  # Debug log
     return JsonResponse({"data": user_rides})
@@ -415,10 +501,12 @@ def addPool(request):
         toCity = request.POST.get("toPoint", "").strip()
         datePoint = request.POST.get("datePoint", "").strip()
         contactPoint = request.POST.get("contactPoint", "").strip()
-        userId = str(request.session.get("user_id"))  # Ensure user ID is string
+        userId = str(request.session.get("user_id"))
         output = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
-        print(f"Creating pool for user: {userId}")  # Debug log
+        print(f"\n=== CREATING NEW POOL ===")
+        print(f"User ID: {userId}")
+        print(f"From: {fromCity} To: {toCity}")
         
         if not fromCity or not toCity:
             messages.error(request, "Pickup and destination locations are required")
@@ -426,34 +514,58 @@ def addPool(request):
             
         # Get road distance from session
         distance = request.session.get('current_ride_distance')
-        print(f"Road distance from session: {distance}")  # Debug log
+        print(f"Road distance from session: {distance}")
         
-        if not distance:
-            # Redirect to maps to calculate road distance
+        if not distance or float(distance) <= 0:
+            print("ERROR: Invalid or missing distance, redirecting to maps")
             return redirect(f'/maps?source={fromCity}&destination={toCity}')
             
         try:
-            print(f"Creating pool with road distance: {distance}")  # Debug log
+            distance = float(distance)
+            if distance <= 0:
+                raise ValueError("Distance must be greater than 0")
+                
+            print(f"Creating pool with road distance: {distance} km")
+            # Calculate fare based on distance (0.000055 ETH per km)
+            fare = round(distance * 0.000055, 6)
+            print(f"Calculated fare: {fare} ETH")
+            
+            # Create the pool
             pool = RidePoint.objects.create(
                 fromCity=fromCity,
                 toCity=toCity,
                 datePoint=datePoint,
                 contactPoint=contactPoint,
                 status="Pending To Accept By Delivery",
-                userid=userId,  # Using string user ID
+                userid=userId,
                 driverId="",
                 applyOn=output,
-                distance=float(distance)  # Ensure distance is a float
+                payment=str(fare)
             )
-            print(f"Pool created successfully with ID: {pool.id}")  # Debug log
+            
+            # Create the ride distance record
+            ride_distance = RideDistance.objects.create(
+                ride=pool,
+                distance=distance,
+                fare=fare
+            )
+            
+            print(f"Pool created successfully with ID: {pool.id}")
+            print(f"Stored distance: {ride_distance.distance} km")
+            print(f"Stored fare: {ride_distance.fare} ETH")
+            print("==============================\n")
             
             # Clear the distance from session after successful creation
             if 'current_ride_distance' in request.session:
                 del request.session['current_ride_distance']
             messages.success(request, "Pool added successfully!")
             return redirect('userHome')
+        except ValueError as e:
+            print(f"Error: Invalid distance value - {str(e)}")
+            messages.error(request, "Invalid distance value. Please try again.")
+            return redirect('userHome')
         except Exception as e:
-            print(f"Error creating pool: {str(e)}")  # Debug log
+            print(f"Error creating pool: {str(e)}")
             messages.error(request, f"Error adding pool: {str(e)}")
             return redirect('userHome')
             
@@ -612,26 +724,40 @@ def update_distance(request):
     try:
         data = json.loads(request.body)
         distance = data.get('distance')
-        if distance is not None:
-            # Store the road distance in session
-            request.session['current_ride_distance'] = float(distance)
-            print(f"Stored road distance in session: {distance} km")  # Debug log
+        
+        print("\n=== UPDATING DISTANCE ===")
+        print(f"Received distance: {distance}")
+        
+        if distance is None:
+            print("ERROR: No distance provided")
+            return JsonResponse({'success': False, 'error': 'No distance provided'})
             
-            # Store the distance in a new model called DistanceCalculation
-            DistanceCalculation.objects.create(
-                distance=float(distance),
+        try:
+            distance = float(distance)
+            if distance <= 0:
+                print("ERROR: Distance must be greater than 0")
+                return JsonResponse({'success': False, 'error': 'Distance must be greater than 0'})
+                
+            # Store the road distance in session
+            request.session['current_ride_distance'] = distance
+            print(f"Stored road distance in session: {distance} km")
+            
+            # Store the distance in DistanceCalculation model
+            distance_calc = DistanceCalculation.objects.create(
+                distance=distance,
                 calculated_at=datetime.now()
             )
-            print(f"Stored road distance in database: {distance} km")  # Debug log
+            print(f"Stored road distance in database: {distance_calc.distance} km")
+            print("==============================\n")
             
             return JsonResponse({'success': True, 'distance': distance})
-        else:
-            return JsonResponse({'success': False, 'error': 'No distance provided'})
-    except Exception as e:
-        print(f"Error updating distance: {str(e)}")  # Debug log
-        return JsonResponse({'success': False, 'error': str(e)})
+        except ValueError:
+            print("ERROR: Invalid distance value")
+            return JsonResponse({'success': False, 'error': 'Invalid distance value'})
             
-    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+    except Exception as e:
+        print(f"Error updating distance: {str(e)}")
+        return JsonResponse({'success': False, 'error': str(e)})
 
 def deletePool(request, pool_id):
     if not request.session.get('user_id') or request.session.get('user_type') != 'user':
