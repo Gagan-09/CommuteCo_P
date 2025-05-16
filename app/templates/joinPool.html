@@ -1,0 +1,214 @@
+{% extends 'base.html' %} {% block content %}
+<div class="headerSelction">
+  <div class="titlePoint">CommuteCo</div>
+  <div class="navPoint">
+    <a href="/userHome">My Pool</a>
+    <a href="/joinPool" id="activac">Join Pool</a>
+    <a href="/payment_history">Payment History</a>
+    <a href="/logout">Logout</a>
+  </div>
+</div>
+
+<div class="container mt-4">
+  <h2>Available Pools</h2>
+  <div class="row">
+    {% for pool in pools %}
+    <div class="col-md-6 mb-4">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Pool #{{ pool.id }}</h5>
+          <p><strong>From:</strong> {{ pool.fromCity }}</p>
+          <p><strong>To:</strong> {{ pool.toCity }}</p>
+          <p><strong>Date:</strong> {{ pool.datePoint }}</p>
+          <p><strong>Contact:</strong> {{ pool.contactPoint }}</p>
+          <p><strong>Status:</strong> {{ pool.status }}</p>
+          <div class="mt-3">
+            <a
+              href="https://www.google.com/maps/dir/?api=1&origin={{ pool.fromCity }}&destination={{ pool.toCity }}"
+              target="_blank"
+              class="btn btn-primary"
+              >Get Directions</a
+            >
+            <button
+              type="button"
+              class="btn btn-success"
+              data-bs-toggle="modal"
+              data-bs-target="#joinModal{{ pool.id }}"
+            >
+              Join Pool
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Join Pool Modal -->
+    <div
+      class="modal fade"
+      id="joinModal{{ pool.id }}"
+      tabindex="-1"
+      aria-labelledby="joinModalLabel{{ pool.id }}"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="joinModalLabel{{ pool.id }}">
+              Join Pool #{{ pool.id }}
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <form action="{% url 'joinPool' %}" method="POST">
+            {% csrf_token %}
+            <div class="modal-body">
+              <input type="hidden" name="poolId" value="{{ pool.id }}" />
+              <input
+                type="hidden"
+                name="userId"
+                value="{{ request.session.user_id }}"
+              />
+              <div class="mb-3">
+                <label for="walletAddress{{ pool.id }}" class="form-label"
+                  >Your Blockchain Wallet Address</label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  id="walletAddress{{ pool.id }}"
+                  name="walletAddress"
+                  required
+                />
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal"
+              >
+                Cancel
+              </button>
+              <button type="submit" class="btn btn-success">Join Pool</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+      <p class="text-center">No available pools found.</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<style>
+  .headerSelction {
+    background: #004aad;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+  }
+
+  .titlePoint {
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
+
+  .navPoint {
+    display: flex;
+    gap: 1.5rem;
+  }
+
+  .navPoint a {
+    color: white;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    transition: 0.3s;
+  }
+
+  .navPoint a:hover {
+    background: #ffffff33;
+  }
+
+  .navPoint a#activac {
+    background: #ffcc00;
+    color: #000;
+  }
+
+  .card {
+    border: 2px solid #004aad;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    background-color: #f8f9fa;
+  }
+
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .card-body {
+    padding: 1.5rem;
+    background: linear-gradient(to bottom right, #ffffff, #f8f9fa);
+  }
+
+  .btn-primary {
+    background: #004aad;
+    border: none;
+  }
+
+  .btn-primary:hover {
+    background: #00338d;
+  }
+
+  .btn-success {
+    background: #28a745;
+    border: none;
+  }
+
+  .btn-success:hover {
+    background: #218838;
+  }
+
+  .modal-content {
+    border-radius: 10px;
+  }
+
+  .modal-header {
+    background: #004aad;
+    color: white;
+    border-radius: 10px 10px 0 0;
+  }
+
+  .modal-header .btn-close {
+    color: white;
+  }
+
+  .form-control:focus {
+    border-color: #004aad;
+    box-shadow: 0 0 0 0.2rem rgba(0, 74, 173, 0.25);
+  }
+</style>
+
+{% if messages %}
+<div class="nothing" id="messagePoint"></div>
+<script>
+  const success = document.getElementById("successpoint").value;
+  const vali = document.getElementById("messagePoint");
+  vali.className = "dialog";
+  vali.innerText = success;
+  setTimeout(() => {
+    vali.className = "nothing";
+  }, 3000);
+</script>
+{% endif %} {% endblock %}
