@@ -25,21 +25,21 @@
             km
           </p>
           <p><strong>Fare:</strong> {{ transaction.fare|floatformat:6 }} ETH</p>
-          <p><strong>Status:</strong> {{ transaction.status }}</p>
           <p>
-            <strong>Date:</strong> {{ transaction.created_at|date:"F j, Y, g:i
-            a" }}
+            <strong>Status:</strong> 
+            <span class="status-badge {% if transaction.status == 'Completed' %}status-completed{% elif transaction.status == 'Pending' %}status-pending{% endif %}">
+              {{ transaction.status }}
+            </span>
           </p>
+          <p><strong>Date:</strong> {{ transaction.created_at|date:"d M Y, h:i A" }}</p>
           {% if transaction.transaction_hash %}
           <p>
             <strong>Transaction Hash:</strong>
-            <a
-              href="https://sepolia.etherscan.io/tx/{{ transaction.transaction_hash }}"
-              target="_blank"
-              class="text-primary"
-            >
-              {{ transaction.transaction_hash|truncatechars:20 }}
-            </a>
+            <div class="hash-container">
+              <a href="https://sepolia.etherscan.io/tx/{{ transaction.transaction_hash }}" target="_blank" class="text-primary">
+                {{ transaction.transaction_hash }}
+              </a>
+            </div>
           </p>
           {% endif %}
         </div>
@@ -91,13 +91,21 @@
   }
 
   .card {
-    border: none;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s;
+    border: 2px solid #004aad;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    background-color: #f8f9fa;
   }
 
   .card:hover {
     transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .card-body {
+    padding: 1.5rem;
+    background: linear-gradient(to bottom right, #ffffff, #f8f9fa);
   }
 
   .text-primary {
@@ -111,12 +119,77 @@
 
   .card-body p {
     margin-bottom: 0.5rem;
+    padding: 0.25rem 0;
   }
 
   .card-title {
     color: #004aad;
     margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e9ecef;
   }
+
+  .hash-container {
+    max-width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding: 5px 0;
+    margin-top: 5px;
+    background-color: #ffffff;
+    border-radius: 4px;
+    border: 1px solid #e9ecef;
+  }
+
+  .hash-container::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .hash-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 2px;
+  }
+
+  .hash-container::-webkit-scrollbar-thumb {
+    background: #004aad;
+    border-radius: 2px;
+  }
+
+  .status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+    display: inline-block;
+  }
+
+  .status-completed {
+    color: #28a745;
+    background-color: rgba(40, 167, 69, 0.1);
+  }
+
+  .status-pending {
+    color: #fd7e14;
+    background-color: rgba(253, 126, 20, 0.1);
+  }
+  .status-badge {
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-weight: 600;
+  display: inline-block;
+  font-size: 0.9rem;
+}
+
+.status-completed {
+  color: #155724;
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+}
+
+.status-pending {
+  color: #856404;
+  background-color: #fff3cd;
+  border: 1px solid #ffeeba;
+}
+
 </style>
 
 {% if messages %}
