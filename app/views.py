@@ -451,7 +451,15 @@ def driverHome(request):
 
 def profileDetails(request):
     userId = request.GET.get("userid", 0)
-    data = User.objects.filter(id=int(userId)).values("name", "email", "typeView", "gender")
+    data = User.objects.filter(id=int(userId)).values(
+        "name", 
+        "email", 
+        "typeView", 
+        "gender",
+        "emergency_contact_name",
+        "emergency_contact_email",
+        "emergency_contact_mobile"
+    )
     return JsonResponse({"profile": list(data)})
 
 

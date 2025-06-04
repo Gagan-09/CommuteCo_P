@@ -688,6 +688,31 @@
               </div>
             </div>
           </div>
+          <!-- Emergency Contact Details Section -->
+          <div id="emergencyContactDetails" style="display: none">
+            <h3 style="margin-top: 1.5rem; color: #004aad; font-size: 1.1rem">
+              Emergency Contact
+              <button
+                onclick="editEmergencyContact()"
+                class="btn btn-primary"
+                style="float: right; padding: 0.3rem 0.8rem; font-size: 0.9rem"
+              >
+                Edit
+              </button>
+            </h3>
+            <div class="info-item">
+              <label>Contact Name</label>
+              <p id="emergencyContactName"></p>
+            </div>
+            <div class="info-item">
+              <label>Contact Email</label>
+              <p id="emergencyContactEmail"></p>
+            </div>
+            <div class="info-item">
+              <label>Contact Mobile</label>
+              <p id="emergencyContactMobile"></p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -753,11 +778,8 @@
     {% endif %}
 
     <script>
-      // Ensure modal is hidden on page load
-      document.addEventListener("DOMContentLoaded", function () {
-        const modal = document.getElementById("emergencyContactModal");
-        modal.style.display = "none";
-      });
+      // Store emergency contact details globally
+      let storedEmergencyContact = null;
 
       window.addEventListener("DOMContentLoaded", () => {
         const userId = "{{ request.session.user_id }}";
@@ -779,6 +801,15 @@
               document.getElementById("userType").textContent =
                 profile.typeView;
 
+              // Store emergency contact details if they exist
+              if (profile.emergency_contact_name) {
+                storedEmergencyContact = {
+                  name: profile.emergency_contact_name,
+                  email: profile.emergency_contact_email,
+                  mobile: profile.emergency_contact_mobile,
+                };
+              }
+
               // Set the radio button value if gender exists
               if (profile.gender) {
                 const radioButton = document.querySelector(
@@ -786,16 +817,19 @@
                 );
                 if (radioButton) {
                   radioButton.checked = true;
-                  // Remove selected class from all options
                   document
                     .querySelectorAll(".radio-option")
                     .forEach((option) => {
                       option.classList.remove("selected");
                     });
-                  // Add selected class to the checked option
                   radioButton
                     .closest(".radio-option")
                     .classList.add("selected");
+
+                  // Show emergency contact details only if gender is Female
+                  if (profile.gender === "Female" && storedEmergencyContact) {
+                    showEmergencyContactDetails();
+                  }
                 }
               }
             }
@@ -804,6 +838,37 @@
             console.error("Error fetching profile:", error);
           });
       });
+
+      function showEmergencyContactDetails() {
+        if (storedEmergencyContact) {
+          document.getElementById("emergencyContactDetails").style.display =
+            "block";
+          document.getElementById("emergencyContactName").textContent =
+            storedEmergencyContact.name;
+          document.getElementById("emergencyContactEmail").textContent =
+            storedEmergencyContact.email;
+          document.getElementById("emergencyContactMobile").textContent =
+            storedEmergencyContact.mobile;
+        }
+      }
+
+      function hideEmergencyContactDetails() {
+        document.getElementById("emergencyContactDetails").style.display =
+          "none";
+      }
+
+      function editEmergencyContact() {
+        if (storedEmergencyContact) {
+          document.getElementById("emergencyName").value =
+            storedEmergencyContact.name;
+          document.getElementById("emergencyEmail").value =
+            storedEmergencyContact.email;
+          document.getElementById("emergencyMobile").value =
+            storedEmergencyContact.mobile;
+        }
+        const modal = document.getElementById("emergencyContactModal");
+        modal.style.display = "block";
+      }
 
       function updateGender(gender) {
         const userId = "{{ request.session.user_id }}";
@@ -828,15 +893,24 @@
         event.target.closest(".radio-option").classList.add("selected");
 
         if (gender === "Female") {
-          // Show the emergency contact modal
-          const modal = document.getElementById("emergencyContactModal");
-          modal.style.display = "block";
-          // Clear any previous values
-          document.getElementById("emergencyName").value = "";
-          document.getElementById("emergencyEmail").value = "";
-          document.getElementById("emergencyMobile").value = "";
+          // Show the emergency contact modal if no details exist
+          if (!storedEmergencyContact) {
+            const modal = document.getElementById("emergencyContactModal");
+            modal.style.display = "block";
+            // Clear any previous values
+            document.getElementById("emergencyName").value = "";
+            document.getElementById("emergencyEmail").value = "";
+            document.getElementById("emergencyMobile").value = "";
+          } else {
+            // Show existing emergency contact details
+            showEmergencyContactDetails();
+            // Update gender without showing modal
+            saveGenderUpdate(userId, gender);
+          }
         } else if (gender === "Male") {
-          // For Male, proceed with normal gender update
+          // Hide emergency contact details but keep data stored
+          hideEmergencyContactDetails();
+          // Update gender
           saveGenderUpdate(userId, gender);
         }
       }
@@ -883,6 +957,13 @@
           return;
         }
 
+        // Store emergency contact details
+        storedEmergencyContact = {
+          name: emergencyName,
+          email: emergencyEmail,
+          mobile: emergencyMobile,
+        };
+
         // Send update request to server
         fetch("/update_gender/", {
           method: "POST",
@@ -908,6 +989,9 @@
               setTimeout(() => {
                 vali.className = "nothing";
               }, 3000);
+
+              // Update emergency contact details in the profile
+              showEmergencyContactDetails();
 
               // Close the modal
               closeModal();
