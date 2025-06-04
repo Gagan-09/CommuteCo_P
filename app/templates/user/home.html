@@ -512,6 +512,9 @@
                 element.joined_at ? "Joined On" : "Raised On"
               }:</strong> ${element.joined_at || element.applyOn}</p>
               <p><strong>Status:</strong> ${element.status}</p>
+              <p><strong>Passengers:</strong> ${
+                element.passenger_count || 1
+              }/2</p>
               <div class="button-group" style="display: flex; gap: 10px; margin-top: 15px;">
                 <button class="accept-btn" onclick="setString('${
                   element.toCity

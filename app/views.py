@@ -262,16 +262,26 @@ def getJoinPool(request):
             ).filter(
                 Q(fromCity__icontains=search) | Q(toCity__icontains=search)
             ).annotate(
-                Joined=Count('applyOn', distinct=True)  # Count number of people who have joined
+                joined_count=Count('jointride', distinct=True)  # Count number of people who have joined
             ).filter(
-                Joined__lt=2  # Only show rides with less than 2 passengers
+                joined_count__lt=2  # Only show rides with less than 2 passengers
             ).order_by('ride_distance')  # Order by distance
 
             # Convert to list of dictionaries
             rides_list = list(rides.values(
                 'id', 'fromCity', 'toCity', 'datePoint', 
-                'contactPoint', 'status', 'Joined', 'ride_distance'
+                'contactPoint', 'status', 'joined_count', 'ride_distance',
+                'passenger_count'  # Include passenger_count in the response
             ))
+
+            # Process the rides to ensure correct passenger count
+            for ride in rides_list:
+                # If no one has joined yet, set passenger_count to 1 (the creator)
+                if ride['joined_count'] == 0:
+                    ride['passenger_count'] = 1
+                else:
+                    # If someone has joined, set passenger_count to 2
+                    ride['passenger_count'] = 2
 
             return JsonResponse({"data": rides_list})
 
@@ -621,7 +631,7 @@ def getRequestFromUsers(request):
             # Get direct rides (created by the user)
             print("Fetching direct rides...")
             user_rides = list(RidePoint.objects.filter(userid=str(userid))
-                .select_related('ride_distance')  # Ensure we're using select_related
+                .select_related('ride_distance')
                 .values(
                     "fromCity",
                     "toCity",
@@ -674,6 +684,12 @@ def getRequestFromUsers(request):
                             ride['distance'] = None
                             ride['fare'] = None
                             
+                    # For direct rides, count the creator as a passenger
+                    ride['passenger_count'] = 1
+                    # Update the actual ride object's passenger count
+                    ride_obj.passenger_count = 1
+                    ride_obj.save()
+                    
                     if ride.get('applyOn'):
                         ride['applyOn'] = ride['applyOn'].strftime('%Y-%m-%d %H:%M:%S')
                 except Exception as e:
@@ -747,6 +763,12 @@ def getRequestFromUsers(request):
                                     ride['distance'] = None
                                     ride['fare'] = None
                                     
+                            # For joint rides, count both the creator and the joiner
+                            ride['passenger_count'] = 2
+                            # Update the actual ride object's passenger count
+                            ride_obj.passenger_count = 2
+                            ride_obj.save()
+                            
                             ride['joined_at'] = joined_at_map[str(ride['id'])]
                             if ride.get('applyOn'):
                                 ride['applyOn'] = ride['applyOn'].strftime('%Y-%m-%d %H:%M:%S')
@@ -845,7 +867,7 @@ def addPool(request):
             fare = round(distance * 0.000055, 6)
             print(f"Calculated fare: {fare} ETH")
             
-            # Create the pool
+            # Create the pool with initial passenger count of 1
             pool = RidePoint.objects.create(
                 fromCity=fromCity,
                 toCity=toCity,
@@ -857,7 +879,11 @@ def addPool(request):
                 userid=userId,
                 driverId="",
                 applyOn=output,
-                payment=str(fare)
+                payment=str(fare),
+                passenger_count=1,  # Set initial passenger count to 1 (the creator)
+                is_carpool=True,    # Mark as carpool since it's created for sharing
+                base_fare=fare,     # Set base fare
+                current_fare=fare   # Set current fare
             )
             
             # Create the ride distance record
@@ -867,7 +893,14 @@ def addPool(request):
                 fare=fare
             )
             
+            # Double-check passenger count is set correctly
+            pool.refresh_from_db()
+            if pool.passenger_count != 1:
+                pool.passenger_count = 1
+                pool.save()
+            
             print(f"Pool created successfully with ID: {pool.id}")
+            print(f"Passenger count: {pool.passenger_count}")
             print(f"Stored distance: {ride_distance.distance} km")
             print(f"Stored fare: {ride_distance.fare} ETH")
             print("==============================\n")
