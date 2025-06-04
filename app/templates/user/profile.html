@@ -168,6 +168,23 @@
       .nothing {
         display: none;
       }
+
+      .gender-select {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background-color: white;
+        color: #333;
+        font-size: 1.1rem;
+        margin-top: 5px;
+      }
+
+      .gender-select:focus {
+        outline: none;
+        border-color: #004aad;
+        box-shadow: 0 0 0 2px rgba(0, 74, 173, 0.2);
+      }
     </style>
 
     <div class="nothing" id="messagePoint"></div>
@@ -202,6 +219,18 @@
           <div class="info-item">
             <label>Type</label>
             <p id="userType"></p>
+          </div>
+          <div class="info-item">
+            <label>Gender</label>
+            <select
+              id="userGender"
+              class="gender-select"
+              onchange="updateGender()"
+            >
+              <option value="">Select Gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
           </div>
         </div>
       </div>
@@ -240,6 +269,9 @@
               document.getElementById("userEmail").textContent = element.email;
               document.getElementById("userType").textContent =
                 element.typeView;
+              if (element.gender) {
+                document.getElementById("userGender").value = element.gender;
+              }
             } else {
               document.getElementById("userName").textContent = "Not available";
               document.getElementById("userEmail").textContent =
@@ -257,6 +289,52 @@
               "Error loading data";
           });
       });
+
+      function updateGender() {
+        const userId = "{{ request.session.user_id }}";
+        const gender = document.getElementById("userGender").value;
+
+        fetch("/update_gender/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie("csrftoken"),
+          },
+          body: JSON.stringify({
+            userId: userId,
+            gender: gender,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              const vali = document.getElementById("messagePoint");
+              vali.className = "dialog";
+              vali.innerText = "Gender updated successfully";
+              setTimeout(() => {
+                vali.className = "nothing";
+              }, 3000);
+            } else {
+              alert("Failed to update gender");
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            alert("Error updating gender");
+          });
+      }
+
+      // Helper to get CSRF token from cookies
+      function getCookie(name) {
+        const cookies = document.cookie.split(";");
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.startsWith(name + "=")) {
+            return decodeURIComponent(cookie.substring(name.length + 1));
+          }
+        }
+        return null;
+      }
     </script>
   </body>
 </html>

@@ -6,6 +6,7 @@ class User(models.Model):
     email=models.CharField(max_length=1000)
     password=models.CharField(max_length=1000)
     typeView=models.CharField(max_length=1000)
+    gender=models.CharField(max_length=10, null=True, blank=True)  # For storing gender (Male/Female)
 
 class Transaction(models.Model):
     id = models.AutoField(primary_key=True)

@@ -451,7 +451,7 @@ def driverHome(request):
 
 def profileDetails(request):
     userId = request.GET.get("userid", 0)
-    data = User.objects.filter(id=int(userId)).values("name", "email", "typeView")
+    data = User.objects.filter(id=int(userId)).values("name", "email", "typeView", "gender")
     return JsonResponse({"profile": list(data)})
 
 
@@ -893,3 +893,30 @@ def transaction_history(request):
         return redirect('login')
         
     return render(request, 'transaction_history.html')
+
+@require_http_methods(["POST"])
+def update_gender(request):
+    if not request.session.get('user_id') or request.session.get('user_type') != 'user':
+        return JsonResponse({'success': False, 'error': 'Unauthorized'})
+        
+    try:
+        data = json.loads(request.body)
+        user_id = data.get('userId')
+        gender = data.get('gender')
+        
+        if not user_id or not gender:
+            return JsonResponse({'success': False, 'error': 'Missing required fields'})
+            
+        # Only allow users to update their own gender
+        if str(user_id) != str(request.session['user_id']):
+            return JsonResponse({'success': False, 'error': 'Unauthorized'})
+            
+        user = User.objects.get(id=user_id)
+        user.gender = gender
+        user.save()
+        
+        return JsonResponse({'success': True})
+    except User.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'User not found'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
