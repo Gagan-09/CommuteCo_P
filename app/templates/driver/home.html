@@ -1,10 +1,19 @@
-{% extends 'base.html' %} {% block title %}Driver Home{% endblock %} {% block
-navigation %}
-<a href="/driverHome" id="activac">Pending Rides</a>
-<a href="/acceptance/{{ request.session.driver_id }}/">Accepted Pool</a>
-<a href="/driver/transactions/">Transactions</a>
-<a href="/logout">Logout</a>
-{% endblock %} {% block content %}
+{% extends 'base.html' %} 
+{% block title %}Driver Home{% endblock %} 
+{% block content %}
+<div class="headerSelction">
+  <div class="titlePoint">CommuteCo</div>
+  <div class="hamburger-menu" onclick="toggleMenu()">
+    <i class="fas fa-ellipsis-v"></i>
+  </div>
+  <div class="navPoint">
+    <a href="/driverHome" id="activac">Pending Rides</a>
+    <a href="/acceptance/{{ request.session.driver_id }}/">Accepted Pool</a>
+    <a href="/driver/transactions/">Transactions</a>
+    <a href="/logout">Logout</a>
+  </div>
+</div>
+
 <div class="container mt-4">
   <h2>Available Rides</h2>
   <div class="row">
@@ -113,8 +122,57 @@ navigation %}
     {% endfor %}
   </div>
 </div>
-{% endblock %} {% block extra_css %}
+
 <style>
+  .headerSelction {
+    background: linear-gradient(135deg, #004aad, #0066cc);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .titlePoint {
+    color: white;
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+  }
+
+  .navPoint {
+    display: flex;
+    gap: 1.5rem;
+  }
+
+  .navPoint a {
+    color: white;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+  }
+
+  .navPoint a:hover {
+    background: #ffffff33;
+  }
+
+  .navPoint a#activac {
+    background: #ffcc00;
+    color: #000;
+  }
+
+  .hamburger-menu {
+    display: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+  }
+
   .card {
     border: none;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -142,11 +200,89 @@ navigation %}
   .btn-success:hover {
     background: #218838;
   }
-</style>
-{% endblock %}
 
-<script src="https://cdn.jsdelivr.net/npm/web3@1.5.2/dist/web3.min.js"></script>
+  @media screen and (max-width: 768px) {
+    .headerSelction {
+      padding: 0.8rem 1rem;
+    }
+
+    .titlePoint {
+      font-size: 1.2rem;
+    }
+
+    .hamburger-menu {
+      display: block;
+    }
+
+    .navPoint {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: #004aad;
+      flex-direction: column;
+      padding: 1rem;
+      gap: 0.5rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .navPoint.active {
+      display: flex;
+    }
+
+    .navPoint a {
+      width: 100%;
+      text-align: center;
+      padding: 0.8rem;
+      border-radius: 8px;
+    }
+
+    .container {
+      margin-top: 1rem;
+      padding: 0.5rem;
+    }
+  }
+
+  @media screen and (max-width: 480px) {
+    .headerSelction {
+      padding: 0.6rem 0.8rem;
+    }
+
+    .titlePoint {
+      font-size: 1.1rem;
+    }
+
+    .navPoint a {
+      padding: 0.6rem;
+      font-size: 0.9rem;
+    }
+
+    .container {
+      margin-top: 0.8rem;
+    }
+  }
+</style>
+
 <script>
+  function toggleMenu() {
+    const navPoint = document.querySelector(".navPoint");
+    navPoint.classList.toggle("active");
+  }
+
+  // Close menu when clicking outside
+  document.addEventListener("click", function (event) {
+    const navPoint = document.querySelector(".navPoint");
+    const hamburgerMenu = document.querySelector(".hamburger-menu");
+
+    if (
+      !navPoint.contains(event.target) &&
+      !hamburgerMenu.contains(event.target)
+    ) {
+      navPoint.classList.remove("active");
+    }
+  });
+
   // Initialize Web3 with Ganache
   const web3 = new Web3("http://127.0.0.1:7545");
 
@@ -231,4 +367,4 @@ navigation %}
     vali.className = "nothing";
   }, 3000);
 </script>
-{% endif %}
+{% endif %} {% endblock %}

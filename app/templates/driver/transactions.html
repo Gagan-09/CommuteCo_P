@@ -1,6 +1,11 @@
-{% extends 'base.html' %} {% block content %}
+{% extends 'base.html' %} 
+{% block title %}Driver Transactions{% endblock %} 
+{% block content %}
 <div class="headerSelction">
   <div class="titlePoint">CommuteCo</div>
+  <div class="hamburger-menu" onclick="toggleMenu()">
+    <i class="fas fa-ellipsis-v"></i>
+  </div>
   <div class="navPoint">
     {% if request.session.driver_id %}
     <a href="/driverHome">Pending Rides</a>
@@ -61,17 +66,22 @@
 
 <style>
   .headerSelction {
-    background: #004aad;
+    background: linear-gradient(135deg, #004aad, #0066cc);
     padding: 1rem 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    color: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    position: sticky;
+    top: 0;
+    z-index: 100;
   }
 
   .titlePoint {
+    color: white;
     font-size: 1.5rem;
     font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
   }
 
   .navPoint {
@@ -84,7 +94,7 @@
     text-decoration: none;
     padding: 0.5rem 1rem;
     border-radius: 20px;
-    transition: 0.3s;
+    transition: all 0.3s ease;
   }
 
   .navPoint a:hover {
@@ -94,6 +104,14 @@
   .navPoint a#activac {
     background: #ffcc00;
     color: #000;
+  }
+
+  .hamburger-menu {
+    display: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
   }
 
   .card {
@@ -179,7 +197,89 @@
     background-color: #fff3cd;
     border: 1px solid #ffeeba;
   }
+
+  @media screen and (max-width: 768px) {
+    .headerSelction {
+      padding: 0.8rem 1rem;
+    }
+
+    .titlePoint {
+      font-size: 1.2rem;
+    }
+
+    .hamburger-menu {
+      display: block;
+    }
+
+    .navPoint {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: #004aad;
+      flex-direction: column;
+      padding: 1rem;
+      gap: 0.5rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .navPoint.active {
+      display: flex;
+    }
+
+    .navPoint a {
+      width: 100%;
+      text-align: center;
+      padding: 0.8rem;
+      border-radius: 8px;
+    }
+
+    .container {
+      margin-top: 1rem;
+      padding: 0.5rem;
+    }
+  }
+
+  @media screen and (max-width: 480px) {
+    .headerSelction {
+      padding: 0.6rem 0.8rem;
+    }
+
+    .titlePoint {
+      font-size: 1.1rem;
+    }
+
+    .navPoint a {
+      padding: 0.6rem;
+      font-size: 0.9rem;
+    }
+
+    .container {
+      margin-top: 0.8rem;
+    }
+  }
 </style>
+
+<script>
+  function toggleMenu() {
+    const navPoint = document.querySelector(".navPoint");
+    navPoint.classList.toggle("active");
+  }
+
+  // Close menu when clicking outside
+  document.addEventListener("click", function (event) {
+    const navPoint = document.querySelector(".navPoint");
+    const hamburgerMenu = document.querySelector(".hamburger-menu");
+
+    if (
+      !navPoint.contains(event.target) &&
+      !hamburgerMenu.contains(event.target)
+    ) {
+      navPoint.classList.remove("active");
+    }
+  });
+</script>
 
 {% if messages %}
 <div class="nothing" id="messagePoint"></div>
@@ -192,4 +292,5 @@
     vali.className = "nothing";
   }, 3000);
 </script>
-{% endif %} {% endblock %}
+{% endif %}
+{% endblock %}
