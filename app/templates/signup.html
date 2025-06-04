@@ -1,20 +1,212 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>User Registration - CarPool</title>
+    <title>User Registration - Car Pool</title>
+    <link rel="stylesheet" href="{% static 'css/login.css' %}" />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
     />
-    <link rel="stylesheet" href="/static/css/login.css" />
+    <style>
+      .new-container {
+        background: rgba(62, 138, 225, 0.95);
+        padding: 3rem;
+        border-radius: 20px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        width: 90%;
+        max-width: 700px;
+        max-height: 750px;
+        border: 2px solid rgba(255, 255, 255, 0.4);
+        backdrop-filter: blur(8px);
+        margin-top: 20px;
+      }
+
+      .new-head {
+        font-size: 2.2rem;
+        color: #fff;
+        text-align: center;
+        margin-bottom: 1rem;
+        background: linear-gradient(45deg, #ffd700, #ffa500);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 600;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .new-head2 {
+        color: rgba(255, 255, 255, 0.9);
+        text-align: center;
+        margin-bottom: 2.5rem;
+        font-size: 1.2rem;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      }
+
+      .new-input-group {
+        position: relative;
+        margin-bottom: .9rem;
+      }
+
+      .new-input-group input {
+        width: 100%;
+        padding: 16px 20px 16px 50px;
+        border: 2px solid rgba(255, 255, 255, 0.4);
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 30px;
+        color: #fff;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+      }
+
+      .new-input-group input:focus {
+        outline: none;
+        background: rgba(255, 255, 255, 0.2);
+        border-color: #d00c0ce9;
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+      }
+
+      .new-input-group input::placeholder {
+        color: #ffffff;
+        opacity: 0.9;
+      }
+
+      .new-input-group i {
+        position: absolute;
+        left: 18px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #ffffff;
+        opacity: 0.9;
+        font-size: 1.1rem;
+      }
+
+      .new-button {
+        width: 100%;
+        padding: 16px;
+        background: linear-gradient(45deg, #ffd700, #ffa500);
+        border: none;
+        border-radius: 30px;
+        color: #333;
+        font-size: 1.2rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+        margin-top: 1rem;
+      }
+
+      .new-button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5);
+      }
+
+      .new-login-link {
+        text-align: center;
+        margin-top: 2rem;
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      .new-login-link a {
+        color: #ffd700;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: inline-block;
+        margin-left: 0.5rem;
+      }
+
+      .new-login-link a:hover {
+        color: #ffa500;
+        transform: translateY(-2px);
+      }
+
+      .new-select-group {
+        position: relative;
+        margin-bottom: 1.5rem;
+      }
+
+      .new-select-group select {
+        width: 100%;
+        padding: 16px 20px 16px 50px;
+        border: 2px solid rgba(255, 255, 255, 0.4);
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 30px;
+        color: #fff;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+        appearance: none;
+        cursor: pointer;
+      }
+
+      .new-select-group select:focus {
+        outline: none;
+        background: rgba(255, 255, 255, 0.2);
+        border-color: #d00c0ce9;
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+      }
+
+      .new-select-group i {
+        position: absolute;
+        left: 18px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #ffffff;
+        opacity: 0.9;
+        font-size: 1.1rem;
+        pointer-events: none;
+      }
+
+      .new-select-group::after {
+        content: "\f107";
+        font-family: "Font Awesome 5 Free";
+        font-weight: 900;
+        position: absolute;
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #ffffff;
+        opacity: 0.9;
+        font-size: 1.1rem;
+        pointer-events: none;
+      }
+
+      @media screen and (max-width: 480px) {
+        .new-container {
+          padding: 2rem;
+          width: 95%;
+        }
+
+        .new-head {
+          font-size: 1.8rem;
+        }
+
+        .new-head2 {
+          font-size: 1rem;
+          margin-bottom: 2rem;
+        }
+
+        .new-input-group input,
+        .new-select-group select {
+          padding: 14px 15px 14px 45px;
+          font-size: 1rem;
+        }
+
+        .new-button {
+          padding: 14px;
+          font-size: 1.1rem;
+        }
+      }
+    </style>
   </head>
 
   <body>
-    <div class="container">
-      <p class="head">User Registration</p>
-      <p class="head2">Join Our CarPool Community</p>
+    <img src="{% static 'img/logo.png' %}" alt="Logo" class="logo" />
+
+    <div class="new-container">
+      <h1 class="new-head">User Registration</h1>
+      <p class="new-head2">Join our carpooling community</p>
 
       {% if messages %} {% for review in messages %}
       <input type="text" value="{{review.message}}" id="point" />
@@ -30,12 +222,18 @@
 
       <form action="/signup/" method="post">
         {% csrf_token %}
-        <div class="input-icon">
+        <div class="new-input-group">
           <i class="fas fa-user"></i>
-          <input type="text" name="name" placeholder="Full Name" required />
+          <input
+            type="text"
+            name="name"
+            placeholder="Full Name"
+            required
+            autocomplete="name"
+          />
         </div>
 
-        <div class="input-icon">
+        <div class="new-input-group">
           <i class="fas fa-envelope"></i>
           <input
             type="email"
@@ -44,26 +242,52 @@
             placeholder="Email Address"
             title="Invalid Email Format"
             required
+            autocomplete="email"
           />
         </div>
 
-        <div class="input-icon">
+        <div class="new-input-group">
+          <i class="fas fa-phone"></i>
+          <input
+            type="tel"
+            name="phone"
+            pattern="[0-9]{10}"
+            placeholder="Phone Number"
+            title="Please enter a valid 10-digit phone number"
+            required
+            autocomplete="tel"
+          />
+        </div>
+
+        <div class="new-input-group">
           <i class="fas fa-lock"></i>
           <input
             type="password"
             name="password"
             pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
-            placeholder="Create Password"
+            placeholder="Password"
             required
+            autocomplete="new-password"
           />
         </div>
 
-        <button>REGISTER NOW</button>
+        <!-- <div class="new-select-group">
+          <i class="fas fa-map-marker-alt"></i>
+          <select name="city" required>
+            <option value="" disabled selected>Select Your City</option>
+            <option value="bangalore">Bangalore</option>
+            <option value="mumbai">Mumbai</option>
+            <option value="delhi">Delhi</option>
+            <option value="chennai">Chennai</option>
+            <option value="hyderabad">Hyderabad</option>
+          </select>
+        </div> -->
+
+        <button type="submit" class="new-button">REGISTER AS USER</button>
       </form>
 
-      <div class="login-link">
-        <p>Already have an account?</p>
-        <h3 onclick="window.location.href='/login'">Sign In</h3>
+      <div class="new-login-link">
+        Already have an account?<a href="/login">Login here</a>
       </div>
     </div>
   </body>

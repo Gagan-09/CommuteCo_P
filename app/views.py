@@ -466,26 +466,29 @@ def getRequestFromUsers(request):
     userid = request.GET.get("userid", "")
     print(f"Fetching rides for user: {userid}")  # Debug log
     
-    # Get direct rides with their distance information
-    user_rides = list(RidePoint.objects.filter(userid=str(userid)).select_related('ride_distance').values(
-        "fromCity",
-        "toCity",
-        "datePoint",
-        "contactPoint",
-        "status",
-        "driverId",
-        "applyOn",
-        "id",
-        "ride_distance__distance",  # Access distance through the relationship
-        "ride_distance__fare"  # Also get the fare
-    ))
+    # Get direct rides with their distance information, ordered by creation date (newest first)
+    user_rides = list(RidePoint.objects.filter(userid=str(userid))
+        .select_related('ride_distance')
+        .order_by('-applyOn')  # Order by creation date in descending order
+        .values(
+            "fromCity",
+            "toCity",
+            "datePoint",
+            "contactPoint",
+            "status",
+            "driverId",
+            "applyOn",
+            "id",
+            "ride_distance__distance",  # Access distance through the relationship
+            "ride_distance__fare"  # Also get the fare
+        ))
     print(f"Found {len(user_rides)} direct rides")  # Debug log
 
     # Get joint rides
     joint_rides = JointRide.objects.filter(userid=str(userid)).values("id", "userid", "rideId")
     if joint_rides.exists():
         ride_ids = [int(d["rideId"]) for d in joint_rides]
-        associated_rides = RidePoint.objects.filter(id__in=ride_ids).select_related('ride_distance').values(
+        associated_rides = RidePoint.objects.filter(id__in=ride_ids).select_related('ride_distance').order_by('-applyOn').values(
             "fromCity",
             "toCity",
             "datePoint",
