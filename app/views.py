@@ -896,27 +896,67 @@ def transaction_history(request):
 
 @require_http_methods(["POST"])
 def update_gender(request):
-    if not request.session.get('user_id') or request.session.get('user_type') != 'user':
-        return JsonResponse({'success': False, 'error': 'Unauthorized'})
-        
     try:
+        print("\n=== UPDATING GENDER ===")
+        print(f"Request body: {request.body}")
+        print(f"Request content type: {request.content_type}")
+        
         data = json.loads(request.body)
+        print(f"Parsed data: {data}")
+        
         user_id = data.get('userId')
         gender = data.get('gender')
+        emergency_name = data.get('emergencyName')
+        emergency_email = data.get('emergencyEmail')
+        emergency_mobile = data.get('emergencyMobile')
         
-        if not user_id or not gender:
-            return JsonResponse({'success': False, 'error': 'Missing required fields'})
-            
-        # Only allow users to update their own gender
-        if str(user_id) != str(request.session['user_id']):
-            return JsonResponse({'success': False, 'error': 'Unauthorized'})
-            
-        user = User.objects.get(id=user_id)
-        user.gender = gender
-        user.save()
+        print(f"User ID: {user_id}")
+        print(f"Gender: {gender}")
         
-        return JsonResponse({'success': True})
-    except User.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'User not found'})
+        if not user_id:
+            print("ERROR: No user ID provided")
+            return JsonResponse({'success': False, 'error': 'User ID is required'})
+            
+        if not gender:
+            print("ERROR: No gender provided")
+            return JsonResponse({'success': False, 'error': 'Gender is required'})
+            
+        try:
+            # Only allow updates for users, not drivers
+            user = User.objects.get(id=int(user_id))  # Convert to integer
+            print(f"Found user: {user.name}")
+            
+            if user.typeView != "user":
+                print(f"ERROR: User is not a regular user (type: {user.typeView})")
+                return JsonResponse({'success': False, 'error': 'Only users can update their gender'})
+                
+            # Update the gender
+            user.gender = gender
+            print(f"Updated gender to: {gender}")
+            
+            # If emergency contact details are provided (for female users)
+            if gender == "Female" and emergency_name and emergency_email and emergency_mobile:
+                user.emergency_contact_name = emergency_name
+                user.emergency_contact_email = emergency_email
+                user.emergency_contact_mobile = emergency_mobile
+                print("Updated emergency contact details")
+            
+            user.save()
+            print("Changes saved successfully")
+            print("==============================\n")
+            
+            return JsonResponse({'success': True})
+            
+        except User.DoesNotExist:
+            print(f"ERROR: User not found with ID {user_id}")
+            return JsonResponse({'success': False, 'error': 'User not found'})
+        except ValueError as ve:
+            print(f"ERROR: Invalid user ID format - {str(ve)}")
+            return JsonResponse({'success': False, 'error': 'Invalid user ID format'})
+            
+    except json.JSONDecodeError as je:
+        print(f"ERROR: Invalid JSON data - {str(je)}")
+        return JsonResponse({'success': False, 'error': 'Invalid request data'})
     except Exception as e:
+        print(f"ERROR: Unexpected error - {str(e)}")
         return JsonResponse({'success': False, 'error': str(e)})
