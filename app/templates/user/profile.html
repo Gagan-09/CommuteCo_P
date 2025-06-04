@@ -781,6 +781,12 @@
       // Store emergency contact details globally
       let storedEmergencyContact = null;
 
+      // Hide modal on page load
+      document.addEventListener("DOMContentLoaded", function () {
+        const modal = document.getElementById("emergencyContactModal");
+        modal.style.display = "none";
+      });
+
       window.addEventListener("DOMContentLoaded", () => {
         const userId = "{{ request.session.user_id }}";
         const userType = "{{ request.session.user_type }}";
