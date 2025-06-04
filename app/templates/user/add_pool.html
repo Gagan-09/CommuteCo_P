@@ -10,17 +10,26 @@
       href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
       rel="stylesheet"
     />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
   </head>
   <body>
     <div class="nothing" id="messagePoint"></div>
 
-    <div class="navbar">
-      <div class="nav-left">CAR POOL</div>
-      <div class="nav-right">
+    <div class="headerSelction">
+      <div class="titlePoint">CommuteCo</div>
+      <div class="hamburger-menu" onclick="toggleMenu()">
+        <i class="fas fa-ellipsis-v"></i>
+      </div>
+      <div class="navPoint">
         <a href="/userHome">My Pool</a>
-        <a href="/addPool" id="activac" class="active">Add Pool</a>
+        <a href="/addPool" id="activac">Add Pool</a>
         <a href="/joinPool">Join Pool</a>
+        <a href="/transaction-history">Transaction History</a>
         <a href="/profile">Profile</a>
+        <a href="/logout">Logout</a>
       </div>
     </div>
 
@@ -88,42 +97,64 @@
         background-color: #f4f4f4;
       }
 
-      /* Navbar Styles */
-      .navbar {
+      /* Header Styles */
+      .headerSelction {
+        background: linear-gradient(135deg, #004aad, #0066cc);
+        padding: 1rem 2rem;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        background-color: #004aad;
-        padding: 1rem 2rem;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        margin-bottom: 2rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        position: sticky;
+        top: 0;
+        z-index: 100;
       }
 
-      .nav-left {
+      .titlePoint {
         color: white;
-        font-size: 1.8rem;
+        font-size: 1.5rem;
         font-weight: bold;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
       }
 
-      .nav-right {
+      .navPoint {
         display: flex;
         gap: 1.5rem;
       }
 
-      .nav-right a {
+      .navPoint a {
         color: white;
         text-decoration: none;
-        font-size: 1rem;
-        padding: 0.4rem 0.8rem;
-        border-radius: 5px;
-        transition: 0.3s ease;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
       }
 
-      .nav-right a:hover,
-      .nav-right a.active,
-      .nav-right a#activac {
-        background-color: #ffcc00;
+      .navPoint a:hover {
+        background: rgba(255, 204, 0, 0.9);
         color: #000;
+        transform: translateY(-2px);
+      }
+
+      .navPoint a#activac {
+        background: #ffcc00;
+        color: #000;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      /* Hamburger Menu Styles */
+      .hamburger-menu {
+        display: none;
+        cursor: pointer;
+        padding: 0.5rem;
+        color: white;
+        font-size: 1.5rem;
+      }
+
+      .hamburger-menu i {
+        font-size: 1.8rem;
       }
 
       /* Form Styles */
@@ -136,85 +167,263 @@
       .form-section {
         background: white;
         padding: 2rem;
-        border-radius: 10px;
+        border-radius: 15px;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
         width: 100%;
         max-width: 600px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+      }
+
+      .form-section:hover {
+        transform: translateY(-5px);
       }
 
       .form-section h2 {
+        color: #004aad;
         margin-bottom: 1.5rem;
         text-align: center;
-        color: #333;
+        font-size: 1.8rem;
+        position: relative;
+        padding-bottom: 0.5rem;
+      }
+
+      .form-section h2::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 50px;
+        height: 3px;
+        background: #ffcc00;
+        border-radius: 2px;
       }
 
       .form-group {
-        margin-bottom: 1rem;
-        display: flex;
-        flex-direction: column;
+        margin-bottom: 1.5rem;
       }
 
-      label {
+      .form-group label {
+        display: block;
         margin-bottom: 0.5rem;
-        font-weight: 600;
-        color: #333;
+        color: #666;
+        font-size: 0.9rem;
+        font-weight: 500;
       }
 
-      input {
-        padding: 0.75rem;
-        border: 1px solid #ccc;
-        border-radius: 6px;
+      .form-group input {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
         font-size: 1rem;
-        transition: border-color 0.3s;
+        transition: all 0.3s ease;
       }
 
-      input:focus {
+      .form-group input:focus {
         outline: none;
         border-color: #004aad;
+        box-shadow: 0 0 0 3px rgba(0, 74, 173, 0.2);
       }
 
       .btn-submit {
+        width: 100%;
+        padding: 1rem;
         background: #004aad;
         color: white;
-        padding: 0.75rem;
-        width: 100%;
-        font-size: 1rem;
         border: none;
-        border-radius: 6px;
+        border-radius: 8px;
+        font-size: 1.1rem;
+        font-weight: 500;
         cursor: pointer;
-        transition: 0.3s;
-        margin-top: 1rem;
+        transition: all 0.3s ease;
       }
 
       .btn-submit:hover {
-        background: #00338d;
+        background: #003d8f;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 74, 173, 0.3);
       }
 
-      .nothing {
-        display: none;
-      }
-
-      .dialog {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: #4caf50;
-        color: white;
-        padding: 1rem 2rem;
-        border-radius: 5px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        z-index: 1000;
-        animation: slideIn 0.3s ease-out;
-      }
-
-      @keyframes slideIn {
-        from {
-          transform: translateX(100%);
-          opacity: 0;
+      /* Media Queries */
+      @media screen and (max-width: 768px) {
+        .hamburger-menu {
+          display: block;
+          position: absolute;
+          right: 1rem;
+          top: 0.1rem;
         }
-        to {
-          transform: translateX(0);
-          opacity: 1;
+
+        .headerSelction {
+          padding: 1.5rem 1rem;
+          flex-direction: column;
+          gap: 1rem;
+          position: relative;
+          min-height: 3rem;
+        }
+
+        .titlePoint {
+          margin-top: 0.5rem;
+        }
+
+        .navPoint {
+          display: none;
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 0.5rem;
+          width: 100%;
+        }
+
+        .navPoint.active {
+          display: flex;
+        }
+
+        .navPoint a {
+          font-size: 0.9rem;
+          padding: 0.4rem 0.8rem;
+        }
+
+        main {
+          padding: 1rem;
+        }
+
+        .form-section {
+          padding: 1.5rem;
+        }
+
+        .form-section h2 {
+          font-size: 1.5rem;
+        }
+
+        .form-group input {
+          padding: 10px;
+        }
+
+        .btn-submit {
+          padding: 0.8rem;
+          font-size: 1rem;
+        }
+      }
+
+      @media screen and (max-width: 480px) {
+        .headerSelction {
+          padding: 0.5rem;
+          width: 100vw;
+          box-sizing: border-box;
+          margin: 0;
+          left: 0;
+          right: 0;
+          position: fixed;
+          top: 0;
+        }
+
+        .titlePoint {
+          font-size: 1.1rem;
+          width: 100%;
+          text-align: center;
+          margin: 0;
+          padding: 0;
+        }
+
+        .navPoint {
+          flex-direction: column;
+          align-items: center;
+          width: 100%;
+          padding: 0.3rem 0;
+          gap: 0.2rem;
+          background: #004aad;
+          position: absolute;
+          top: 100%;
+          left: 0;
+          z-index: 1000;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .navPoint a {
+          width: 100%;
+          text-align: center;
+          margin: 0;
+          padding: 0.4rem 0.8rem;
+          box-sizing: border-box;
+          font-size: 0.85rem;
+        }
+
+        /* Add margin to form section to account for fixed navbar */
+        main {
+          margin-top: 5rem;
+          padding: 0.5rem;
+        }
+
+        .form-section {
+          padding: 1rem;
+          margin: 0;
+          border-radius: 10px;
+        }
+
+        .form-section h2 {
+          font-size: 1.3rem;
+          margin-bottom: 1rem;
+        }
+
+        .form-group {
+          margin-bottom: 1rem;
+        }
+
+        .form-group label {
+          font-size: 0.85rem;
+          margin-bottom: 0.3rem;
+        }
+
+        .form-group input {
+          padding: 8px;
+          font-size: 0.9rem;
+        }
+
+        .btn-submit {
+          padding: 0.8rem;
+          font-size: 0.9rem;
+        }
+      }
+
+      @media screen and (max-width: 320px) {
+        .headerSelction {
+          padding: 0.4rem;
+        }
+
+        .titlePoint {
+          font-size: 1rem;
+        }
+
+        .navPoint a {
+          padding: 0.3rem 0.6rem;
+          font-size: 0.8rem;
+        }
+
+        /* Adjust margin for smaller screens */
+        main {
+          margin-top: 4.5rem;
+        }
+
+        .form-section {
+          padding: 0.8rem;
+        }
+
+        .form-section h2 {
+          font-size: 1.2rem;
+        }
+
+        .form-group label {
+          font-size: 0.8rem;
+        }
+
+        .form-group input {
+          padding: 6px;
+          font-size: 0.85rem;
+        }
+
+        .btn-submit {
+          padding: 0.7rem;
+          font-size: 0.85rem;
         }
       }
     </style>
@@ -234,6 +443,24 @@
     {% endif %}
 
     <script>
+      function toggleMenu() {
+        const navPoint = document.querySelector(".navPoint");
+        navPoint.classList.toggle("active");
+      }
+
+      // Close menu when clicking outside
+      document.addEventListener("click", function (event) {
+        const navPoint = document.querySelector(".navPoint");
+        const hamburgerMenu = document.querySelector(".hamburger-menu");
+
+        if (
+          !navPoint.contains(event.target) &&
+          !hamburgerMenu.contains(event.target)
+        ) {
+          navPoint.classList.remove("active");
+        }
+      });
+
       window.addEventListener("DOMContentLoaded", () => {
         // Handle form submission
         const form = document.getElementById("poolForm");

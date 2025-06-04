@@ -7,6 +7,10 @@
       href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
       rel="stylesheet"
     />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
 
     {%if messages%} {%for me in messages %} {%if me.tags in "success" %}
     <input type="hidden" value="{{me}}" id="successpoint" />
@@ -399,18 +403,50 @@
         display: none;
       }
 
+      /* Hamburger Menu Styles */
+      .hamburger-menu {
+        display: none;
+        cursor: pointer;
+        padding: 0.5rem;
+        color: white;
+        font-size: 1.5rem;
+      }
+
+      .hamburger-menu i {
+        font-size: 1.8rem;
+      }
+
       /* Media Queries */
       @media screen and (max-width: 768px) {
+        .hamburger-menu {
+          display: block;
+          position: absolute;
+          right: 1rem;
+          top: 0.1rem;
+        }
+
         .headerSelction {
-          padding: 1rem;
+          padding: 1.5rem 1rem;
           flex-direction: column;
           gap: 1rem;
+          position: relative;
+          min-height: 3rem;
+        }
+
+        .titlePoint {
+          margin-top: 0.5rem;
         }
 
         .navPoint {
+          display: none;
           flex-wrap: wrap;
           justify-content: center;
           gap: 0.5rem;
+          width: 100%;
+        }
+
+        .navPoint.active {
+          display: flex;
         }
 
         .navPoint a {
@@ -474,6 +510,12 @@
           width: 100%;
           padding: 0.3rem 0;
           gap: 0.2rem;
+          background: #004aad;
+          position: absolute;
+          top: 100%;
+          left: 0;
+          z-index: 1000;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
         .navPoint a {
@@ -631,6 +673,9 @@
     <div class="nothing" id="messagePoint"></div>
     <div class="headerSelction">
       <div class="titlePoint">CommuteCo</div>
+      <div class="hamburger-menu" onclick="toggleMenu()">
+        <i class="fas fa-ellipsis-v"></i>
+      </div>
       <div class="navPoint">
         <a href="/userHome">My Pool</a>
         <a href="/addPool">Add Pool</a>
@@ -1070,6 +1115,24 @@
         }
         return null;
       }
+
+      function toggleMenu() {
+        const navPoint = document.querySelector(".navPoint");
+        navPoint.classList.toggle("active");
+      }
+
+      // Close menu when clicking outside
+      document.addEventListener("click", function (event) {
+        const navPoint = document.querySelector(".navPoint");
+        const hamburgerMenu = document.querySelector(".hamburger-menu");
+
+        if (
+          !navPoint.contains(event.target) &&
+          !hamburgerMenu.contains(event.target)
+        ) {
+          navPoint.classList.remove("active");
+        }
+      });
     </script>
   </body>
 </html>
