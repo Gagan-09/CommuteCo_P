@@ -19,7 +19,7 @@
 
   <!-- Add search input -->
   <div class="row mb-4">
-    <div class="col-md-6">
+    <div class="col-md-4">
       <div class="input-group mb-3">
         <input
           type="text"
@@ -29,13 +29,23 @@
         />
       </div>
     </div>
-    <div class="col-md-6">
+    <div class="col-md-4">
       <div class="input-group mb-3">
         <input
           type="text"
           id="destinationInput"
           class="form-control"
           placeholder="Search by destination location..."
+        />
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="input-group mb-3">
+        <input
+          type="date"
+          id="dateInput"
+          class="form-control"
+          placeholder="Filter by date..."
         />
       </div>
     </div>
@@ -280,6 +290,15 @@
   .input-group {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
+
+  input[type="date"] {
+    cursor: pointer;
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    padding: 5px;
+  }
 </style>
 
 <script>
@@ -305,8 +324,9 @@
   function fetchPools() {
     const source = document.getElementById("sourceInput").value;
     const destination = document.getElementById("destinationInput").value;
+    const date = document.getElementById("dateInput").value;
 
-    console.log("Fetching pools with filters:", { source, destination }); // Debug log
+    console.log("Fetching pools with filters:", { source, destination, date }); // Debug log
 
     // Get CSRF token from cookie
     function getCookie(name) {
@@ -325,10 +345,16 @@
     }
     const csrftoken = getCookie("csrftoken");
 
+    // Show loading state
+    const resultsContainer = document.getElementById("rideResults");
+    resultsContainer.innerHTML = '<p class="text-center">Loading pools...</p>';
+
     fetch(
       `/joinPool/?source=${encodeURIComponent(
         source
-      )}&destination=${encodeURIComponent(destination)}`,
+      )}&destination=${encodeURIComponent(
+        destination
+      )}&date=${encodeURIComponent(date)}`,
       {
         method: "GET",
         headers: {
@@ -341,13 +367,22 @@
     )
       .then(async (response) => {
         console.log("Response status:", response.status); // Debug log
+        console.log(
+          "Response headers:",
+          Object.fromEntries(response.headers.entries())
+        ); // Debug log
+
         if (response.status === 401) {
           // Redirect to login if not authenticated
           window.location.href = "/login";
           throw new Error("Please login to view pools");
         }
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          const errorText = await response.text();
+          console.error("Error response:", errorText); // Debug log
+          throw new Error(
+            `HTTP error! status: ${response.status}, message: ${errorText}`
+          );
         }
         // Check content type
         const contentType = response.headers.get("content-type");
@@ -461,19 +496,23 @@
           resultsContainer.innerHTML =
             '<p class="text-center text-danger">Server error. Please try again later.</p>';
         } else {
-          resultsContainer.innerHTML =
-            '<p class="text-center text-danger">Error loading pools. Please try again.</p>';
+          resultsContainer.innerHTML = `<p class="text-center text-danger">Error loading pools: ${error.message}</p>`;
         }
       });
   }
 
   // Initial load of pools
   document.addEventListener("DOMContentLoaded", function () {
+    // Set min date to today
+    const today = new Date().toISOString().split("T")[0];
+    document.getElementById("dateInput").min = today;
+
     fetchPools();
 
     // Add search functionality
     const sourceInput = document.getElementById("sourceInput");
     const destinationInput = document.getElementById("destinationInput");
+    const dateInput = document.getElementById("dateInput");
 
     if (sourceInput) {
       sourceInput.addEventListener("input", function () {
@@ -483,6 +522,12 @@
 
     if (destinationInput) {
       destinationInput.addEventListener("input", function () {
+        fetchPools();
+      });
+    }
+
+    if (dateInput) {
+      dateInput.addEventListener("change", function () {
         fetchPools();
       });
     }

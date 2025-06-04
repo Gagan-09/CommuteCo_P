@@ -287,11 +287,16 @@ def joinPool(request):
     if request.method == "GET":
         # If it's an AJAX request, return JSON
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            source = request.GET.get("source", "")
-            destination = request.GET.get("destination", "")
-            user_id = str(request.session['user_id'])
-            
             try:
+                source = request.GET.get("source", "")
+                destination = request.GET.get("destination", "")
+                date = request.GET.get("date", "")
+                user_id = str(request.session['user_id'])
+                
+                print(f"\n=== FETCHING POOLS ===")
+                print(f"User ID: {user_id}")
+                print(f"Filters - Source: {source}, Destination: {destination}, Date: {date}")
+                
                 # Start with base queryset
                 rides = RidePoint.objects.exclude(
                     Q(userid=user_id) |  # Exclude rides created by the user
@@ -303,6 +308,10 @@ def joinPool(request):
                     rides = rides.filter(fromCity__icontains=source)
                 if destination:
                     rides = rides.filter(toCity__icontains=destination)
+                if date:
+                    # Filter by date string directly since datePoint is stored as string
+                    rides = rides.filter(datePoint__icontains=date)
+                    print(f"Filtering by date: {date}")
 
                 # Add join count and filter by capacity
                 rides = rides.annotate(
@@ -311,15 +320,22 @@ def joinPool(request):
                     Joined__lt=2  # Only show rides with less than 2 passengers
                 ).order_by('ride_distance')  # Order by distance
 
+                print(f"Found {rides.count()} rides after filtering")
+
                 # Convert to list of dictionaries
                 rides_list = list(rides.values(
                     'id', 'fromCity', 'toCity', 'datePoint', 
                     'contactPoint', 'status', 'Joined', 'ride_distance'
                 ))
 
+                print(f"Returning {len(rides_list)} rides")
+                print("==============================\n")
+
                 return JsonResponse({"data": rides_list})
             except Exception as e:
                 print(f"Error in joinPool AJAX: {str(e)}")
+                import traceback
+                print(traceback.format_exc())
                 return JsonResponse({"error": str(e)}, status=500)
         
         # For regular GET requests, render the template
