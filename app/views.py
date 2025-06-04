@@ -261,7 +261,67 @@ def getJoinPool(request):
 
 
 def joinPool(request):
-    return render(request, "user/joinpool.html")
+    if request.method == "GET":
+        # If it's an AJAX request, return JSON
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            search = request.GET.get("search", "")
+            id = request.GET.get("id", "")
+            data = RidePoint.objects.filter(
+                (Q(fromCity__icontains=search) | Q(toCity__icontains=search))
+                & (~Q(userid=str(id)) & ~Q(status="Ride Completed"))
+            ).values(
+                "id",
+                "fromCity",
+                "toCity",
+                "datePoint",
+                "contactPoint",
+                "status",
+                "userid",
+                "driverId",
+                "applyOn",
+                "payment",
+                "distance"
+            )
+            data = list(data)
+            result = []
+
+            for i in range(len(data)):
+                if data[i] not in ["sizeOF"]:
+                    jointCount = JointRide.objects.filter(rideId=int(data[i]["id"])).values(
+                        "id", "userid", "rideId"
+                    )
+                    view = len(list(jointCount))
+                    if view < 2:
+                        for posi in jointCount:
+                            if posi["userid"] != id and view < 2:
+                                data[i]['Joined']=view
+                                result.append(data[i])
+                        if view == 0:
+                            data[i]['Joined']=view
+                            result.append(data[i])
+            return JsonResponse({"data": result})
+        
+        # For regular GET requests, render the template
+        return render(request, "joinPool.html")
+    
+    elif request.method == "POST":
+        # Handle POST request for joining a pool
+        poolId = request.POST.get("poolId")
+        userId = request.POST.get("userId")
+        walletAddress = request.POST.get("walletAddress")
+        
+        try:
+            # Create the joint ride
+            JointRide.objects.create(
+                userid=userId,
+                rideId=poolId,
+                walletAddress=walletAddress
+            )
+            messages.success(request, "Successfully joined the pool!")
+        except Exception as e:
+            messages.error(request, f"Error joining pool: {str(e)}")
+        
+        return redirect("joinPool")
 
 
 def stateOF(request):
