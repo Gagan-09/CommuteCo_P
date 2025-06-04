@@ -1,6 +1,9 @@
 {% extends 'base.html' %} 
 {% block title %}Driver Home{% endblock %} 
 {% block content %}
+<!-- Web3 Library -->
+<script src="https://cdn.jsdelivr.net/npm/web3@1.5.2/dist/web3.min.js"></script>
+
 <div class="headerSelction">
   <div class="titlePoint">CommuteCo</div>
   <div class="hamburger-menu" onclick="toggleMenu()">
@@ -58,7 +61,7 @@
     <div class="modal fade" id="acceptModal{{ ride.id }}" tabindex="-1">
       <div class="modal-dialog">
         <div class="modal-content">
-          <form action="/acceptRide/" method="POST">
+          <form action="/AcceptTheRide/" method="POST">
             {% csrf_token %}
             <div class="modal-header">
               <h5 class="modal-title">Accept Ride #{{ ride.id }}</h5>
@@ -72,7 +75,7 @@
               <input type="hidden" name="rideId" value="{{ ride.id }}" />
               <input
                 type="hidden"
-                name="driverId"
+                name="userId"
                 value="{{ request.session.driver_id }}"
               />
               <div class="mb-3">
@@ -286,41 +289,38 @@
   // Initialize Web3 with Ganache
   const web3 = new Web3("http://127.0.0.1:7545");
 
-  function checkBalance(rideId) {
-    const walletInput = document.getElementById(`walletAddress${rideId}`);
-    const balanceDisplay = document.getElementById(`balanceDisplay${rideId}`);
+  async function checkBalance(rideId) {
+    try {
+      const addressInput = document.getElementById(`walletAddress${rideId}`);
+      const walletAddress = addressInput.value;
+      const balanceDisplay = document.getElementById(`balanceDisplay${rideId}`);
 
-    if (!walletInput.value) {
-      balanceDisplay.textContent = "Please enter a wallet address";
-      balanceDisplay.style.color = "#dc3545";
-      return;
-    }
-
-    if (!web3.utils.isAddress(walletInput.value)) {
-      balanceDisplay.textContent =
-        "Please enter a valid Ethereum wallet address";
-      balanceDisplay.style.color = "#dc3545";
-      return;
-    }
-
-    balanceDisplay.textContent = "Checking balance...";
-    balanceDisplay.style.color = "#6c757d";
-
-    web3.eth
-      .getBalance(walletInput.value)
-      .then((balance) => {
-        const ethBalance = web3.utils.fromWei(balance, "ether");
-        balanceDisplay.textContent = `Wallet Balance: ${parseFloat(
-          ethBalance
-        ).toFixed(4)} ETH`;
-        balanceDisplay.style.color = "#28a745";
-      })
-      .catch((error) => {
-        balanceDisplay.textContent =
-          "Error checking balance. Please try again.";
+      if (!walletAddress) {
+        balanceDisplay.textContent = "Please enter a wallet address";
         balanceDisplay.style.color = "#dc3545";
-        console.error("Error checking balance:", error);
-      });
+        return;
+      }
+
+      if (!web3.utils.isAddress(walletAddress)) {
+        balanceDisplay.textContent = "Invalid Ethereum address";
+        balanceDisplay.style.color = "#dc3545";
+        return;
+      }
+
+      balanceDisplay.textContent = "Checking balance...";
+      balanceDisplay.style.color = "#6c757d";
+
+      const balance = await web3.eth.getBalance(walletAddress);
+      const eth = web3.utils.fromWei(balance, "ether");
+
+      balanceDisplay.textContent = `Balance: ${parseFloat(eth).toFixed(4)} ETH`;
+      balanceDisplay.style.color = "#28a745";
+    } catch (error) {
+      console.error("Balance error:", error);
+      balanceDisplay.textContent =
+        "Error checking balance. Ensure Ganache is running at http://127.0.0.1:7545";
+      balanceDisplay.style.color = "#dc3545";
+    }
   }
 
   function rejectRide(rideId) {
@@ -367,4 +367,5 @@
     vali.className = "nothing";
   }, 3000);
 </script>
-{% endif %} {% endblock %}
+{% endif %} 
+{% endblock %}

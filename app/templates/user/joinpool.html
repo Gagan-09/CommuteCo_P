@@ -1,395 +1,193 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="/static/css/all.css" />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-    />
+{% extends 'base.html' %} 
+{% block title %}Join Pool{% endblock %} 
+{% block navigation %}
+<a href="/userHome">My Pool</a>
+<a href="/addPool">Add Pool</a>
+<a href="/joinPool" id="activac">Join Pool</a>
+<a href="/profile">Profile</a>
+<a href="/logout">Logout</a>
+{% endblock %} {% block content %}
+<div class="search-container">
+  <div class="search-box">
+    <i class="fas fa-search"></i>
+    <input type="text" id="searchInput" placeholder="Search by location..." />
+  </div>
+</div>
 
-    {%if messages%} {%for me in messages %} {%if me.tags in "success" %}
-    <input type="hidden" value="{{me}}" id="successpoint" />
-    {% endif %} {%if me.tags in "info" %}
-    <input type="hidden" value="{{me}}" id="infoPoint" />
-    {% endif %} {% endfor %} {% endif %}
+<div id="rideResults" class="ride-results">
+  <!-- Ride results will be displayed here -->
+</div>
+{% endblock %} {% block extra_css %}
+<style>
+  .search-container {
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
 
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Join Pool</title>
-  </head>
+  .search-box {
+    position: relative;
+    background: white;
+    padding: 1rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+  }
 
-  <body>
-    <style>
-      body {
-        font-family: "Roboto", sans-serif;
-        background-color: #f4f6f8;
-        margin: 0;
-        padding: 0;
-      }
+  .search-box i {
+    position: absolute;
+    left: 1.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #64748b;
+  }
 
-      .headerSelction {
-        background: #004aad;
-        padding: 1rem 2rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      }
+  .search-box input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.5rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 5px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+  }
 
-      .titlePoint {
-        color: white;
-        font-size: 1.5rem;
-        font-weight: bold;
-      }
+  .search-box input:focus {
+    outline: none;
+    border-color: #004aad;
+  }
 
-      .navPoint {
-        display: flex;
-        gap: 1.5rem;
-      }
+  .ride-results {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem;
+    padding: 0 1rem;
+  }
 
-      .navPoint a {
-        color: white;
-        text-decoration: none;
-        padding: 0.5rem 1rem;
-        border-radius: 20px;
-        transition: 0.3s;
-      }
+  .ride-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s;
+  }
 
-      .navPoint a:hover {
-        background: #ffcc00;
-        color: #000;
-      }
+  .ride-card:hover {
+    transform: translateY(-5px);
+  }
 
-      .navPoint a#activac {
-        background: #ffcc00;
-        color: #000;
-      }
+  .ride-card h3 {
+    color: #004aad;
+    margin: 0 0 1rem 0;
+    font-size: 1.2rem;
+  }
 
-      .search-container {
-        max-width: 800px;
-        margin: 30px auto;
-        padding: 0 20px;
-      }
+  .ride-card p {
+    margin: 0.5rem 0;
+    color: #64748b;
+  }
 
-      .search-box {
-        display: flex;
-        align-items: center;
-        background: white;
-        padding: 15px 25px;
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-        transition: all 0.3s ease;
-      }
+  .ride-card .btn {
+    width: 100%;
+    margin-top: 1rem;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
 
-      .search-box:focus-within {
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-      }
+  .ride-card .btn-primary {
+    background: #004aad;
+    color: white;
+  }
 
-      .search-box input {
-        flex: 1;
-        border: none;
-        outline: none;
-        font-size: 16px;
-        padding: 8px;
-        background: transparent;
-      }
+  .ride-card .btn-primary:hover {
+    background: #003d8f;
+  }
+</style>
+{% endblock %} {% block extra_js %}
+<script>
+  window.addEventListener("DOMContentLoaded", () => {
+    const userId = "{{ request.session.user_id }}";
+    const userType = "{{ request.session.user_type }}";
 
-      .search-box i {
-        color: #666;
-        font-size: 18px;
-        margin-right: 10px;
-      }
+    if (!userId || userType !== "user") {
+      window.location.href = "/login";
+      return;
+    }
 
-      .ride-results {
-        max-width: 1200px;
-        margin: 30px auto;
-        padding: 0 20px;
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-        gap: 25px;
-      }
+    // Initial load of rides
+    searchRides();
+  });
 
-      .ride-card {
-        background: white;
-        border-radius: 15px;
-        padding: 25px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-      }
+  function searchRides() {
+    const searchInput = document.getElementById("searchInput");
+    const userId = "{{ request.session.user_id }}";
 
-      .ride-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-      }
+    fetch(`/getJoinPool?search=${searchInput.value}&id=${userId}`)
+      .then((response) => response.json())
+      .then((data) => {
+        const resultsDiv = document.getElementById("rideResults");
+        let html = "";
 
-      .ride-card h3 {
-        color: #2c3e50;
-        margin: 0 0 20px 0;
-        font-size: 1.4rem;
-        border-bottom: 2px solid #f0f0f0;
-        padding-bottom: 10px;
-      }
+        data.forEach((ride) => {
+          html += `
+            <div class="ride-card">
+              <h3>${ride.fromCity} ➜ ${ride.toCity}</h3>
+              <p><strong>Date:</strong> ${ride.datePoint}</p>
+              <p><strong>Contact:</strong> ${ride.contactPoint}</p>
+              <p><strong>Status:</strong> ${ride.status}</p>
+              <button class="btn btn-primary" onclick="joinRide(${ride.id})">
+                Join Ride
+              </button>
+            </div>
+          `;
+        });
 
-      .ride-info {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 15px;
-        margin-bottom: 20px;
-      }
-
-      .info-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .info-item i {
-        color: #3498db;
-        font-size: 16px;
-      }
-
-      .info-item p {
-        margin: 0;
-        color: #555;
-        font-size: 14px;
-      }
-
-      .info-item strong {
-        color: #2c3e50;
-        font-weight: 500;
-      }
-
-      .join-btn {
-        width: 100%;
-        padding: 12px;
-        background: #3498db;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 16px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: background 0.3s ease;
-      }
-
-      .join-btn:hover {
-        background: #2980b9;
-      }
-
-      .status-badge {
-        display: inline-block;
-        padding: 5px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 500;
-        margin-top: 10px;
-      }
-
-      .status-active {
-        background: #e8f5e9;
-        color: #2e7d32;
-      }
-
-      .status-completed {
-        background: #f5f5f5;
-        color: #616161;
-      }
-
-      .no-rides {
-        text-align: center;
-        color: #666;
-        font-size: 16px;
-        padding: 40px;
-        background: white;
-        border-radius: 12px;
-        grid-column: 1 / -1;
-      }
-
-      .error {
-        text-align: center;
-        color: #e74c3c;
-        font-size: 16px;
-        padding: 40px;
-        background: white;
-        border-radius: 12px;
-        grid-column: 1 / -1;
-      }
-
-      .cancel-btn {
-        width: 100%;
-        padding: 12px;
-        background: #e74c3c;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 16px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: background 0.3s ease;
-      }
-
-      .cancel-btn:hover {
-        background: #c0392b;
-      }
-
-      @media (max-width: 768px) {
-        .ride-results {
-          grid-template-columns: 1fr;
-        }
-
-        .ride-info {
-          grid-template-columns: 1fr;
-        }
-      }
-    </style>
-
-    <div class="nothing" id="messagePoint"></div>
-    <div class="headerSelction">
-      <div class="titlePoint">CommuteCo</div>
-      <div class="navPoint">
-        <a href="/userHome">My Pool</a>
-        <a href="/addPool">Add Pool</a>
-        <a href="/joinPool" id="activac">Join Pool</a>
-        <a href="/profile">Profile</a>
-        <a href="/logout">Logout</a>
-      </div>
-    </div>
-
-    <div class="search-container">
-      <div class="search-box">
-        <i class="fas fa-search"></i>
-        <input
-          type="text"
-          id="searchInput"
-          placeholder="Search by location..."
-        />
-      </div>
-    </div>
-
-    <div id="rideResults" class="ride-results">
-      <!-- Ride results will be displayed here -->
-    </div>
-
-    <script>
-      window.addEventListener("DOMContentLoaded", () => {
-        const userId = "{{ request.session.user_id }}";
-        const userType = "{{ request.session.user_type }}";
-
-        if (!userId || userType !== "user") {
-          window.location.href = "/login";
-          return;
-        }
-
-        // Initial load of rides
-        searchRides();
+        resultsDiv.innerHTML = html;
+      })
+      .catch((error) => {
+        console.error("Error:", error);
       });
+  }
 
-      function searchRides() {
-        const searchInput = document.getElementById("searchInput");
-        const userId = "{{ request.session.user_id }}";
+  function joinRide(rideId) {
+    if (confirm("Are you sure you want to join this ride?")) {
+      fetch(`/joinRide/${rideId}/`, {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": getCookie("csrftoken"),
+          "Content-Type": "application/json",
+        },
+      })
+        .then((response) => {
+          if (response.ok) {
+            window.location.reload();
+          } else {
+            alert("Failed to join ride. Please try again.");
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          alert("An error occurred while joining the ride.");
+        });
+    }
+  }
 
-        fetch(`/getJoinPool?search=${searchInput.value}&id=${userId}`)
-          .then((response) => response.json())
-          .then((data) => {
-            const resultsDiv = document.getElementById("rideResults");
-            let html = "";
-
-            if (data.data && data.data.length > 0) {
-              data.data.forEach((ride) => {
-                const statusClass =
-                  ride.status === "Active"
-                    ? "status-active"
-                    : "status-completed";
-                html += `
-                  <div class="ride-card">
-                    <h3>Ride #${ride.id}</h3>
-                    <div class="ride-info">
-                      <div class="info-item">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <p><strong>From:</strong> ${ride.fromCity}</p>
-                      </div>
-                      <div class="info-item">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <p><strong>To:</strong> ${ride.toCity}</p>
-                      </div>
-                      <div class="info-item">
-                        <i class="fas fa-road"></i>
-                        <p><strong>Distance:</strong> ${
-                          ride.distance ? ride.distance.toFixed(2) : "N/A"
-                        } km</p>
-                      </div>
-                      <div class="info-item">
-                        <i class="fas fa-calendar"></i>
-                        <p><strong>Date:</strong> ${ride.datePoint}</p>
-                      </div>
-                      <div class="info-item">
-                        <i class="fas fa-phone"></i>
-                        <p><strong>Contact:</strong> ${ride.contactPoint}</p>
-                      </div>
-                      <div class="info-item">
-                        <i class="fas fa-users"></i>
-                        <p><strong>Joined:</strong> ${ride.Joined || 0}/2</p>
-                      </div>
-                    </div>
-                    <div class="status-badge ${statusClass}">${
-                  ride.status
-                }</div>
-                    <div style="display: flex; gap: 10px; margin-top: 20px;">
-                      ${
-                        ride.hasJoined
-                          ? `
-                        <form action="/cancelJoinedRide/" method="post" style="flex: 1;">
-                          {% csrf_token %}
-                          <input type="hidden" name="rideId" value="${ride.id}">
-                          <button type="submit" class="cancel-btn">Cancel Ride</button>
-                        </form>
-                      `
-                          : `
-                        <form action="/AcceptTheRide/" method="post" style="flex: 1;">
-                          {% csrf_token %}
-                          <input type="hidden" name="rideId" value="${ride.id}">
-                          <input type="hidden" name="userId" value="${userId}">
-                          <button type="submit" class="join-btn">Join Ride</button>
-                        </form>
-                      `
-                      }
-                    </div>
-                  </div>
-                `;
-              });
-            } else {
-              html =
-                '<div class="no-rides"><i class="fas fa-search" style="font-size: 48px; color: #ccc; margin-bottom: 20px;"></i><p>No rides found matching your search criteria.</p></div>';
-            }
-
-            resultsDiv.innerHTML = html;
-          })
-          .catch((error) => {
-            console.error("Error:", error);
-            document.getElementById("rideResults").innerHTML =
-              '<div class="error"><i class="fas fa-exclamation-circle" style="font-size: 48px; margin-bottom: 20px;"></i><p>Error loading rides. Please try again.</p></div>';
-          });
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === name + "=") {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
       }
-    </script>
-
-    {%if messages%}
-    <script>
-      const success = document.getElementById("successpoint")?.value;
-      if (success) {
-        const vali = document.getElementById("messagePoint");
-        vali.className = "dialog";
-        vali.innerText = success;
-        setTimeout(() => {
-          vali.className = "nothing";
-        }, 3000);
-      }
-    </script>
-    {% endif %}
-  </body>
-</html>
+    }
+    return cookieValue;
+  }
+</script>
+{% endblock %}
