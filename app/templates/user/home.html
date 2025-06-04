@@ -440,16 +440,77 @@
 
     window.addEventListener("DOMContentLoaded", () => {
       const myRequest = document.getElementById("myRequest");
-      fetch(`/getRequestFromUsers?userid={{ request.session.user_id }}`)
-        .then((view) => view.json())
+      const userId = "{{ request.session.user_id }}";
+
+      if (!userId) {
+        myRequest.innerHTML =
+          '<p class="text-center text-danger">Please login to view your rides</p>';
+        return;
+      }
+
+      console.log("Fetching rides for user:", userId);
+
+      // Add loading state
+      myRequest.innerHTML = `
+        <div class="card" style="text-align: center; padding: 2rem;">
+          <h3>Loading Rides...</h3>
+          <p>Please wait while we fetch your rides.</p>
+        </div>`;
+
+      fetch(`/getRequestFromUsers?userid=${userId}`, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+        },
+        credentials: "same-origin", // Include cookies
+      })
+        .then(async (response) => {
+          console.log("Response status:", response.status);
+          console.log(
+            "Response headers:",
+            Object.fromEntries(response.headers.entries())
+          );
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error("Server response:", errorText);
+            throw new Error(`Server error: ${response.status} - ${errorText}`);
+          }
+
+          const data = await response.json();
+          console.log("Received data:", data);
+          return data;
+        })
         .then((point) => {
+          if (point.error) {
+            throw new Error(point.error);
+          }
+
+          if (!point.data || point.data.length === 0) {
+            myRequest.innerHTML =
+              '<p class="text-center">No rides found. Create a new pool or join an existing one!</p>';
+            return;
+          }
+
+          // Sort the rides by most recent activity
+          point.data.sort((a, b) => {
+            const aTime = a.joined_at || a.applyOn;
+            const bTime = b.joined_at || b.applyOn;
+            return new Date(bTime) - new Date(aTime);
+          });
+
           var text = "";
           point.data.forEach((element) => {
             text += `<div class="card">
               <h3>${element.fromCity} ➜ ${element.toCity}</h3>
               <p><strong>Date:</strong> ${element.datePoint}</p>
+              <p><strong>Time:</strong> ${element.journey_time}</p>
+              <p><strong>Phone:</strong> ${element.phone_number}</p>
               <p><strong>Contact:</strong> ${element.contactPoint}</p>
-              <p><strong>Raised On:</strong> ${element.applyOn}</p>
+              <p><strong>${
+                element.joined_at ? "Joined On" : "Raised On"
+              }:</strong> ${element.joined_at || element.applyOn}</p>
               <p><strong>Status:</strong> ${element.status}</p>
               <div class="button-group" style="display: flex; gap: 10px; margin-top: 15px;">
                 <button class="accept-btn" onclick="setString('${
@@ -465,6 +526,23 @@
             </div>`;
           });
           myRequest.innerHTML = text;
+        })
+        .catch((error) => {
+          console.error("Error fetching rides:", error);
+          myRequest.innerHTML = `
+            <div class="card" style="text-align: center; padding: 2rem;">
+              <h3 style="color: #e74c3c;">Error Loading Rides</h3>
+              <p>${error.message}</p>
+              <p style="color: #666; font-size: 0.9em; margin-top: 1rem;">
+                If this error persists, please try:
+                <br>1. Refreshing the page
+                <br>2. Logging out and back in
+                <br>3. Checking your internet connection
+              </p>
+              <button onclick="window.location.reload()" class="accept-btn" style="margin-top: 1rem;">
+                <i class="fas fa-sync"></i> Try Again
+              </button>
+            </div>`;
         });
     });
 

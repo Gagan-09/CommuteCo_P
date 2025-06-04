@@ -181,38 +181,42 @@ def stateOFCompleted(request):
                 print("\n=== RIDE COMPLETION DETAILS ===")
                 print(f"Ride ID: {ride.id}")
                 print(f"From: {ride.fromCity} To: {ride.toCity}")
+                print(f"Passenger Count: {ride.passenger_count}")
+                print(f"Is Carpool: {ride.is_carpool}")
                 
                 # Get the distance from RideDistance model
                 try:
                     ride_distance = ride.ride_distance
                     road_distance = ride_distance.distance
-                    fare = ride_distance.fare
                     
-                    print(f"Road Distance: {road_distance:.2f} km")
-                    print(f"Calculated Fare: {fare} ETH")
-                    print("==============================\n")
+                    # Get all passengers for this ride
+                    passengers = JointRide.objects.filter(rideId=rideId)
+                    passenger_count = passengers.count()
                     
                     # Update ride status
                     ride.status = "Ride Completed"
                     ride.save()
                     
-                    # Create transaction with the stored distance and fare
-                    transaction = Transaction.objects.create(
-                        ride=ride,
-                        driver=User.objects.get(id=driverId),
-                        source=ride.fromCity,
-                        destination=ride.toCity,
-                        distance=road_distance,
-                        fare=fare,
-                        status='pending'
-                    )
-                    print(f"Transaction created with ID: {transaction.id}")
-                    print(f"Transaction details - Distance: {transaction.distance:.2f} km, Fare: {transaction.fare} ETH")
+                    # Create transaction for each passenger
+                    for passenger in passengers:
+                        transaction = Transaction.objects.create(
+                            ride=ride,
+                            driver=User.objects.get(id=driverId),
+                            source=ride.fromCity,
+                            destination=ride.toCity,
+                            distance=road_distance,
+                            fare=passenger.payment_amount,
+                            status='pending',
+                            passenger_count=passenger_count,
+                            is_carpool=(passenger_count == 2)
+                        )
+                        print(f"Created transaction for passenger {passenger.userid}")
+                        print(f"Amount: {passenger.payment_amount} ETH")
                     
-                    messages.success(request, f"Ride completed. Distance: {road_distance:.2f} km, Fare: {fare} ETH")
+                    messages.success(request, f"Ride completed. {passenger_count} passenger(s) processed.")
                 except RideDistance.DoesNotExist:
                     print("ERROR: No distance information available for this ride")
-                    messages.error(request, "Cannot complete ride: Distance and fare information not available")
+                    messages.error(request, "Cannot complete ride: Distance information not available")
                     return redirect("acceptance", userid=driverId)
             else:
                 messages.error(request, "Ride not found")
@@ -277,6 +281,17 @@ def getJoinPool(request):
 
     return JsonResponse({"error": "Invalid request method"}, status=400)
 
+@login_required(login_url="login")
+def myPool(request):
+    user_id = request.session.get('user_id')
+    if not user_id:
+        return JsonResponse({'error': 'User not logged in'}, status=401)
+    # Get all rides the user has joined, ordered by joined_at timestamp
+    joined_rides = JointRide.objects.filter(userid=user_id).order_by('-joined_at')
+    ride_ids = joined_rides.values_list('rideId', flat=True)
+    rides = RidePoint.objects.filter(id__in=ride_ids)
+    rides_list = list(rides.values('id', 'fromCity', 'toCity', 'datePoint', 'contactPoint', 'status', 'passenger_count', 'is_carpool', 'current_fare'))
+    return JsonResponse({'data': rides_list})
 
 def joinPool(request):
     # Check if user is logged in
@@ -293,93 +308,97 @@ def joinPool(request):
                 date = request.GET.get("date", "")
                 user_id = str(request.session['user_id'])
                 
-                print(f"\n=== FETCHING POOLS ===")
-                print(f"User ID: {user_id}")
-                print(f"Filters - Source: {source}, Destination: {destination}, Date: {date}")
-                
-                # Start with base queryset
+                # Get all rides that:
+                # 1. Are not created by this user
+                # 2. Are not already joined by this user
+                # 3. Are not completed
+                # 4. Have less than 2 passengers
                 rides = RidePoint.objects.exclude(
                     Q(userid=user_id) |  # Exclude rides created by the user
-                    Q(status="Completed")  # Exclude completed rides
+                    Q(id__in=JointRide.objects.filter(userid=user_id).values_list('rideId', flat=True)) |  # Exclude rides already joined
+                    Q(status="Ride Completed")  # Exclude completed rides
+                ).filter(
+                    passenger_count__lt=2  # Only show rides with less than 2 passengers
                 )
-
+                
                 # Apply source and destination filters if provided
                 if source:
                     rides = rides.filter(fromCity__icontains=source)
                 if destination:
                     rides = rides.filter(toCity__icontains=destination)
                 if date:
-                    # Filter by date string directly since datePoint is stored as string
                     rides = rides.filter(datePoint__icontains=date)
-                    print(f"Filtering by date: {date}")
-
-                # Add join count and filter by capacity
-                rides = rides.annotate(
-                    Joined=Count('applyOn', distinct=True)  # Count number of people who have joined
-                ).filter(
-                    Joined__lt=2  # Only show rides with less than 2 passengers
-                ).order_by('ride_distance')  # Order by distance
-
-                print(f"Found {rides.count()} rides after filtering")
-
-                # Convert to list of dictionaries
+                    
+                # Order by distance
+                rides = rides.select_related('ride_distance').order_by('ride_distance__distance')
+                
                 rides_list = list(rides.values(
                     'id', 'fromCity', 'toCity', 'datePoint', 
-                    'contactPoint', 'status', 'Joined', 'ride_distance'
+                    'journey_time', 'phone_number', 'contactPoint', 
+                    'status', 'passenger_count', 'is_carpool',
+                    'base_fare', 'current_fare',
+                    'ride_distance__distance'
                 ))
-
-                print(f"Returning {len(rides_list)} rides")
-                print("==============================\n")
-
+                
+                # Rename the distance field
+                for ride in rides_list:
+                    ride['distance'] = ride.pop('ride_distance__distance', None)
+                
                 return JsonResponse({"data": rides_list})
             except Exception as e:
-                print(f"Error in joinPool AJAX: {str(e)}")
-                import traceback
-                print(traceback.format_exc())
+                print(f"Error in joinPool: {str(e)}")  # Debug log
                 return JsonResponse({"error": str(e)}, status=500)
-        
-        # For regular GET requests, render the template
         return render(request, "joinPool.html")
-    
     elif request.method == "POST":
-        # Handle POST request for joining a pool
         poolId = request.POST.get("poolId")
         userId = request.session.get('user_id')
         walletAddress = request.POST.get("walletAddress")
-        
         if not all([poolId, userId, walletAddress]):
             messages.error(request, "Missing required information")
             return redirect("joinPool")
-            
         try:
-            # Check if ride exists and is available
             ride = RidePoint.objects.get(id=poolId)
             if ride.status == "Ride Completed":
                 messages.error(request, "This ride is no longer available")
                 return redirect("joinPool")
-                
-            # Check if user has already joined this ride
             if JointRide.objects.filter(rideId=poolId, userid=userId).exists():
                 messages.error(request, "You have already joined this ride")
                 return redirect("joinPool")
-                
-            # Check if ride is full (2 passengers)
-            if JointRide.objects.filter(rideId=poolId).count() >= 2:
+            current_passengers = JointRide.objects.filter(rideId=poolId).count()
+            if current_passengers >= 2:
                 messages.error(request, "This ride is full")
                 return redirect("joinPool")
-            
+            # Calculate fare based on number of passengers
+            if current_passengers == 0:
+                ride.base_fare = float(ride.payment)
+                ride.current_fare = float(ride.payment)
+                ride.is_carpool = True
+                ride.passenger_count = 1
+                ride.save()
+                payment_amount = float(ride.payment)
+            else:
+                payment_amount = float(ride.base_fare) / 2
+                ride.current_fare = payment_amount
+                ride.passenger_count = 2
+                ride.save()
+                first_passenger = JointRide.objects.get(rideId=poolId)
+                first_passenger.payment_amount = payment_amount
+                first_passenger.save()
             # Create the joint ride
             JointRide.objects.create(
                 userid=userId,
                 rideId=poolId,
-                walletAddress=walletAddress
+                walletAddress=walletAddress,
+                payment_amount=payment_amount
             )
+            # Increment passenger_count in RidePoint
+            ride.passenger_count = JointRide.objects.filter(rideId=poolId).count()
+            ride.save()
             messages.success(request, "Successfully joined the pool!")
         except RidePoint.DoesNotExist:
             messages.error(request, "Invalid ride")
         except Exception as e:
             messages.error(request, f"Error joining pool: {str(e)}")
-        
         return redirect("joinPool")
 
 
@@ -554,7 +573,7 @@ def driverHome(request):
         Q(driverId="") & 
         ~Q(userid="") &
         ~Q(id__in=RejectedRide.objects.filter(driverId=str(request.session['driver_id'])).values_list('rideId', flat=True))
-    ).values(
+    ).order_by('-applyOn').values(  # Order by creation date in descending order
         "id",
         "fromCity",
         "toCity",
@@ -590,53 +609,193 @@ def profile(request):
 
 
 def getRequestFromUsers(request):
-    userid = request.GET.get("userid", "")
-    print(f"Fetching rides for user: {userid}")  # Debug log
-    
-    # Get direct rides with their distance information, ordered by creation date (newest first)
-    user_rides = list(RidePoint.objects.filter(userid=str(userid))
-        .select_related('ride_distance')
-        .order_by('-applyOn')  # Order by creation date in descending order
-        .values(
-            "fromCity",
-            "toCity",
-            "datePoint",
-            "contactPoint",
-            "status",
-            "driverId",
-            "applyOn",
-            "id",
-            "ride_distance__distance",  # Access distance through the relationship
-            "ride_distance__fare"  # Also get the fare
-        ))
-    print(f"Found {len(user_rides)} direct rides")  # Debug log
-
-    # Get joint rides
-    joint_rides = JointRide.objects.filter(userid=str(userid)).values("id", "userid", "rideId")
-    if joint_rides.exists():
-        ride_ids = [int(d["rideId"]) for d in joint_rides]
-        associated_rides = RidePoint.objects.filter(id__in=ride_ids).select_related('ride_distance').order_by('-applyOn').values(
-            "fromCity",
-            "toCity",
-            "datePoint",
-            "contactPoint",
-            "status",
-            "driverId",
-            "applyOn",
-            "id",
-            "ride_distance__distance",  # Access distance through the relationship
-            "ride_distance__fare"  # Also get the fare
-        )
-        user_rides.extend(list(associated_rides))
-        print(f"Added {len(associated_rides)} joint rides")  # Debug log
-    
-    # Rename the fields to match the expected format
-    for ride in user_rides:
-        ride['distance'] = ride.pop('ride_distance__distance', None)
-        ride['fare'] = ride.pop('ride_distance__fare', None)
-    
-    print(f"Total rides: {len(user_rides)}")  # Debug log
-    return JsonResponse({"data": user_rides})
+    try:
+        userid = request.GET.get("userid", "")
+        print(f"\n=== FETCHING RIDES FOR USER {userid} ===")
+        
+        if not userid:
+            print("ERROR: No user ID provided")
+            return JsonResponse({"error": "User ID is required"}, status=400)
+            
+        try:
+            # Get direct rides (created by the user)
+            print("Fetching direct rides...")
+            user_rides = list(RidePoint.objects.filter(userid=str(userid))
+                .select_related('ride_distance')  # Ensure we're using select_related
+                .values(
+                    "fromCity",
+                    "toCity",
+                    "datePoint",
+                    "journey_time",
+                    "phone_number",
+                    "contactPoint",
+                    "status",
+                    "driverId",
+                    "applyOn",
+                    "id",
+                    "ride_distance__distance",
+                    "ride_distance__fare",
+                    "passenger_count",
+                    "is_carpool",
+                    "base_fare",
+                    "current_fare"
+                ))
+            print(f"Found {len(user_rides)} direct rides")
+            
+            # Process direct rides
+            for ride in user_rides:
+                try:
+                    # Get the actual ride object to access ride_distance
+                    ride_obj = RidePoint.objects.select_related('ride_distance').get(id=ride['id'])
+                    if hasattr(ride_obj, 'ride_distance'):
+                        ride['distance'] = ride_obj.ride_distance.distance
+                        ride['fare'] = ride_obj.ride_distance.fare
+                    else:
+                        # If no ride_distance exists, calculate it
+                        source_coords = get_coordinates(ride['fromCity'])
+                        dest_coords = get_coordinates(ride['toCity'])
+                        
+                        if source_coords and dest_coords:
+                            distance = calculate_distance(
+                                source_coords[0], source_coords[1],
+                                dest_coords[0], dest_coords[1]
+                            )
+                            fare = round(float(distance) * 0.000055, 6)
+                            
+                            # Create the distance record
+                            RideDistance.objects.create(
+                                ride=ride_obj,
+                                distance=distance,
+                                fare=fare
+                            )
+                            ride['distance'] = distance
+                            ride['fare'] = fare
+                        else:
+                            ride['distance'] = None
+                            ride['fare'] = None
+                            
+                    if ride.get('applyOn'):
+                        ride['applyOn'] = ride['applyOn'].strftime('%Y-%m-%d %H:%M:%S')
+                except Exception as e:
+                    print(f"Error processing direct ride {ride.get('id')}: {str(e)}")
+                    continue
+                    
+            # Get joint rides
+            print("Fetching joint rides...")
+            joint_rides = JointRide.objects.filter(userid=str(userid)).values(
+                "id", "userid", "rideId", "joined_at"
+            )
+            print(f"Found {len(joint_rides)} joint rides")
+            
+            if joint_rides.exists():
+                try:
+                    # Create mapping of ride IDs to joined_at timestamps
+                    ride_ids = [int(d["rideId"]) for d in joint_rides]
+                    joined_at_map = {str(d["rideId"]): d["joined_at"] for d in joint_rides}
+                    
+                    # Get associated rides
+                    print("Fetching associated rides...")
+                    associated_rides = RidePoint.objects.filter(id__in=ride_ids).select_related('ride_distance').values(
+                        "fromCity",
+                        "toCity",
+                        "datePoint",
+                        "journey_time",
+                        "phone_number",
+                        "contactPoint",
+                        "status",
+                        "driverId",
+                        "applyOn",
+                        "id",
+                        "ride_distance__distance",
+                        "ride_distance__fare",
+                        "passenger_count",
+                        "is_carpool",
+                        "base_fare",
+                        "current_fare"
+                    )
+                    
+                    # Process associated rides
+                    associated_rides_list = list(associated_rides)
+                    for ride in associated_rides_list:
+                        try:
+                            # Get the actual ride object to access ride_distance
+                            ride_obj = RidePoint.objects.select_related('ride_distance').get(id=ride['id'])
+                            if hasattr(ride_obj, 'ride_distance'):
+                                ride['distance'] = ride_obj.ride_distance.distance
+                                ride['fare'] = ride_obj.ride_distance.fare
+                            else:
+                                # If no ride_distance exists, calculate it
+                                source_coords = get_coordinates(ride['fromCity'])
+                                dest_coords = get_coordinates(ride['toCity'])
+                                
+                                if source_coords and dest_coords:
+                                    distance = calculate_distance(
+                                        source_coords[0], source_coords[1],
+                                        dest_coords[0], dest_coords[1]
+                                    )
+                                    fare = round(float(distance) * 0.000055, 6)
+                                    
+                                    # Create the distance record
+                                    RideDistance.objects.create(
+                                        ride=ride_obj,
+                                        distance=distance,
+                                        fare=fare
+                                    )
+                                    ride['distance'] = distance
+                                    ride['fare'] = fare
+                                else:
+                                    ride['distance'] = None
+                                    ride['fare'] = None
+                                    
+                            ride['joined_at'] = joined_at_map[str(ride['id'])]
+                            if ride.get('applyOn'):
+                                ride['applyOn'] = ride['applyOn'].strftime('%Y-%m-%d %H:%M:%S')
+                            if ride.get('joined_at'):
+                                ride['joined_at'] = ride['joined_at'].strftime('%Y-%m-%d %H:%M:%S')
+                        except Exception as e:
+                            print(f"Error processing associated ride {ride.get('id')}: {str(e)}")
+                            continue
+                            
+                    user_rides.extend(associated_rides_list)
+                    print(f"Added {len(associated_rides_list)} joint rides")
+                except Exception as e:
+                    print(f"Error processing joint rides: {str(e)}")
+            
+            # Sort rides by most recent activity
+            print("Sorting rides...")
+            def get_sort_key(ride):
+                try:
+                    # Get the timestamp string
+                    joined_at = ride.get('joined_at')
+                    apply_on = ride.get('applyOn')
+                    
+                    # Convert string timestamps to datetime objects for comparison
+                    if joined_at:
+                        return datetime.strptime(joined_at, '%Y-%m-%d %H:%M:%S')
+                    elif apply_on:
+                        return datetime.strptime(apply_on, '%Y-%m-%d %H:%M:%S')
+                    return datetime.min  # Default to earliest possible date
+                except Exception as e:
+                    print(f"Error getting sort key for ride {ride.get('id')}: {str(e)}")
+                    return datetime.min
+                    
+            user_rides.sort(key=get_sort_key, reverse=True)
+            
+            print(f"Total rides after processing: {len(user_rides)}")
+            print("==============================\n")
+            
+            return JsonResponse({"data": user_rides})
+            
+        except Exception as e:
+            print(f"Error in main processing: {str(e)}")
+            raise
+            
+    except Exception as e:
+        print(f"\n=== ERROR IN getRequestFromUsers ===")
+        print(f"Error type: {type(e).__name__}")
+        print(f"Error message: {str(e)}")
+        print("==============================\n")
+        return JsonResponse({"error": str(e)}, status=500)
 
 def addPool(request):
     # Check if user is logged in via session
@@ -648,6 +807,8 @@ def addPool(request):
         fromCity = request.POST.get("formPoint", "").strip()
         toCity = request.POST.get("toPoint", "").strip()
         datePoint = request.POST.get("datePoint", "").strip()
+        journeyTime = request.POST.get("journeyTime", "").strip()
+        phoneNumber = request.POST.get("phoneNumber", "").strip()
         contactPoint = request.POST.get("contactPoint", "").strip()
         userId = str(request.session.get("user_id"))
         output = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -655,9 +816,15 @@ def addPool(request):
         print(f"\n=== CREATING NEW POOL ===")
         print(f"User ID: {userId}")
         print(f"From: {fromCity} To: {toCity}")
+        print(f"Date: {datePoint} Time: {journeyTime}")
+        print(f"Phone: +91{phoneNumber}")
         
         if not fromCity or not toCity:
             messages.error(request, "Pickup and destination locations are required")
+            return redirect('userHome')
+            
+        if not phoneNumber or len(phoneNumber) != 10:
+            messages.error(request, "Please enter a valid 10-digit phone number")
             return redirect('userHome')
             
         # Get road distance from session
@@ -683,7 +850,9 @@ def addPool(request):
                 fromCity=fromCity,
                 toCity=toCity,
                 datePoint=datePoint,
+                journey_time=journeyTime,
                 contactPoint=contactPoint,
+                phone_number=f"+91{phoneNumber}",
                 status="Waiting for driver to accept",
                 userid=userId,
                 driverId="",
