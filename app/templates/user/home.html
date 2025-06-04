@@ -7,6 +7,10 @@
       href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
       rel="stylesheet"
     />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
 
     {%if messages%} {%for me in messages %} {%if me.tags in "success" %}
     <input type="hidden" value="{{me}}" id="successpoint" />
@@ -160,10 +164,223 @@
       .nothing {
         display: none;
       }
+
+      /* Hamburger Menu Styles */
+      .hamburger-menu {
+        display: none;
+        cursor: pointer;
+        padding: 0.5rem;
+        color: white;
+        font-size: 1.5rem;
+      }
+
+      .hamburger-menu i {
+        font-size: 1.8rem;
+      }
+
+      /* Mobile Media Queries */
+      @media screen and (max-width: 768px) {
+        .hamburger-menu {
+          display: block;
+          position: absolute;
+          right: 1rem;
+          top: 0.1rem;
+        }
+
+        .headerSelction {
+          padding: 1.5rem 1rem;
+          flex-direction: column;
+          gap: 1rem;
+          position: relative;
+          min-height: 3rem;
+        }
+
+        .titlePoint {
+          margin-top: 0.5rem;
+        }
+
+        .navPoint {
+          display: none;
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 0.5rem;
+          width: 100%;
+        }
+
+        .navPoint.active {
+          display: flex;
+        }
+
+        .navPoint a {
+          font-size: 0.9rem;
+          padding: 0.4rem 0.8rem;
+        }
+
+        .request-list {
+          margin: 1rem;
+          gap: 1rem;
+          padding: 0 0.5rem;
+        }
+
+        .card {
+          padding: 1.2rem;
+        }
+
+        .card h3 {
+          font-size: 1.1rem;
+          margin-bottom: 0.8rem;
+        }
+
+        .card p {
+          font-size: 0.9rem;
+          margin: 0.4rem 0;
+        }
+
+        .button-group {
+          flex-direction: column;
+          gap: 0.5rem !important;
+        }
+
+        .accept-btn,
+        .reject-btn {
+          padding: 0.6rem 1rem;
+          font-size: 0.9rem;
+          margin-top: 0.5rem;
+        }
+      }
+
+      @media screen and (max-width: 480px) {
+        .headerSelction {
+          padding: 0.5rem;
+          width: 100vw;
+          box-sizing: border-box;
+          margin: 0;
+          left: 0;
+          right: 0;
+          position: fixed;
+          top: 0;
+        }
+
+        .titlePoint {
+          font-size: 1.1rem;
+          width: 100%;
+          text-align: center;
+          margin: 0;
+          padding: 0;
+        }
+
+        .navPoint {
+          flex-direction: column;
+          align-items: center;
+          width: 100%;
+          padding: 0.3rem 0;
+          gap: 0.2rem;
+          background: #004aad;
+          position: absolute;
+          top: 100%;
+          left: 0;
+          z-index: 1000;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .navPoint a {
+          width: 100%;
+          text-align: center;
+          margin: 0;
+          padding: 0.4rem 0.8rem;
+          box-sizing: border-box;
+          font-size: 0.85rem;
+        }
+
+        /* Add margin to request list to account for fixed navbar */
+        .request-list {
+          margin-top: 5rem;
+          margin-left: 0.5rem;
+          margin-right: 0.5rem;
+          padding: 0;
+        }
+
+        .card {
+          padding: 1rem;
+          margin-bottom: 0.8rem;
+        }
+
+        .card h3 {
+          font-size: 1rem;
+          margin-bottom: 0.6rem;
+          padding-bottom: 0.4rem;
+        }
+
+        .card p {
+          font-size: 0.85rem;
+          margin: 0.3rem 0;
+        }
+
+        .button-group {
+          margin-top: 0.8rem;
+        }
+
+        .accept-btn,
+        .reject-btn {
+          padding: 0.5rem 0.8rem;
+          font-size: 0.85rem;
+          margin-top: 0.4rem;
+        }
+      }
+
+      @media screen and (max-width: 320px) {
+        .headerSelction {
+          padding: 0.4rem;
+        }
+
+        .titlePoint {
+          font-size: 1rem;
+        }
+
+        .navPoint a {
+          padding: 0.3rem 0.6rem;
+          font-size: 0.8rem;
+        }
+
+        /* Adjust margin for smaller screens */
+        .request-list {
+          margin-top: 4.5rem;
+        }
+
+        .card {
+          padding: 0.8rem;
+          margin-bottom: 0.6rem;
+        }
+
+        .card h3 {
+          font-size: 0.95rem;
+          margin-bottom: 0.5rem;
+          padding-bottom: 0.3rem;
+        }
+
+        .card p {
+          font-size: 0.8rem;
+          margin: 0.25rem 0;
+        }
+
+        .button-group {
+          margin-top: 0.6rem;
+        }
+
+        .accept-btn,
+        .reject-btn {
+          padding: 0.4rem 0.7rem;
+          font-size: 0.8rem;
+          margin-top: 0.3rem;
+        }
+      }
     </style>
     <div class="nothing" id="messagePoint"></div>
     <div class="headerSelction">
       <div class="titlePoint">CommuteCo</div>
+      <div class="hamburger-menu" onclick="toggleMenu()">
+        <i class="fas fa-ellipsis-v"></i>
+      </div>
       <div class="navPoint">
         <a href="/userHome" id="activac">My Pool</a>
         <a href="/addPool">Add Pool</a>
@@ -203,6 +420,24 @@
   {% endif %}
 
   <script>
+    function toggleMenu() {
+      const navPoint = document.querySelector(".navPoint");
+      navPoint.classList.toggle("active");
+    }
+
+    // Close menu when clicking outside
+    document.addEventListener("click", function (event) {
+      const navPoint = document.querySelector(".navPoint");
+      const hamburgerMenu = document.querySelector(".hamburger-menu");
+
+      if (
+        !navPoint.contains(event.target) &&
+        !hamburgerMenu.contains(event.target)
+      ) {
+        navPoint.classList.remove("active");
+      }
+    });
+
     window.addEventListener("DOMContentLoaded", () => {
       const myRequest = document.getElementById("myRequest");
       fetch(`/getRequestFromUsers?userid={{ request.session.user_id }}`)
