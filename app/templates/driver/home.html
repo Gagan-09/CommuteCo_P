@@ -545,7 +545,10 @@
             "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]")
               .value,
           },
-          body: JSON.stringify({ walletAddress: walletAddress }),
+          body: JSON.stringify({
+            walletAddress: walletAddress,
+            amount: "0", // For driver's wallet check, we just want to see the balance
+          }),
         });
 
         const data = await response.json();

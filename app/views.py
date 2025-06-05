@@ -199,37 +199,66 @@ def AcceptTheRide(request):
 
 def stateOFCompleted(request):
     if request.method == "POST":
-        rideId = request.POST.get("rideId", 0)
+        rideId = request.POST.get("rideId", "").strip()
         driverId = request.session.get('driver_id')
-        if not driverId:
-            messages.error(request, "Please login as a driver")
-            return redirect('login')
+        
+        if not rideId or not driverId:
+            messages.error(request, "Missing required information")
+            return redirect("acceptance", userid=driverId)
             
         try:
-            # Get ride with its distance information
-            ride = RidePoint.objects.select_related('ride_distance').get(id=int(rideId))
-            if ride:
-                print("\n=== RIDE COMPLETION DETAILS ===")
-                print(f"Ride ID: {ride.id}")
-                print(f"From: {ride.fromCity} To: {ride.toCity}")
-                print(f"Passenger Count: {ride.passenger_count}")
-                print(f"Is Carpool: {ride.is_carpool}")
+            # Get the ride
+            ride = RidePoint.objects.get(id=rideId)
+            
+            # Verify this is the correct driver
+            if str(ride.driverId) != str(driverId):
+                messages.error(request, "Unauthorized access")
+                return redirect("driverHome")
                 
-                # Get the distance from RideDistance model
-                try:
-                    ride_distance = ride.ride_distance
-                    road_distance = ride_distance.distance
+            # Get ride distance information
+            try:
+                ride_distance = ride.ride_distance
+                road_distance = ride_distance.distance
+                
+                # Update ride status
+                ride.status = "Ride Completed"
+                ride.save()
+                
+                # Create transaction for solo ride
+                if not ride.is_carpool:
+                    # Check if transaction already exists
+                    existing_transaction = Transaction.objects.filter(
+                        ride=ride,
+                        driver_id=driverId,
+                        source=ride.fromCity,
+                        destination=ride.toCity
+                    ).first()
                     
+                    if not existing_transaction:
+                        # For solo rides, use the full base fare
+                        transaction = Transaction.objects.create(
+                            ride=ride,
+                            driver=User.objects.get(id=driverId),
+                            source=ride.fromCity,
+                            destination=ride.toCity,
+                            distance=road_distance,
+                            fare=float(ride.base_fare),
+                            status='pending',
+                            passenger_count=1,
+                            is_carpool=False
+                        )
+                        print(f"Created transaction for solo ride {ride.id}")
+                        print(f"Fare: {ride.base_fare} ETH")
+                    else:
+                        print(f"Transaction already exists for solo ride {ride.id}")
+                
+                # Handle carpool rides
+                else:
                     # Get all passengers for this ride
                     passengers = JointRide.objects.filter(rideId=rideId)
                     passenger_count = passengers.count()
                     
-                    # Update ride status and ensure it's linked to the driver
-                    ride.status = "Ride Completed"
-                    ride.driverId = driverId  # Ensure driver ID is set
-                    ride.save()
-                    
-                    # Create transaction for each passenger with their individual fare
+                    # Create transaction for each passenger
                     for passenger in passengers:
                         # Check if transaction already exists
                         existing_transaction = Transaction.objects.filter(
@@ -241,11 +270,8 @@ def stateOFCompleted(request):
                         
                         if not existing_transaction:
                             # Calculate individual fare for carpool
-                            if ride.is_carpool:
-                                individual_fare = float(ride.base_fare) / 2
-                            else:
-                                individual_fare = float(ride.base_fare)
-                                
+                            individual_fare = float(ride.base_fare) / 2
+                            
                             transaction = Transaction.objects.create(
                                 ride=ride,
                                 driver=User.objects.get(id=driverId),
@@ -255,25 +281,30 @@ def stateOFCompleted(request):
                                 fare=individual_fare,
                                 status='pending',
                                 passenger_count=passenger_count,
-                                is_carpool=(passenger_count == 2)
+                                is_carpool=True
                             )
                             print(f"Created transaction for passenger {passenger.userid}")
                             print(f"Individual fare: {individual_fare} ETH")
                         else:
                             print(f"Transaction already exists for passenger {passenger.userid}")
-                    
-                    messages.success(request, f"Ride completed. {passenger_count} passenger(s) processed.")
-                except RideDistance.DoesNotExist:
-                    print("ERROR: No distance information available for this ride")
-                    messages.error(request, "Cannot complete ride: Distance information not available")
-                    return redirect("acceptance", userid=driverId)
-            else:
-                messages.error(request, "Ride not found")
+                
+                messages.success(request, "Ride completed successfully")
+                return redirect("acceptance", userid=driverId)  # Redirect back to accepted rides page
+                
+            except RideDistance.DoesNotExist:
+                print("ERROR: No distance information available for this ride")
+                messages.error(request, "Cannot complete ride: Distance information not available")
+                return redirect("acceptance", userid=driverId)
+                
+        except RidePoint.DoesNotExist:
+            messages.error(request, "Ride not found")
+            return redirect("acceptance", userid=driverId)
         except Exception as e:
             print(f"Error completing ride: {str(e)}")
             messages.error(request, f"Error completing ride: {str(e)}")
+            return redirect("acceptance", userid=driverId)
             
-    return redirect("acceptance", userid=driverId)
+    return redirect("driverHome")
 
 def transactions(request):
     if 'driver_id' in request.session:
@@ -284,14 +315,30 @@ def transactions(request):
     elif 'user_id' in request.session:
         # For users, show transactions where they are the passenger
         transactions = Transaction.objects.filter(
-            ride__userid=request.session['user_id']
+            Q(ride__userid=request.session['user_id']) |  # Direct rides
+            Q(ride__id__in=JointRide.objects.filter(userid=request.session['user_id']).values_list('rideId', flat=True))  # Joined rides
         ).order_by('-created_at')
     else:
         messages.error(request, "Please login to view transactions")
         return redirect('login')
     
+    # Group transactions by status
+    # Show completed rides in pending transactions until payment is made
+    # pending_transactions = transactions.filter(
+    #     Q(status='pending') |  # Regular pending transactions
+    #     Q(status='completed', transaction_hash__isnull=True)  # Completed rides waiting for payment
+    # )
+    
+    # Show only paid transactions in completed
+    completed_transactions = transactions.filter(
+        status='completed',
+        transaction_hash__isnull=False  # Only show transactions with payment hash
+    )
+    
     return render(request, 'driver/transactions.html', {
-        'transactions': transactions
+        'transactions': transactions,
+        'pending_transactions': [],  # Empty list since we're not showing pending transactions
+        'completed_transactions': completed_transactions
     })
 
 @login_required(login_url="login")
@@ -610,7 +657,8 @@ def acceptance(request, userid=0):
                 "applyOn": ride.applyOn,
                 "payment": ride.payment,
                 "distance": distance,
-                "fare": fare
+                "fare": fare,
+                "is_carpool": ride.is_carpool
             }
             rideDate.append(ride_data)
         

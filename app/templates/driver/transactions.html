@@ -21,46 +21,95 @@
 </div>
 
 <div class="container mt-4">
-  <h2>{% if request.session.driver_id %}Driver{% else %}Payment{% endif %} History</h2>
-  <div class="row">
-    {% for transaction in transactions %}
-    <div class="col-md-6 mb-4">
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">Transaction #{{ transaction.id }}</h5>
-          <p><strong>Ride ID:</strong> {{ transaction.ride.id }}</p>
+  <!-- <h2>Transactions</h2> -->
+
+  <!-- Status Filter -->
+  <!-- <div class="status-filter">
+    <select id="statusFilter" class="form-control" onchange="filterTransactions()">
+      <option value="all">All Transactions</option>
+      <option value="pending" selected>Pending Transactions</option>
+      <option value="completed">Completed Transactions</option>
+    </select>
+  </div> -->
+
+  <!-- Pending Transactions -->
+  <!-- <div class="transaction-section" id="pendingSection">
+    <h3>Pending Transactions</h3>
+    {% if pending_transactions %}
+    <div class="transaction-list">
+      {% for transaction in pending_transactions %}
+      <div class="transaction-card">
+        <div class="transaction-header">
+          <span class="transaction-id">#{{ transaction.id }}</span>
+          <span class="status-badge status-pending">Pending</span>
+        </div>
+        <div class="transaction-details">
           <p><strong>From:</strong> {{ transaction.source }}</p>
           <p><strong>To:</strong> {{ transaction.destination }}</p>
-          <p>
-            <strong>Distance:</strong> {{ transaction.distance|floatformat:2 }}
-            km
-          </p>
-          <p><strong>Fare:</strong> {{ transaction.fare|floatformat:6 }} ETH</p>
-          <p>
-            <strong>Status:</strong> 
-            <span class="status-badge {% if transaction.status == 'Completed' %}status-completed{% elif transaction.status == 'Pending' %}status-pending{% endif %}">
-              {{ transaction.status }}
-            </span>
-          </p>
+          <p><strong>Distance:</strong> {{ transaction.distance }} km</p>
+          <p><strong>Fare:</strong> {{ transaction.fare }} ETH</p>
           <p><strong>Date:</strong> {{ transaction.created_at|date:"d M Y, h:i A" }}</p>
-          {% if transaction.transaction_hash %}
-          <p>
-            <strong>Transaction Hash:</strong>
-            <div class="hash-container">
-              <a href="https://sepolia.etherscan.io/tx/{{ transaction.transaction_hash }}" target="_blank" class="text-primary">
-                {{ transaction.transaction_hash }}
-              </a>
-            </div>
-          </p>
+          {% if transaction.ride.is_carpool %}
+            {% if transaction.passenger_count == 1 %}
+              <p><strong>Type:</strong> Solo</p>
+            {% else %}
+              <p><strong>Type:</strong> Carpool</p>
+            {% endif %}
+          {% else %}
+            <p><strong>Type:</strong> Solo</p>
           {% endif %}
         </div>
       </div>
+      {% endfor %}
     </div>
-    {% empty %}
-    <div class="col-12">
-      <p class="text-center">No transactions found.</p>
+    {% else %}
+    <p class="no-transactions">No pending transactions</p>
+    {% endif %}
+  </div> -->
+
+  <!-- Completed Transactions -->
+  <div class="transaction-section" id="completedSection">
+    <h3>Completed Transactions</h3>
+    {% if completed_transactions %}
+    <div class="transaction-list">
+      {% for transaction in completed_transactions %}
+      <div class="transaction-card">
+        <div class="transaction-header">
+          <span class="transaction-id">#{{ transaction.id }}</span>
+          <span class="status-badge status-completed">Payment Completed</span>
+        </div>
+        <div class="transaction-details">
+          <p><strong>From:</strong> {{ transaction.source }}</p>
+          <p><strong>To:</strong> {{ transaction.destination }}</p>
+          <p><strong>Distance:</strong> {{ transaction.distance }} km</p>
+          <p><strong>Fare:</strong> {{ transaction.fare }} ETH</p>
+          <p><strong>Date:</strong> {{ transaction.created_at|date:"d M Y, h:i A" }}</p>
+          {% if transaction.transaction_hash %}
+            <p>
+              <strong>Transaction Hash:</strong>
+              <div class="hash-container">
+                <a href="https://sepolia.etherscan.io/tx/{{ transaction.transaction_hash }}" target="_blank" class="text-primary">
+                  {{ transaction.transaction_hash }}
+                </a>
+              </div>
+            </p>
+          {% endif %}
+          {% if transaction.ride.is_carpool %}
+            {% if transaction.passenger_count == 1 %}
+              <p><strong>Type:</strong> Solo</p>
+            {% else %}
+              <p><strong>Type:</strong> Carpool</p>
+            {% endif %}
+          {% else %}
+            <p><strong>Type:</strong> Solo</p>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
     </div>
-    {% endfor %}
+    {% else %}
+    <p class="no-transactions">No completed transactions</p>
+    {% endif %}
   </div>
 </div>
 
@@ -80,30 +129,25 @@
   .titlePoint {
     color: white;
     font-size: 1.5rem;
-    font-weight: bold;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+    font-weight: 600;
+    margin: 0;
   }
 
   .navPoint {
     display: flex;
-    gap: 1.5rem;
+    gap: 1rem;
   }
 
   .navPoint a {
     color: white;
     text-decoration: none;
     padding: 0.5rem 1rem;
-    border-radius: 20px;
-    transition: all 0.3s ease;
+    border-radius: 5px;
+    transition: background-color 0.3s;
   }
 
   .navPoint a:hover {
-    background: #ffffff33;
-  }
-
-  .navPoint a#activac {
-    background: #ffcc00;
-    color: #000;
+    background-color: rgba(255, 255, 255, 0.1);
   }
 
   .hamburger-menu {
@@ -112,90 +156,36 @@
     font-size: 1.5rem;
     cursor: pointer;
     padding: 0.5rem;
+    z-index: 101;
   }
 
-  .card {
-    border: 2px solid #004aad;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s, box-shadow 0.2s;
-    background-color: #f8f9fa;
+  .hamburger-menu i {
+    display: block;
   }
 
-  .card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  .status-filter {
+    margin-bottom: 2rem;
   }
 
-  .card-body {
-    padding: 1.5rem;
-    background: linear-gradient(to bottom right, #ffffff, #f8f9fa);
+  .status-filter select {
+    width: 200px;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: border-color 0.3s;
   }
 
-  .text-primary {
-    color: #004aad !important;
-    text-decoration: none;
+  .status-filter select:hover {
+    border-color: #004aad;
   }
 
-  .text-primary:hover {
-    text-decoration: underline;
-  }
-
-  .card-body p {
-    margin-bottom: 0.5rem;
-    padding: 0.25rem 0;
-  }
-
-  .card-title {
-    color: #004aad;
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid #e9ecef;
-  }
-
-  .hash-container {
-    max-width: 100%;
-    overflow-x: auto;
-    white-space: nowrap;
-    padding: 5px 0;
-    margin-top: 5px;
-    background-color: #ffffff;
-    border-radius: 4px;
-    border: 1px solid #e9ecef;
-  }
-
-  .hash-container::-webkit-scrollbar {
-    height: 4px;
-  }
-
-  .hash-container::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 2px;
-  }
-
-  .hash-container::-webkit-scrollbar-thumb {
-    background: #004aad;
-    border-radius: 2px;
-  }
-
-  .status-badge {
-    padding: 4px 10px;
-    border-radius: 4px;
-    font-weight: 600;
-    display: inline-block;
-    font-size: 0.9rem;
-  }
-
-  .status-completed {
-    color: #155724;
-    background-color: #d4edda;
-    border: 1px solid #c3e6cb;
-  }
-
-  .status-pending {
-    color: #856404;
-    background-color: #fff3cd;
-    border: 1px solid #ffeeba;
+  .status-filter select:focus {
+    outline: none;
+    border-color: #004aad;
+    box-shadow: 0 0 0 2px rgba(0, 74, 173, 0.2);
   }
 
   @media screen and (max-width: 768px) {
@@ -213,15 +203,16 @@
 
     .navPoint {
       display: none;
-      position: absolute;
-      top: 100%;
+      position: fixed;
+      top: 0;
       left: 0;
       right: 0;
-      background: #004aad;
+      bottom: 0;
+      background: rgba(0, 74, 173, 0.95);
       flex-direction: column;
-      padding: 1rem;
+      padding: 4rem 1rem 1rem;
       gap: 0.5rem;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      z-index: 100;
     }
 
     .navPoint.active {
@@ -231,40 +222,150 @@
     .navPoint a {
       width: 100%;
       text-align: center;
-      padding: 0.8rem;
+      padding: 1rem;
       border-radius: 8px;
+      font-size: 1.1rem;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .navPoint a:hover {
+      background: rgba(255, 255, 255, 0.2);
     }
 
     .container {
       margin-top: 1rem;
       padding: 0.5rem;
     }
+
+    .status-filter select {
+      width: 100%;
+    }
+
+    .hash-container {
+      font-size: 0.8rem;
+      padding: 0.6rem;
+    }
   }
 
   @media screen and (max-width: 480px) {
-    .headerSelction {
-      padding: 0.6rem 0.8rem;
+    .hash-container {
+      font-size: 0.75rem;
+      padding: 0.5rem;
     }
+  }
 
-    .titlePoint {
-      font-size: 1.1rem;
-    }
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+  }
 
-    .navPoint a {
-      padding: 0.6rem;
-      font-size: 0.9rem;
-    }
+  .transaction-section {
+    margin-bottom: 2rem;
+  }
 
-    .container {
-      margin-top: 0.8rem;
-    }
+  .transaction-section h3 {
+    color: #333;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+  }
+
+  .transaction-list {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .transaction-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 1rem;
+  }
+
+  .transaction-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #eee;
+  }
+
+  .transaction-id {
+    font-weight: 600;
+    color: #666;
+  }
+
+  .status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .status-pending {
+    background-color: #fff3cd;
+    color: #856404;
+  }
+
+  .status-completed {
+    background-color: #d4edda;
+    color: #155724;
+  }
+
+  .transaction-details p {
+    margin: 0.5rem 0;
+    color: #666;
+  }
+
+  .transaction-details strong {
+    color: #333;
+  }
+
+  .no-transactions {
+    text-align: center;
+    color: #666;
+    padding: 2rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+  }
+
+  .hash-container {
+    word-break: break-all;
+    background: #f8f9fa;
+    padding: 0.8rem;
+    border-radius: 6px;
+    margin-top: 0.5rem;
+    border: 1px solid #e9ecef;
+    font-family: monospace;
+    font-size: 0.9rem;
+  }
+
+  .hash-container a {
+    color: #0066cc;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .hash-container a:hover {
+    color: #004aad;
+    text-decoration: underline;
   }
 </style>
 
 <script>
   function toggleMenu() {
     const navPoint = document.querySelector(".navPoint");
+    const hamburgerMenu = document.querySelector(".hamburger-menu");
+
     navPoint.classList.toggle("active");
+
+    // Prevent body scrolling when menu is open
+    if (navPoint.classList.contains("active")) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
   }
 
   // Close menu when clicking outside
@@ -277,8 +378,36 @@
       !hamburgerMenu.contains(event.target)
     ) {
       navPoint.classList.remove("active");
+      document.body.style.overflow = "";
     }
   });
+
+  // Close menu when clicking a link
+  document.querySelectorAll(".navPoint a").forEach((link) => {
+    link.addEventListener("click", () => {
+      const navPoint = document.querySelector(".navPoint");
+      navPoint.classList.remove("active");
+      document.body.style.overflow = "";
+    });
+  });
+
+  // Function to filter transactions
+  function filterTransactions() {
+    const status = document.getElementById('statusFilter').value;
+    const pendingSection = document.getElementById('pendingSection');
+    const completedSection = document.getElementById('completedSection');
+
+    if (status === 'all') {
+      pendingSection.style.display = 'block';
+      completedSection.style.display = 'block';
+    } else if (status === 'pending') {
+      pendingSection.style.display = 'block';
+      completedSection.style.display = 'none';
+    } else if (status === 'completed') {
+      pendingSection.style.display = 'none';
+      completedSection.style.display = 'block';
+    }
+  }
 </script>
 
 {% if messages %}
