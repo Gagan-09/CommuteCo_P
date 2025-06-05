@@ -311,35 +311,59 @@ def transactions(request):
         # For drivers, show transactions where they are the driver
         transactions = Transaction.objects.filter(
             driver__id=request.session['driver_id']
-        ).order_by('-created_at')
+        ).select_related('ride', 'ride__ride_distance').order_by('-created_at')
     elif 'user_id' in request.session:
         # For users, show transactions where they are the passenger
         transactions = Transaction.objects.filter(
             Q(ride__userid=request.session['user_id']) |  # Direct rides
             Q(ride__id__in=JointRide.objects.filter(userid=request.session['user_id']).values_list('rideId', flat=True))  # Joined rides
-        ).order_by('-created_at')
+        ).select_related('ride', 'ride__ride_distance').order_by('-created_at')
     else:
         messages.error(request, "Please login to view transactions")
         return redirect('login')
-    
-    # Group transactions by status
-    # Show completed rides in pending transactions until payment is made
-    # pending_transactions = transactions.filter(
-    #     Q(status='pending') |  # Regular pending transactions
-    #     Q(status='completed', transaction_hash__isnull=True)  # Completed rides waiting for payment
-    # )
-    
-    # Show only paid transactions in completed
-    completed_transactions = transactions.filter(
-        status='completed',
-        transaction_hash__isnull=False  # Only show transactions with payment hash
-    )
-    
-    return render(request, 'driver/transactions.html', {
-        'transactions': transactions,
-        'pending_transactions': [],  # Empty list since we're not showing pending transactions
-        'completed_transactions': completed_transactions
-    })
+
+    # Process transactions to add carpool-specific data
+    for transaction in transactions:
+        if transaction.is_carpool:
+            # Get the total fare from RideDistance and convert to float
+            transaction.total_fare = float(transaction.ride.ride_distance.fare) if transaction.ride.ride_distance else 0.0
+            
+            # Get all completed payments for this ride
+            payments = Transaction.objects.filter(
+                ride=transaction.ride,
+                status='completed'
+            )
+            
+            # Calculate total paid by all passengers
+            total_paid = float(sum(payment.fare for payment in payments))
+            
+            # Calculate individual payment based on total fare and passenger count
+            passenger_count = transaction.ride.passenger_count
+            if passenger_count > 0:
+                individual_fare = transaction.total_fare / passenger_count
+            else:
+                individual_fare = transaction.total_fare
+
+            # For completed transactions
+            if transaction.status == 'completed':
+                transaction.total_paid = individual_fare
+                # For completed transactions, remaining amount is total fare minus what this passenger paid
+                transaction.remaining_amount = transaction.total_fare - individual_fare
+            else:
+                # For pending transactions
+                transaction.total_paid = total_paid
+                # For pending transactions, remaining amount is total fare minus total paid by others
+                transaction.remaining_amount = transaction.total_fare - total_paid
+
+    # Separate completed and pending transactions
+    completed_transactions = [t for t in transactions if t.status == 'completed']
+    pending_transactions = [t for t in transactions if t.status == 'pending']
+
+    context = {
+        'completed_transactions': completed_transactions,
+        'pending_transactions': pending_transactions,
+    }
+    return render(request, 'driver/transactions.html', context)
 
 @login_required(login_url="login")
 def getJoinPool(request):
