@@ -408,7 +408,7 @@ def joinPool(request):
             else:
                 payment_amount = float(ride.base_fare) / 2
                 ride.current_fare = payment_amount
-                ride.passenger_count = 2
+                ride.passenger_count = 2  # Update passenger count to 2
                 ride.save()
                 first_passenger = JointRide.objects.get(rideId=poolId)
                 first_passenger.payment_amount = payment_amount
@@ -423,9 +423,11 @@ def joinPool(request):
                 payment_amount=payment_amount
             )
             
-            # Increment passenger_count in RidePoint
-            ride.passenger_count = JointRide.objects.filter(rideId=poolId).count()
+            # Update passenger count in RidePoint
+            ride.refresh_from_db()  # Refresh to get latest data
+            ride.passenger_count = 2  # Set to 2 since we have creator + 1 joiner
             ride.save()
+            
             messages.success(request, "Successfully joined the pool!")
         except RidePoint.DoesNotExist:
             messages.error(request, "Invalid ride")
@@ -610,6 +612,10 @@ def driverHome(request):
     # Convert to list to modify the data
     rides_list = []
     for ride in data:
+        # Get all joiners for this ride
+        joiners = JointRide.objects.filter(rideId=ride.id)
+        total_passengers = 1 + joiners.count()  # Creator + joiners
+
         ride_data = {
             "id": ride.id,
             "fromCity": ride.fromCity,
@@ -621,6 +627,7 @@ def driverHome(request):
             "driverId": ride.driverId,
             "applyOn": ride.applyOn,
             "is_carpool": ride.is_carpool,
+            "passenger_count": total_passengers,
             "passengers": []
         }
 
@@ -635,18 +642,16 @@ def driverHome(request):
             }
             ride_data["passengers"].append(passenger_data)
 
-        # If it's a carpool, get joiner details
-        if ride.is_carpool:
-            joiner = JointRide.objects.filter(rideId=ride.id).first()
-            if joiner:
-                joiner_user = User.objects.filter(id=joiner.userid).first()
-                if joiner_user:
-                    ride_data["passengers"].append({
-                        "name": joiner_user.name,
-                        "phone": joiner.phone,
-                        "email": joiner.email,
-                        "is_creator": False
-                    })
+        # Get joiner details
+        for joiner in joiners:
+            joiner_user = User.objects.filter(id=joiner.userid).first()
+            if joiner_user:
+                ride_data["passengers"].append({
+                    "name": joiner_user.name,
+                    "phone": joiner.phone,
+                    "email": joiner.email,
+                    "is_creator": False
+                })
 
         rides_list.append(ride_data)
 
@@ -739,12 +744,17 @@ def getRequestFromUsers(request):
                         else:
                             ride['distance'] = None
                             ride['fare'] = None
-                            
-                    # For direct rides, count the creator as a passenger
-                    ride['passenger_count'] = 1
-                    # Update the actual ride object's passenger count
-                    ride_obj.passenger_count = 1
+                    
+                    # Count total passengers (creator + joiners)
+                    joiners = JointRide.objects.filter(rideId=ride['id']).count()
+                    total_passengers = 1 + joiners  # Creator + joiners
+                    
+                    # Update the passenger count in the ride object
+                    ride_obj.passenger_count = total_passengers
                     ride_obj.save()
+                    
+                    # Update the passenger count in the response
+                    ride['passenger_count'] = total_passengers
                     
                     if ride.get('applyOn'):
                         ride['applyOn'] = ride['applyOn'].strftime('%Y-%m-%d %H:%M:%S')
@@ -818,12 +828,17 @@ def getRequestFromUsers(request):
                                 else:
                                     ride['distance'] = None
                                     ride['fare'] = None
-                                    
-                            # For joint rides, count both the creator and the joiner
-                            ride['passenger_count'] = 2
-                            # Update the actual ride object's passenger count
-                            ride_obj.passenger_count = 2
+                            
+                            # Count total passengers (creator + joiners)
+                            joiners = JointRide.objects.filter(rideId=ride['id']).count()
+                            total_passengers = 1 + joiners  # Creator + joiners
+                            
+                            # Update the passenger count in the ride object
+                            ride_obj.passenger_count = total_passengers
                             ride_obj.save()
+                            
+                            # Update the passenger count in the response
+                            ride['passenger_count'] = total_passengers
                             
                             ride['joined_at'] = joined_at_map[str(ride['id'])]
                             if ride.get('applyOn'):
