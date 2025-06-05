@@ -10,6 +10,8 @@ import requests
 from math import radians, sin, cos, sqrt, atan2
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
+from web3 import Web3
+import socket
 
 def calculate_distance(lat1, lon1, lat2, lon2):
     print(f"Calculating driving distance between ({lat1}, {lon1}) and ({lat2}, {lon2})")
@@ -1382,3 +1384,79 @@ def update_gender(request):
     except Exception as e:
         print(f"ERROR: Unexpected error - {str(e)}")
         return JsonResponse({'success': False, 'error': str(e)})
+
+@require_http_methods(["POST"])
+def check_wallet_balance(request):
+    try:
+        print("\n=== CHECKING WALLET BALANCE ===")
+        data = json.loads(request.body)
+        wallet_address = data.get('walletAddress')
+        
+        if not wallet_address:
+            print("ERROR: No wallet address provided")
+            return JsonResponse({'error': 'Wallet address is required'}, status=400)
+            
+        print(f"Checking balance for address: {wallet_address}")
+            
+        # Initialize Web3 with Ganache
+        try:
+            print("Attempting to connect to Ganache...")
+            # Try connecting to Ganache with a timeout
+            web3 = Web3(Web3.HTTPProvider('http://127.0.0.1:7545', request_kwargs={'timeout': 5}))
+            
+            # Validate address format
+            if not web3.is_address(wallet_address):
+                print(f"ERROR: Invalid Ethereum address format: {wallet_address}")
+                return JsonResponse({'error': 'Invalid Ethereum address'}, status=400)
+            
+            # Check if connected to Ganache
+            if not web3.is_connected():
+                print("ERROR: Could not connect to Ganache")
+                return JsonResponse({
+                    'error': 'Could not connect to Ganache. Please check:\n1. Ganache is running\n2. Ganache is on port 7545\n3. Your computer and mobile are on the same network',
+                    'is_mobile_error': True
+                }, status=503)
+                
+            print("Successfully connected to Ganache")
+                
+            # Get balance with timeout
+            try:
+                print("Getting balance...")
+                balance = web3.eth.get_balance(wallet_address)
+                eth_balance = web3.from_wei(balance, 'ether')
+                print(f"Balance: {eth_balance} ETH")
+                
+                return JsonResponse({
+                    'success': True,
+                    'balance': str(eth_balance),
+                    'formatted_balance': f"{float(eth_balance):.4f} ETH"
+                })
+            except Exception as e:
+                print(f"ERROR getting balance: {str(e)}")
+                return JsonResponse({
+                    'error': 'Error getting balance. Please try again.',
+                    'is_mobile_error': True
+                }, status=500)
+            
+        except Exception as e:
+            print(f"ERROR connecting to Ganache: {str(e)}")
+            # Check if it's a connection error
+            if "Connection refused" in str(e):
+                return JsonResponse({
+                    'error': 'Could not connect to Ganache. Please check:\n1. Ganache is running\n2. Ganache is on port 7545\n3. Your computer and mobile are on the same network',
+                    'is_mobile_error': True
+                }, status=503)
+            else:
+                return JsonResponse({
+                    'error': f'Error connecting to Ganache: {str(e)}',
+                    'is_mobile_error': True
+                }, status=500)
+            
+    except json.JSONDecodeError as e:
+        print(f"ERROR parsing JSON: {str(e)}")
+        return JsonResponse({'error': 'Invalid request data'}, status=400)
+    except Exception as e:
+        print(f"UNEXPECTED ERROR: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+    finally:
+        print("==============================\n")

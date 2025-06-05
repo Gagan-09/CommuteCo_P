@@ -514,8 +514,12 @@
     }
   });
 
-  // Initialize Web3 with Ganache
-  const web3 = new Web3("http://127.0.0.1:7545");
+  // Function to detect mobile devices
+  function isMobileDevice() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    );
+  }
 
   async function checkBalance(rideId) {
     try {
@@ -529,27 +533,77 @@
         return;
       }
 
-      if (!web3.utils.isAddress(walletAddress)) {
-        balanceDisplay.textContent = "Invalid Ethereum address";
-        balanceDisplay.style.color = "#dc3545";
-        return;
-      }
-
       balanceDisplay.textContent = "Checking balance...";
       balanceDisplay.style.color = "#6c757d";
 
-      const balance = await web3.eth.getBalance(walletAddress);
-      const eth = web3.utils.fromWei(balance, "ether");
+      try {
+        // Call backend endpoint to check balance
+        const response = await fetch("/check_wallet_balance/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]")
+              .value,
+          },
+          body: JSON.stringify({ walletAddress: walletAddress }),
+        });
 
-      balanceDisplay.textContent = `Balance: ${parseFloat(eth).toFixed(4)} ETH`;
-      balanceDisplay.style.color = "#28a745";
+        const data = await response.json();
+
+        if (response.ok) {
+          balanceDisplay.textContent = data.formatted_balance;
+          balanceDisplay.style.color = "#28a745";
+        } else {
+          // Format error message with line breaks
+          const errorMessage = data.error.replace(/\\n/g, "<br>");
+          balanceDisplay.innerHTML = errorMessage;
+          balanceDisplay.style.color = "#dc3545";
+        }
+      } catch (error) {
+        console.error("Balance error:", error);
+        balanceDisplay.innerHTML = "Error checking balance. Please try again.";
+        balanceDisplay.style.color = "#dc3545";
+      }
     } catch (error) {
       console.error("Balance error:", error);
-      balanceDisplay.textContent =
-        "Error checking balance. Ensure Ganache is running at http://127.0.0.1:7545";
+      balanceDisplay.textContent = "Error checking balance. Please try again.";
       balanceDisplay.style.color = "#dc3545";
     }
   }
+
+  // Add event listener for mobile devices
+  document.addEventListener("DOMContentLoaded", function () {
+    // Check if we're on a mobile device
+    if (isMobileDevice()) {
+      // Add a message about Ganache connection
+      const balanceDisplays = document.querySelectorAll(
+        '[id^="balanceDisplay"]'
+      );
+      balanceDisplays.forEach((display) => {
+        display.innerHTML = `
+          <div style="text-align: left;">
+            <p style="margin-bottom: 8px;">To check balance on mobile:</p>
+            <ol style="margin: 0; padding-left: 20px;">
+              <li>Ensure Ganache is running on your computer</li>
+              <li>Make sure Ganache is on port 7545</li>
+              <li>Make sure your mobile is on the same network</li>
+              <li>Click "View Balance" to check</li>
+            </ol>
+          </div>
+        `;
+        display.style.color = "#6c757d";
+      });
+
+      // Update the View Balance buttons for mobile
+      const viewBalanceButtons = document.querySelectorAll(
+        'button[onclick^="checkBalance"]'
+      );
+      viewBalanceButtons.forEach((button) => {
+        button.title =
+          "Check balance (requires Ganache running on your computer)";
+      });
+    }
+  });
 
   function rejectRide(rideId) {
     if (confirm("Are you sure you want to reject this ride?")) {
@@ -588,5 +642,4 @@
 <div class="alert alert-info" role="alert">
   {% for message in messages %} {{ message }} {% endfor %}
 </div>
-{% endif %} 
-{% endblock %}
+{% endif %} {% endblock %}
