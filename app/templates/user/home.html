@@ -521,10 +521,11 @@
                 }','${element.fromCity}')" style="flex: 1;">
                   <i class="fas fa-directions"></i> Directions
                 </button>
-                ${checkAndUpdate(element.status, element.id)}
-                <button onclick="deletePool(${
-                  element.id
-                })" class='reject-btn' style="flex: 1;">Delete</button>
+                ${checkAndUpdate(
+                  element.status,
+                  element.id,
+                  element.passenger_count
+                )}
               </div>
             </div>`;
           });
@@ -553,13 +554,17 @@
       window.location.href = `/maps?source=${fromCity}'&destination=${toCity}`;
     }
 
-    function checkAndUpdate(status, rideId) {
+    function checkAndUpdate(status, rideId, passengerCount) {
       if (status == "Ride Completed") {
         return `<button onclick="window.location.href='/payment?rideId=${rideId}'" class='accept-btn' style='flex: 1; background-color: #ffcc00; color: #000;'>
           <i class="fas fa-money-bill"></i> Payment
         </button>`;
+      } else if (passengerCount >= 2) {
+        return `<button class='accept-btn' style='flex: 1; background-color: #004aad; color: #fff;' disabled>
+          <i class="fas fa-users"></i> Carpool Full
+        </button>`;
       } else {
-        return "";
+        return `<button onclick="deletePool(${rideId})" class='reject-btn' style="flex: 1;">Delete</button>`;
       }
     }
 
