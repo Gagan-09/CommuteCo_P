@@ -572,21 +572,41 @@ def stateOF(request):
 
 def rejectRide(request):
     if request.method == "POST":
-        rideId = request.POST.get("rideId", 0).strip()
-        driverId = request.POST.get("driverId", "").strip()
-        
-        # Only allow rejection if this driver hasn't already accepted
-        ride = RidePoint.objects.get(id=int(rideId))
-        if ride.driverId == "":
-            # Mark this driver as having rejected this ride
-            # This prevents the same driver from seeing this ride again
+        try:
+            rideId = request.POST.get("rideId", "").strip()
+            driverId = request.POST.get("driverId", "").strip()
+            
+            if not rideId or not driverId:
+                messages.error(request, "Missing required information")
+                return redirect("driverHome")
+                
+            # Get the ride
+            ride = RidePoint.objects.get(id=int(rideId))
+            
+            # Check if ride is already accepted by any driver
+            if ride.driverId:
+                messages.error(request, "This ride has already been accepted by another driver")
+                return redirect("driverHome")
+                
+            # Check if this driver has already rejected this ride
+            if RejectedRide.objects.filter(rideId=rideId, driverId=driverId).exists():
+                messages.error(request, "You have already rejected this ride")
+                return redirect("driverHome")
+                
+            # Create rejection record
             RejectedRide.objects.create(
                 rideId=rideId,
                 driverId=driverId
             )
+            
             messages.success(request, "Ride rejected successfully")
-        else:
-            messages.error(request, "This ride has already been accepted")
+            
+        except RidePoint.DoesNotExist:
+            messages.error(request, "Invalid ride ID")
+        except ValueError:
+            messages.error(request, "Invalid ride ID format")
+        except Exception as e:
+            messages.error(request, f"Error rejecting ride: {str(e)}")
             
     return redirect("driverHome")
 

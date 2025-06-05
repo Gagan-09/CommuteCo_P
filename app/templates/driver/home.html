@@ -621,16 +621,25 @@
       fetch("/rejectRide/", {
         method: "POST",
         body: formData,
+        headers: {
+          "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]")
+            .value,
+        },
       })
         .then((response) => {
           if (response.ok) {
-            const rideCard = document
-              .querySelector(`#acceptModal${rideId}`)
-              .closest(".col-md-6");
-            rideCard.style.display = "none";
-            location.reload(); // Refresh to update the list
+            // Remove the ride card from the UI
+            const rideCard = document.querySelector(
+              `[data-ride-id="${rideId}"]`
+            );
+            if (rideCard) {
+              rideCard.remove();
+            } else {
+              // If we can't find the specific card, reload the page
+              location.reload();
+            }
           } else {
-            alert("Error rejecting ride. Please try again.");
+            throw new Error("Network response was not ok");
           }
         })
         .catch((error) => {
