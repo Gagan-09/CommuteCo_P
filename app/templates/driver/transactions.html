@@ -77,7 +77,15 @@
       <div class="transaction-card">
         <div class="transaction-header">
           <span class="transaction-id">#{{ transaction.id }}</span>
-          <span class="status-badge status-completed">Payment Completed</span>
+          {% if transaction.is_carpool %}
+            {% if transaction.remaining_amount > 0 %}
+              <span class="status-badge status-pending">Payment Pending</span>
+            {% else %}
+              <span class="status-badge status-completed">Payment Completed</span>
+            {% endif %}
+          {% else %}
+            <span class="status-badge status-completed">Payment Completed</span>
+          {% endif %}
         </div>
         <div class="transaction-details">
           <p><strong>From:</strong> {{ transaction.source }}</p>
