@@ -390,6 +390,7 @@ def getJoinPool(request):
                 "fromCity": ride.fromCity,
                 "toCity": ride.toCity,
                 "datePoint": ride.datePoint,
+                "journey_time": ride.journey_time,
                 "contactPoint": ride.contactPoint,
                 "status": ride.status,
                 "passenger_count": ride.passenger_count
@@ -454,11 +455,9 @@ def joinPool(request):
                 rides = rides.select_related('ride_distance').order_by('ride_distance__distance')
                 
                 rides_list = list(rides.values(
-                    'id', 'fromCity', 'toCity', 'datePoint', 
-                    'journey_time', 'phone_number', 'contactPoint', 
-                    'status', 'passenger_count', 'is_carpool',
-                    'base_fare', 'current_fare',
-                    'ride_distance__distance'
+                    'id', 'fromCity', 'toCity', 'datePoint', 'journey_time',
+                    'contactPoint', 'status', 'passenger_count', 'is_carpool',
+                    'base_fare', 'current_fare', 'ride_distance__distance'
                 ))
                 
                 # Rename the distance field
