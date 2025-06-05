@@ -39,6 +39,14 @@
             >
             <button
               type="button"
+              class="btn btn-info"
+              data-bs-toggle="modal"
+              data-bs-target="#passengerModal{{ ride.id }}"
+            >
+              View Passengers
+            </button>
+            <button
+              type="button"
               class="btn btn-success"
               data-bs-toggle="modal"
               data-bs-target="#acceptModal{{ ride.id }}"
@@ -51,6 +59,59 @@
               onclick="rejectRide('{{ ride.id }}')"
             >
               Reject Ride
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Passenger Details Modal -->
+    <div class="modal fade" id="passengerModal{{ ride.id }}" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Passenger Details - Ride #{{ ride.id }}</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div class="passenger-details">
+              {% for passenger in ride.passengers %}
+              <div
+                class="passenger-card mb-3 p-3 {% if passenger.is_creator %}bg-light{% endif %}"
+              >
+                <h6 class="mb-2">
+                  {{ passenger.name }} {% if passenger.is_creator %}
+                  <span class="badge bg-primary">Creator</span>
+                  {% else %}
+                  <span class="badge bg-success">Joined</span>
+                  {% endif %}
+                </h6>
+                <div class="contact-info">
+                  <p class="mb-1">
+                    <strong>Name:</strong> {{ passenger.name }}
+                  </p>
+                  <p class="mb-1">
+                    <strong>Phone:</strong> {{ passenger.phone }}
+                  </p>
+                  <p class="mb-1">
+                    <strong>Email:</strong> {{ passenger.email }}
+                  </p>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Close
             </button>
           </div>
         </div>
@@ -245,6 +306,92 @@
       margin-top: 1rem;
       padding: 0.5rem;
     }
+
+    .container .row {
+      margin: 0;
+    }
+
+    .container .col-md-6 {
+      padding: 0 10px;
+    }
+
+    .card {
+      margin-bottom: 15px;
+    }
+
+    .card-body {
+      padding: 15px;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+    }
+
+    .card-body p {
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+    }
+
+    .mt-3 {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .btn {
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      flex: 1;
+      min-width: 120px;
+      text-align: center;
+    }
+
+    .btn-primary {
+      order: 1;
+    }
+
+    .btn-info {
+      order: 2;
+    }
+
+    .btn-success {
+      order: 3;
+    }
+
+    .btn-danger {
+      order: 4;
+    }
+
+    /* Modal adjustments for mobile */
+    .modal-dialog {
+      margin: 10px;
+    }
+
+    .modal-body {
+      padding: 15px;
+    }
+
+    .passenger-details {
+      padding: 10px;
+    }
+
+    .passenger-card {
+      padding: 10px !important;
+    }
+
+    .passenger-card h6 {
+      font-size: 0.9rem;
+    }
+
+    .passenger-card p {
+      font-size: 0.85rem;
+      margin-bottom: 5px;
+    }
+
+    .badge {
+      font-size: 0.7em;
+      padding: 0.2em 0.5em;
+    }
   }
 
   @media screen and (max-width: 480px) {
@@ -264,6 +411,86 @@
     .container {
       margin-top: 0.8rem;
     }
+
+    .container .col-md-6 {
+      padding: 0 5px;
+    }
+
+    .card-body {
+      padding: 12px;
+    }
+
+    .card-title {
+      font-size: 1rem;
+    }
+
+    .card-body p {
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+    }
+
+    .btn {
+      padding: 5px 10px;
+      font-size: 0.8rem;
+      min-width: 100px;
+    }
+
+    .modal-dialog {
+      margin: 5px;
+    }
+
+    .modal-body {
+      padding: 12px;
+    }
+
+    .passenger-details {
+      padding: 8px;
+    }
+
+    .passenger-card {
+      padding: 8px !important;
+    }
+
+    .passenger-card h6 {
+      font-size: 0.85rem;
+    }
+
+    .passenger-card p {
+      font-size: 0.8rem;
+    }
+  }
+
+  .passenger-details {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+  }
+
+  .passenger-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    background-color: white;
+  }
+
+  .passenger-card.bg-light {
+    background-color: #e9ecef;
+  }
+
+  .badge {
+    font-size: 0.8em;
+    padding: 0.25em 0.6em;
+    margin-left: 8px;
+  }
+
+  .btn-info {
+    background-color: #17a2b8;
+    border: none;
+    color: white;
+  }
+
+  .btn-info:hover {
+    background-color: #138496;
+    color: white;
   }
 </style>
 
@@ -357,15 +584,8 @@
 </script>
 
 {% if messages %}
-<div class="nothing" id="messagePoint"></div>
-<script>
-  const success = document.getElementById("successpoint").value;
-  const vali = document.getElementById("messagePoint");
-  vali.className = "dialog";
-  vali.innerText = success;
-  setTimeout(() => {
-    vali.className = "nothing";
-  }, 3000);
-</script>
+<div class="alert alert-info" role="alert">
+  {% for message in messages %} {{ message }} {% endfor %}
+</div>
 {% endif %} 
 {% endblock %}

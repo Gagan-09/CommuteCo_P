@@ -502,7 +502,7 @@
 
           var text = "";
           point.data.forEach((element) => {
-            text += `<div class="card">
+            text += `<div class="card" data-pool-id="${element.id}">
               <h3>${element.fromCity} ➜ ${element.toCity}</h3>
               <p><strong>Date:</strong> ${element.datePoint}</p>
               <p><strong>Time:</strong> ${element.journey_time}</p>
@@ -569,19 +569,36 @@
           method: "POST",
           headers: {
             "X-CSRFToken": getCookie("csrftoken"),
+            "X-Requested-With": "XMLHttpRequest",
             "Content-Type": "application/json",
           },
         })
-          .then((response) => {
-            if (response.ok) {
-              window.location.reload();
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              // Remove the pool card from the UI
+              const poolCard = document.querySelector(
+                `[data-pool-id="${poolId}"]`
+              );
+              if (poolCard) {
+                poolCard.remove();
+              }
+              // Show success message
+              const messagePoint = document.getElementById("messagePoint");
+              messagePoint.className = "dialog";
+              messagePoint.innerText = data.message;
+              setTimeout(() => {
+                messagePoint.className = "nothing";
+              }, 3000);
             } else {
-              alert("Failed to delete pool. Please try again.");
+              throw new Error(data.message || "Failed to delete pool");
             }
           })
           .catch((error) => {
             console.error("Error:", error);
-            alert("An error occurred while deleting the pool.");
+            alert(
+              error.message || "An error occurred while deleting the pool."
+            );
           });
       }
     }

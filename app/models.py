@@ -68,13 +68,14 @@ class JointRide(models.Model):
     id=models.AutoField(primary_key=True)
     userid=models.CharField(max_length=100)
     rideId=models.CharField(max_length=100)
-    walletAddress = models.CharField(max_length=100, default='0x0000000000000000000000000000000000000000')  # Default empty Ethereum address
+    email = models.EmailField(max_length=100, null=True, blank=True)
+    phone = models.CharField(max_length=15, null=True, blank=True)
     payment_status = models.CharField(max_length=20, default='pending')  # pending, completed
     payment_amount = models.DecimalField(max_digits=10, decimal_places=6, default=0)  # Individual payment amount
     joined_at = models.DateTimeField(default=timezone.now)  # Track when passenger joined
 
     def __str__(self):
-        return f"Joint Ride #{self.id}: User {self.userid} on Ride {self.rideId}"
+        return f"Joint Ride {self.id} - User {self.userid} - Ride {self.rideId}"
 
 class RejectedRide(models.Model):
     id = models.AutoField(primary_key=True)

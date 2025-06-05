@@ -247,49 +247,64 @@ def transactions(request):
 
 @login_required(login_url="login")
 def getJoinPool(request):
-    if request.method == "GET":
-        search = request.GET.get("search", "")
-        user_id = request.session.get("user_id")
+    try:
+        # Get search parameters
+        source = request.GET.get('source', '')
+        destination = request.GET.get('destination', '')
+        date = request.GET.get('date', '')
 
-        if not user_id:
-            return JsonResponse({"error": "User not logged in"}, status=401)
+        # Get rides that user hasn't created or joined
+        rides = RidePoint.objects.filter(
+            ~Q(userid=request.session['user_id']) &  # Not created by user
+            ~Q(id__in=JointRide.objects.filter(userid=request.session['user_id']).values_list('rideId', flat=True)) &  # Not joined by user
+            ~Q(status="Ride Completed") &  # Not completed
+            Q(passenger_count__lt=2)  # Less than 2 passengers
+        )
 
-        try:
-            # Get all rides that the user hasn't created and hasn't joined
-            rides = RidePoint.objects.exclude(
-                Q(userid=user_id) |  # Exclude rides created by the user
-                Q(status="Completed")  # Exclude completed rides
-            ).filter(
-                Q(fromCity__icontains=search) | Q(toCity__icontains=search)
-            ).annotate(
-                joined_count=Count('jointride', distinct=True)  # Count number of people who have joined
-            ).filter(
-                joined_count__lt=2  # Only show rides with less than 2 passengers
-            ).order_by('ride_distance')  # Order by distance
+        # Apply filters if provided
+        if source:
+            rides = rides.filter(fromCity__icontains=source)
+        if destination:
+            rides = rides.filter(toCity__icontains=destination)
+        if date:
+            rides = rides.filter(datePoint__icontains=date)
 
-            # Convert to list of dictionaries
-            rides_list = list(rides.values(
-                'id', 'fromCity', 'toCity', 'datePoint', 
-                'contactPoint', 'status', 'joined_count', 'ride_distance',
-                'passenger_count'  # Include passenger_count in the response
-            ))
+        # Convert to list for sorting
+        rides_list = list(rides)
+        
+        # Sort rides by date and time
+        def get_sort_key(ride):
+            try:
+                # Parse the date and time from datePoint
+                date_str = ride.datePoint
+                if isinstance(date_str, datetime.datetime):
+                    return date_str
+                return datetime.datetime.strptime(date_str, "%Y-%m-%d %H:%M")
+            except Exception as e:
+                print(f"Error getting sort key for ride {ride.id}: {str(e)}")
+                return datetime.datetime.min
 
-            # Process the rides to ensure correct passenger count
-            for ride in rides_list:
-                # If no one has joined yet, set passenger_count to 1 (the creator)
-                if ride['joined_count'] == 0:
-                    ride['passenger_count'] = 1
-                else:
-                    # If someone has joined, set passenger_count to 2
-                    ride['passenger_count'] = 2
+        rides_list.sort(key=get_sort_key)
 
-            return JsonResponse({"data": rides_list})
+        # Convert to dictionary format for JSON response
+        data = []
+        for ride in rides_list:
+            ride_data = {
+                "id": ride.id,
+                "fromCity": ride.fromCity,
+                "toCity": ride.toCity,
+                "datePoint": ride.datePoint,
+                "contactPoint": ride.contactPoint,
+                "status": ride.status,
+                "passenger_count": ride.passenger_count
+            }
+            data.append(ride_data)
 
-        except Exception as e:
-            print(f"Error in getJoinPool: {str(e)}")  # Add server-side logging
-            return JsonResponse({"error": f"Error loading pools: {str(e)}"}, status=500)
+        return JsonResponse({"data": data})
 
-    return JsonResponse({"error": "Invalid request method"}, status=400)
+    except Exception as e:
+        print(f"Error in getJoinPool: {str(e)}")
+        return JsonResponse({"error": str(e)}, status=500)
 
 @login_required(login_url="login")
 def myPool(request):
@@ -362,10 +377,13 @@ def joinPool(request):
     elif request.method == "POST":
         poolId = request.POST.get("poolId")
         userId = request.session.get('user_id')
-        walletAddress = request.POST.get("walletAddress")
-        if not all([poolId, userId, walletAddress]):
+        email = request.POST.get("email")
+        phone = request.POST.get("phone")
+        
+        if not all([poolId, userId, email, phone]):
             messages.error(request, "Missing required information")
             return redirect("joinPool")
+            
         try:
             ride = RidePoint.objects.get(id=poolId)
             if ride.status == "Ride Completed":
@@ -378,6 +396,7 @@ def joinPool(request):
             if current_passengers >= 2:
                 messages.error(request, "This ride is full")
                 return redirect("joinPool")
+                
             # Calculate fare based on number of passengers
             if current_passengers == 0:
                 ride.base_fare = float(ride.payment)
@@ -394,13 +413,16 @@ def joinPool(request):
                 first_passenger = JointRide.objects.get(rideId=poolId)
                 first_passenger.payment_amount = payment_amount
                 first_passenger.save()
+                
             # Create the joint ride
             JointRide.objects.create(
                 userid=userId,
                 rideId=poolId,
-                walletAddress=walletAddress,
+                email=email,
+                phone=phone,
                 payment_amount=payment_amount
             )
+            
             # Increment passenger_count in RidePoint
             ride.passenger_count = JointRide.objects.filter(rideId=poolId).count()
             ride.save()
@@ -583,18 +605,52 @@ def driverHome(request):
         Q(driverId="") & 
         ~Q(userid="") &
         ~Q(id__in=RejectedRide.objects.filter(driverId=str(request.session['driver_id'])).values_list('rideId', flat=True))
-    ).order_by('-applyOn').values(  # Order by creation date in descending order
-        "id",
-        "fromCity",
-        "toCity",
-        "datePoint",
-        "contactPoint",
-        "status",
-        "userid",
-        "driverId",
-        "applyOn",
-    )
-    return render(request, "driver/home.html", context={"data": data})
+    ).order_by('-applyOn')
+
+    # Convert to list to modify the data
+    rides_list = []
+    for ride in data:
+        ride_data = {
+            "id": ride.id,
+            "fromCity": ride.fromCity,
+            "toCity": ride.toCity,
+            "datePoint": ride.datePoint,
+            "contactPoint": ride.contactPoint,
+            "status": ride.status,
+            "userid": ride.userid,
+            "driverId": ride.driverId,
+            "applyOn": ride.applyOn,
+            "is_carpool": ride.is_carpool,
+            "passengers": []
+        }
+
+        # Get creator details
+        creator = User.objects.filter(id=ride.userid).first()
+        if creator:
+            passenger_data = {
+                "name": creator.name,
+                "phone": ride.phone_number,
+                "email": creator.email,
+                "is_creator": True
+            }
+            ride_data["passengers"].append(passenger_data)
+
+        # If it's a carpool, get joiner details
+        if ride.is_carpool:
+            joiner = JointRide.objects.filter(rideId=ride.id).first()
+            if joiner:
+                joiner_user = User.objects.filter(id=joiner.userid).first()
+                if joiner_user:
+                    ride_data["passengers"].append({
+                        "name": joiner_user.name,
+                        "phone": joiner.phone,
+                        "email": joiner.email,
+                        "is_creator": False
+                    })
+
+        rides_list.append(ride_data)
+
+    return render(request, "driver/home.html", context={"data": rides_list})
 
 
 def profileDetails(request):
@@ -1110,8 +1166,8 @@ def update_distance(request):
         return JsonResponse({'success': False, 'error': str(e)})
 
 def deletePool(request, pool_id):
-    if not request.session.get('user_id') or request.session.get('user_type') != 'user':
-        messages.error(request, "Please login as a user")
+    if not request.session.get('user_id'):
+        messages.error(request, "Please login to delete a pool")
         return redirect('login')
         
     try:
@@ -1125,12 +1181,26 @@ def deletePool(request, pool_id):
             messages.error(request, "Cannot delete a completed or accepted ride")
             return redirect('userHome')
             
+        # Delete any associated joint rides first
+        JointRide.objects.filter(rideId=pool_id).delete()
+        
+        # Delete the pool
         pool.delete()
         messages.success(request, "Pool deleted successfully")
+        
+        # If it's an AJAX request, return JSON response
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': True, 'message': 'Pool deleted successfully'})
+            
     except RidePoint.DoesNotExist:
         messages.error(request, "Pool not found")
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'message': 'Pool not found'}, status=404)
     except Exception as e:
+        print(f"Error deleting pool: {str(e)}")  # Add logging
         messages.error(request, f"Error deleting pool: {str(e)}")
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'message': str(e)}, status=500)
         
     return redirect('userHome')
 

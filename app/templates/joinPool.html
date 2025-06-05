@@ -460,13 +460,25 @@
                     <div class="modal-body">
                       <input type="hidden" name="poolId" value="${pool.id}" />
                       <div class="mb-3">
-                        <label for="walletAddress${pool.id}" class="form-label">
-                          Your Blockchain Wallet Address
+                        <label for="email${pool.id}" class="form-label">
+                          Your Email Address
                         </label>
-                        <input type="text"
+                        <input type="email"
                                class="form-control"
-                               id="walletAddress${pool.id}"
-                               name="walletAddress"
+                               id="email${pool.id}"
+                               name="email"
+                               required />
+                      </div>
+                      <div class="mb-3">
+                        <label for="phone${pool.id}" class="form-label">
+                          Your Phone Number
+                        </label>
+                        <input type="tel"
+                               class="form-control"
+                               id="phone${pool.id}"
+                               name="phone"
+                               pattern="[0-9]{10}"
+                               title="Please enter a valid 10-digit phone number"
                                required />
                       </div>
                     </div>

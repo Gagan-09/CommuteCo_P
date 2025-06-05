@@ -257,14 +257,8 @@
 </script>
 
 {% if messages %}
-<div class="nothing" id="messagePoint"></div>
-<script>
-  const success = document.getElementById("successpoint").value;
-  const vali = document.getElementById("messagePoint");
-  vali.className = "dialog";
-  vali.innerText = success;
-  setTimeout(() => {
-    vali.className = "nothing";
-  }, 3000);
-</script>
-{% endif %} {% endblock %}
+<div class="alert alert-info" role="alert">
+  {% for message in messages %} {{ message }} {% endfor %}
+</div>
+{% endif %} 
+{% endblock %}
