@@ -70,6 +70,12 @@
       .payment-details p {
         margin: 10px 0;
         color: #333;
+        word-break: break-all;
+        overflow-wrap: break-word;
+      }
+      .payment-details strong {
+        display: inline-block;
+        min-width: 120px;
       }
       .wallet-section {
         margin: 20px 0;
@@ -81,6 +87,7 @@
         border: 1px solid #ddd;
         border-radius: 5px;
         font-size: 14px;
+        word-break: break-all;
       }
       .wallet-input:disabled {
         background: #f5f5f5;
@@ -95,6 +102,9 @@
         font-size: 16px;
         cursor: pointer;
         transition: background 0.3s ease;
+        width: 100%;
+        max-width: 200px;
+        margin: 10px 0;
       }
       .pay-btn:hover {
         background: #45a049;
@@ -109,6 +119,8 @@
         background: #f5f5f5;
         border-radius: 5px;
         display: none;
+        word-break: break-all;
+        overflow-wrap: break-word;
       }
       .balance-display.show {
         display: block;
@@ -120,9 +132,199 @@
         background: #e8f5e9;
         border-radius: 5px;
         color: #2e7d32;
+        text-align: left;
+        word-break: break-all;
+        overflow-wrap: break-word;
       }
       .success-message.show {
         display: block;
+      }
+      .success-message h3 {
+        margin-top: 0;
+        color: #1b5e20;
+      }
+      .success-message p {
+        margin: 8px 0;
+      }
+      .success-message span {
+        font-weight: 500;
+      }
+
+      /* Media Queries */
+      @media screen and (max-width: 768px) {
+        .container {
+          margin: 1rem;
+          padding: 20px;
+          border-radius: 10px;
+        }
+
+        .headerSelction {
+          padding: 1rem;
+          flex-direction: column;
+          gap: 1rem;
+        }
+
+        .navPoint {
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 0.5rem;
+        }
+
+        .navPoint a {
+          padding: 0.4rem 0.8rem;
+          font-size: 0.9rem;
+        }
+
+        .payment-details {
+          padding: 15px;
+          margin: 15px 0;
+        }
+
+        .payment-details p {
+          font-size: 0.9rem;
+          margin: 8px 0;
+        }
+
+        .payment-details strong {
+          min-width: 100px;
+        }
+
+        .wallet-input {
+          padding: 10px;
+          font-size: 13px;
+        }
+
+        .pay-btn {
+          padding: 10px 20px;
+          font-size: 14px;
+          max-width: 100%;
+        }
+
+        .success-message {
+          padding: 12px;
+          margin-top: 15px;
+        }
+
+        .success-message h3 {
+          font-size: 1.1rem;
+        }
+
+        .success-message p {
+          font-size: 0.9rem;
+          margin: 6px 0;
+        }
+      }
+
+      @media screen and (max-width: 480px) {
+        .container {
+          margin: 0.5rem;
+          padding: 15px;
+        }
+
+        .titlePoint {
+          font-size: 1.2rem;
+        }
+
+        .payment-details {
+          padding: 12px;
+          margin: 12px 0;
+        }
+
+        .payment-details p {
+          font-size: 0.85rem;
+          margin: 6px 0;
+        }
+
+        .payment-details strong {
+          min-width: 90px;
+        }
+
+        .wallet-input {
+          font-size: 12px;
+          padding: 8px;
+        }
+
+        .pay-btn {
+          padding: 8px 16px;
+          font-size: 13px;
+        }
+
+        .success-message {
+          padding: 10px;
+          margin-top: 12px;
+        }
+
+        .success-message h3 {
+          font-size: 1rem;
+        }
+
+        .success-message p {
+          font-size: 0.85rem;
+          margin: 5px 0;
+        }
+      }
+
+      /* For very small screens */
+      @media screen and (max-width: 320px) {
+        .container {
+          padding: 10px;
+          margin: 0.5rem;
+        }
+
+        .payment-details {
+          padding: 10px;
+          margin: 10px 0;
+        }
+
+        .payment-details p {
+          font-size: 0.8rem;
+          margin: 5px 0;
+        }
+
+        .payment-details strong {
+          min-width: 80px;
+        }
+
+        .wallet-input {
+          font-size: 11px;
+          padding: 6px;
+        }
+
+        .pay-btn {
+          padding: 6px 12px;
+          font-size: 12px;
+        }
+
+        .success-message {
+          padding: 8px;
+          margin-top: 10px;
+        }
+
+        .success-message h3 {
+          font-size: 0.9rem;
+        }
+
+        .success-message p {
+          font-size: 0.8rem;
+          margin: 4px 0;
+        }
+      }
+
+      /* For landscape orientation on mobile */
+      @media screen and (max-height: 500px) and (orientation: landscape) {
+        .container {
+          margin: 0.5rem auto;
+          max-height: 90vh;
+          overflow-y: auto;
+        }
+
+        .payment-details {
+          margin: 10px 0;
+        }
+
+        .wallet-section {
+          margin: 10px 0;
+        }
       }
     </style>
   </head>
@@ -143,7 +345,10 @@
           <strong>Distance:</strong>
           <span id="distance">{{ distance }}</span> km
         </p>
-        <p><strong>Fare:</strong> <span id="fare">{{ fare }}</span> ETH</p>
+        <p>
+          <strong>Fare:</strong>
+          <span id="fare">{{ individual_fare }}</span> ETH
+        </p>
       </div>
 
       <div class="wallet-section">
@@ -172,13 +377,85 @@
 
     <script>
       // Initialize Web3 with Ganache
-      const web3 = new Web3("http://127.0.0.1:7545");
+      let web3;
+      let isConnected = false;
 
-      // Check Web3 connection
-      web3.eth.net
-        .isListening()
-        .then(() => console.log("Connected to Ganache"))
-        .catch((e) => console.error("Failed to connect to Ganache:", e));
+      async function initializeWeb3() {
+        try {
+          // Get the current hostname/IP
+          const hostname = window.location.hostname;
+          let ganacheUrl;
+
+          // For mobile devices, we need to use the computer's IP address
+          if (hostname === "localhost" || hostname === "127.0.0.1") {
+            ganacheUrl = "http://127.0.0.1:7545";
+          } else {
+            // For mobile, use the server's IP address
+            ganacheUrl = `http://${hostname}:7545`;
+          }
+
+          console.log("Attempting to connect to Ganache at:", ganacheUrl);
+
+          // Create provider with timeout
+          const provider = new Web3.providers.HttpProvider(ganacheUrl, {
+            timeout: 10000, // 10 second timeout
+            clientConfig: {
+              maxReceivedFrameSize: 100000000,
+              maxReceivedMessageSize: 100000000,
+            },
+            reconnect: {
+              auto: true,
+              delay: 5000,
+              maxAttempts: 5,
+              onTimeout: false,
+            },
+          });
+
+          web3 = new Web3(provider);
+
+          // Test the connection
+          const connected = await web3.eth.net.isListening();
+          if (connected) {
+            console.log("Successfully connected to Ganache");
+            isConnected = true;
+            enablePaymentUI();
+          } else {
+            throw new Error("Could not connect to Ganache");
+          }
+        } catch (error) {
+          console.error("Failed to initialize Web3:", error);
+          isConnected = false;
+          disablePaymentUI();
+          showConnectionError();
+        }
+      }
+
+      function enablePaymentUI() {
+        document.getElementById("userWallet").disabled = false;
+        document.querySelector(".pay-btn").disabled = false;
+        document.getElementById("balanceDisplay").textContent =
+          "Connected to Ganache";
+        document.getElementById("balanceDisplay").style.color = "#4CAF50";
+      }
+
+      function disablePaymentUI() {
+        document.getElementById("userWallet").disabled = true;
+        document.querySelector(".pay-btn").disabled = true;
+        document.getElementById("payButton").disabled = true;
+      }
+
+      function showConnectionError() {
+        const errorMsg =
+          "Failed to connect to Ganache. Please ensure:\n" +
+          "1. Your computer and phone are on the same network\n" +
+          "2. Ganache is running on your computer\n" +
+          "3. Your computer's IP address is correct\n" +
+          "4. Port 7545 is not blocked by firewall";
+        alert(errorMsg);
+      }
+
+      // Initialize Web3 when the page loads
+      initializeWeb3();
 
       // Get ride details from DOM elements
       const rideId = document.getElementById("rideId").textContent;
@@ -187,7 +464,14 @@
       const distance = document.getElementById("distance").textContent;
       const fare = document.getElementById("fare").textContent;
 
-      function checkBalance() {
+      async function checkBalance() {
+        if (!isConnected) {
+          alert(
+            "Not connected to Ganache. Please refresh the page and try again."
+          );
+          return;
+        }
+
         const userWallet = document.getElementById("userWallet").value;
         const balanceDisplay = document.getElementById("balanceDisplay");
         const payButton = document.getElementById("payButton");
@@ -202,112 +486,146 @@
           return;
         }
 
-        balanceDisplay.textContent = "Checking balance...";
-        balanceDisplay.classList.add("show");
-        balanceDisplay.style.color = "#666";
+        try {
+          balanceDisplay.textContent = "Checking balance...";
+          balanceDisplay.classList.add("show");
+          balanceDisplay.style.color = "#666";
 
-        web3.eth
-          .getBalance(userWallet)
-          .then((balance) => {
-            const ethBalance = web3.utils.fromWei(balance, "ether");
-            balanceDisplay.textContent = `Wallet Balance: ${parseFloat(
-              ethBalance
-            ).toFixed(4)} ETH`;
+          const balance = await web3.eth.getBalance(userWallet);
+          const ethBalance = web3.utils.fromWei(balance, "ether");
+          const formattedBalance = parseFloat(ethBalance).toFixed(4);
 
-            if (parseFloat(ethBalance) >= parseFloat(fare)) {
-              balanceDisplay.style.color = "#4CAF50";
-              payButton.disabled = false;
-            } else {
-              balanceDisplay.style.color = "#f44336";
-              payButton.disabled = true;
-              balanceDisplay.textContent += " (Insufficient balance)";
-            }
-          })
-          .catch((error) => {
-            balanceDisplay.textContent =
-              "Error checking balance. Please try again.";
+          balanceDisplay.textContent = `Wallet Balance: ${formattedBalance} ETH`;
+
+          if (parseFloat(ethBalance) >= parseFloat(fare)) {
+            balanceDisplay.style.color = "#4CAF50";
+            payButton.disabled = false;
+          } else {
             balanceDisplay.style.color = "#f44336";
-            console.error("Error checking balance:", error);
-          });
+            payButton.disabled = true;
+            balanceDisplay.textContent += " (Insufficient balance)";
+          }
+        } catch (error) {
+          console.error("Error checking balance:", error);
+          balanceDisplay.textContent =
+            "Error checking balance. Please try again.";
+          balanceDisplay.style.color = "#f44336";
+          alert(
+            "Error checking balance. Please make sure:\n1. Ganache is running\n2. Your computer and phone are on the same network\n3. The wallet address is correct"
+          );
+        }
       }
 
-      function makePayment() {
+      async function makePayment() {
+        if (!isConnected) {
+          alert(
+            "Not connected to Ganache. Please refresh the page and try again."
+          );
+          return;
+        }
+
         const userWallet = document.getElementById("userWallet").value;
         const payButton = document.getElementById("payButton");
+        const individualFare = document.getElementById("fare").textContent;
 
-        payButton.disabled = true;
-        payButton.textContent = "Processing Payment...";
+        if (!userWallet) {
+          alert("Please enter your wallet address");
+          return;
+        }
 
-        // Create transaction object
-        const transaction = {
-          from: userWallet,
-          to: driverWallet,
-          value: web3.utils.toWei(fare.toString(), "ether"),
-          gas: 21000,
-        };
+        if (!web3.utils.isAddress(userWallet)) {
+          alert("Please enter a valid Ethereum wallet address");
+          return;
+        }
 
-        console.log("Sending transaction:", transaction);
+        try {
+          payButton.disabled = true;
+          payButton.textContent = "Processing Payment...";
 
-        // Send transaction
-        web3.eth
-          .sendTransaction(transaction)
-          .on("transactionHash", function (hash) {
-            console.log("Transaction hash received:", hash);
-            payButton.textContent = "Payment Processing...";
+          // Create transaction object
+          const transaction = {
+            from: userWallet,
+            to: driverWallet,
+            value: web3.utils.toWei(individualFare.toString(), "ether"),
+            gas: 21000,
+          };
 
-            // Update transaction in database
-            fetch("{% url 'updateTransaction' %}", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": getCookie("csrftoken"),
-              },
-              body: JSON.stringify({
-                rideId: rideId,
-                transactionHash: hash,
-              }),
-            })
-              .then((response) => response.json())
-              .then((data) => {
-                console.log("Transaction update response:", data);
-                if (data.success) {
-                  // Show success message
-                  const successMessage =
-                    document.getElementById("successMessage");
-                  document.getElementById("transactionHash").textContent = hash;
-                  document.getElementById("successDistance").textContent =
-                    distance;
-                  document.getElementById("successAmount").textContent = fare;
-                  successMessage.classList.add("show");
+          console.log("Sending transaction:", transaction);
 
-                  // Redirect to success page after 2 seconds
-                  setTimeout(() => {
-                    const successUrl = `/payment-success/?hash=${encodeURIComponent(
-                      hash
-                    )}&distance=${encodeURIComponent(
-                      distance
-                    )}&amount=${encodeURIComponent(fare)}`;
-                    window.location.href = successUrl;
-                  }, 2000);
-                } else {
-                  throw new Error(data.error || "Failed to update transaction");
-                }
+          // Send transaction
+          web3.eth
+            .sendTransaction(transaction)
+            .on("transactionHash", function (hash) {
+              console.log("Transaction hash received:", hash);
+              payButton.textContent = "Payment Processing...";
+
+              // Update transaction in database
+              fetch("{% url 'updateTransaction' %}", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "X-CSRFToken": getCookie("csrftoken"),
+                },
+                body: JSON.stringify({
+                  rideId: rideId,
+                  transactionHash: hash,
+                }),
               })
-              .catch((error) => {
-                console.error("Error updating transaction:", error);
-                payButton.disabled = false;
-                payButton.textContent = "Pay Now";
-                alert(
-                  "Payment successful but failed to update transaction. Please contact support."
-                );
-              });
-          })
-          .on("error", function (error) {
-            console.error("Transaction error:", error);
-            payButton.disabled = false;
-            payButton.textContent = "Pay Now";
-            alert("Transaction failed. Please try again.");
-          });
+                .then((response) => response.json())
+                .then((data) => {
+                  console.log("Transaction update response:", data);
+                  if (data.success) {
+                    // Show success message
+                    const successMessage =
+                      document.getElementById("successMessage");
+                    document.getElementById("transactionHash").textContent =
+                      hash;
+                    document.getElementById("successDistance").textContent =
+                      distance;
+                    document.getElementById("successAmount").textContent =
+                      individualFare;
+                    successMessage.classList.add("show");
+
+                    // Redirect to success page after 2 seconds
+                    setTimeout(() => {
+                      const successUrl = `/payment-success/?hash=${encodeURIComponent(
+                        hash
+                      )}&distance=${encodeURIComponent(
+                        distance
+                      )}&amount=${encodeURIComponent(individualFare)}`;
+                      window.location.href = successUrl;
+                    }, 2000);
+                  } else {
+                    throw new Error(
+                      data.error || "Failed to update transaction"
+                    );
+                  }
+                })
+                .catch((error) => {
+                  console.error("Error updating transaction:", error);
+                  payButton.disabled = false;
+                  payButton.textContent = "Pay Now";
+                  alert(
+                    "Payment successful but failed to update transaction. Please contact support."
+                  );
+                });
+            })
+            .on("error", function (error) {
+              console.error("Transaction error:", error);
+              payButton.disabled = false;
+              payButton.textContent = "Pay Now";
+              alert(
+                "Transaction failed. Please make sure Ganache is running and accessible."
+              );
+            });
+        } catch (error) {
+          console.error("Payment error:", error);
+          payButton.disabled = false;
+          payButton.textContent = "Pay Now";
+          alert(
+            "Error processing payment. Please make sure Ganache is running and accessible."
+          );
+        }
       }
 
       // Function to get CSRF token

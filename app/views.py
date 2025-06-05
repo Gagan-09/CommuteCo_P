@@ -99,23 +99,52 @@ def payment(request):
         try:
             ride_distance = ride.ride_distance
             road_distance = ride_distance.distance
-            fare = ride_distance.fare
+            base_fare = ride_distance.fare
             
             print(f"\n=== PAYMENT DETAILS ===")
             print(f"Ride ID: {ride.id}")
             print(f"From: {ride.fromCity} To: {ride.toCity}")
             print(f"Distance: {road_distance:.2f} km")
-            print(f"Fare: {fare} ETH")
-            print("==============================\n")
+            print(f"Base Fare: {base_fare} ETH")
+            
+            # Calculate individual fare for carpool
+            if ride.is_carpool:
+                individual_fare = float(base_fare) / 2
+                print(f"Individual Fare (Carpool): {individual_fare} ETH")
+            else:
+                individual_fare = float(base_fare)
+                print(f"Fare (Single): {individual_fare} ETH")
+            
+            # Get payment status for current user
+            user_id = request.session.get('user_id')
+            user_payment = Transaction.objects.filter(
+                ride=ride,
+                status='completed'
+            ).first()
+            
+            # Check if other passenger has paid (for carpool)
+            other_payment = None
+            if ride.is_carpool:
+                other_payment = Transaction.objects.filter(
+                    ride=ride,
+                    status='completed'
+                ).exclude(
+                    id=user_payment.id if user_payment else None
+                ).first()
             
             context = {
                 'rideId': ride.id,
                 'driverName': driver.name,
                 'driverWallet': ride.payment,  # This is the driver's wallet address
                 'distance': road_distance,
-                'fare': fare,
+                'base_fare': base_fare,
+                'individual_fare': individual_fare,
                 'fromCity': ride.fromCity,
-                'toCity': ride.toCity
+                'toCity': ride.toCity,
+                'is_carpool': ride.is_carpool,
+                'user_paid': bool(user_payment),
+                'other_paid': bool(other_payment),
+                'total_paid': Transaction.objects.filter(ride=ride, status='completed').count()
             }
             
             return render(request, 'payment.html', context)
@@ -195,25 +224,43 @@ def stateOFCompleted(request):
                     passengers = JointRide.objects.filter(rideId=rideId)
                     passenger_count = passengers.count()
                     
-                    # Update ride status
+                    # Update ride status and ensure it's linked to the driver
                     ride.status = "Ride Completed"
+                    ride.driverId = driverId  # Ensure driver ID is set
                     ride.save()
                     
-                    # Create transaction for each passenger
+                    # Create transaction for each passenger with their individual fare
                     for passenger in passengers:
-                        transaction = Transaction.objects.create(
+                        # Check if transaction already exists
+                        existing_transaction = Transaction.objects.filter(
                             ride=ride,
-                            driver=User.objects.get(id=driverId),
+                            driver_id=driverId,
                             source=ride.fromCity,
-                            destination=ride.toCity,
-                            distance=road_distance,
-                            fare=passenger.payment_amount,
-                            status='pending',
-                            passenger_count=passenger_count,
-                            is_carpool=(passenger_count == 2)
-                        )
-                        print(f"Created transaction for passenger {passenger.userid}")
-                        print(f"Amount: {passenger.payment_amount} ETH")
+                            destination=ride.toCity
+                        ).first()
+                        
+                        if not existing_transaction:
+                            # Calculate individual fare for carpool
+                            if ride.is_carpool:
+                                individual_fare = float(ride.base_fare) / 2
+                            else:
+                                individual_fare = float(ride.base_fare)
+                                
+                            transaction = Transaction.objects.create(
+                                ride=ride,
+                                driver=User.objects.get(id=driverId),
+                                source=ride.fromCity,
+                                destination=ride.toCity,
+                                distance=road_distance,
+                                fare=individual_fare,
+                                status='pending',
+                                passenger_count=passenger_count,
+                                is_carpool=(passenger_count == 2)
+                            )
+                            print(f"Created transaction for passenger {passenger.userid}")
+                            print(f"Individual fare: {individual_fare} ETH")
+                        else:
+                            print(f"Transaction already exists for passenger {passenger.userid}")
                     
                     messages.success(request, f"Ride completed. {passenger_count} passenger(s) processed.")
                 except RideDistance.DoesNotExist:
@@ -509,11 +556,11 @@ def acceptance(request, userid=0):
     print(f"Driver ID: {userid}")
     
     try:
-        # Get rides with their distance information
+        # Get rides with their distance information, ordered by newest first
         rides = RidePoint.objects.filter(
             Q(driverId=userid)
             & (Q(status="Accepted By Driver") | Q(status="Ride Completed"))
-        ).select_related('ride_distance')
+        ).select_related('ride_distance').order_by('-applyOn')  # Order by newest first
         
         rideDate = []
         for ride in rides:
@@ -1081,43 +1128,98 @@ def updateTransaction(request):
             data = json.loads(request.body)
             ride_id = data.get('rideId')
             tx_hash = data.get('transactionHash')
+            user_id = request.session.get('user_id')
             
-            print(f"Updating transaction for ride {ride_id} with hash {tx_hash}")
+            print(f"\n=== UPDATING TRANSACTION ===")
+            print(f"Ride ID: {ride_id}")
+            print(f"Transaction Hash: {tx_hash}")
+            print(f"User ID: {user_id}")
             
-            if not ride_id or not tx_hash:
-                print("Missing required fields")
+            if not ride_id or not tx_hash or not user_id:
+                print("ERROR: Missing required fields")
                 return JsonResponse({'success': False, 'error': 'Missing required fields'})
                 
-            # Find the transaction for this ride
-            transaction = Transaction.objects.get(ride_id=ride_id)
-            print(f"Found transaction: {transaction.id}")
-            
-            # Update transaction details
-            transaction.transaction_hash = tx_hash
-            transaction.status = 'completed'
-            transaction.save()
-            
-            # Update the ride status
+            # Get the ride and check if it's a carpool
             ride = RidePoint.objects.get(id=ride_id)
-            ride.status = "Payment Completed"
-            ride.save()
+            print(f"Ride Type: {'Carpool' if ride.is_carpool else 'Single'}")
+            print(f"Passenger Count: {ride.passenger_count}")
             
-            print(f"Transaction and ride updated successfully: {transaction.id}")
-            return JsonResponse({
-                'success': True,
-                'message': 'Transaction updated successfully',
-                'transaction_id': transaction.id,
-                'ride_id': ride_id
-            })
-        except Transaction.DoesNotExist:
-            print(f"Transaction not found for ride {ride_id}")
-            return JsonResponse({'success': False, 'error': 'Transaction not found'})
+            # Check if user has already paid
+            existing_user_tx = Transaction.objects.filter(
+                ride_id=ride_id,
+                status='completed'
+            ).first()
+            
+            if existing_user_tx:
+                print(f"User has already paid for this ride")
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Payment already recorded',
+                    'transaction_id': existing_user_tx.id,
+                    'ride_id': ride_id
+                })
+            
+            # Create new transaction for this user's payment
+            try:
+                # Get the ride distance
+                ride_distance = ride.ride_distance
+                road_distance = ride_distance.distance
+                
+                # Calculate individual fare
+                if ride.is_carpool:
+                    individual_fare = float(ride.base_fare) / 2
+                else:
+                    individual_fare = float(ride.base_fare)
+                
+                # Create new transaction
+                transaction = Transaction.objects.create(
+                    ride=ride,
+                    driver=User.objects.get(id=ride.driverId),
+                    source=ride.fromCity,
+                    destination=ride.toCity,
+                    distance=road_distance,
+                    fare=individual_fare,
+                    status='completed',
+                    transaction_hash=tx_hash,
+                    passenger_count=ride.passenger_count,
+                    is_carpool=ride.is_carpool
+                )
+                print(f"Created new transaction {transaction.id} for user payment")
+                
+                # Check if all payments are completed
+                all_transactions = Transaction.objects.filter(ride_id=ride_id)
+                completed_transactions = all_transactions.filter(status='completed')
+                
+                if completed_transactions.count() == ride.passenger_count:
+                    ride.status = "Payment Completed"
+                    ride.save()
+                    print("All passengers have paid. Marking ride as Payment Completed")
+                
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Payment recorded successfully',
+                    'transaction_id': transaction.id,
+                    'ride_id': ride_id,
+                    'is_carpool': ride.is_carpool,
+                    'total_passengers': ride.passenger_count,
+                    'completed_payments': completed_transactions.count()
+                })
+                
+            except Exception as e:
+                print(f"ERROR creating transaction: {str(e)}")
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Payment received but failed to record transaction. Please contact support with transaction hash.'
+                })
+            
         except RidePoint.DoesNotExist:
-            print(f"Ride not found for ID {ride_id}")
+            print(f"ERROR: Ride not found for ID {ride_id}")
             return JsonResponse({'success': False, 'error': 'Ride not found'})
         except Exception as e:
-            print(f"Error updating transaction: {str(e)}")
+            print(f"ERROR: {str(e)}")
             return JsonResponse({'success': False, 'error': str(e)})
+        finally:
+            print("==============================\n")
             
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
@@ -1391,12 +1493,18 @@ def check_wallet_balance(request):
         print("\n=== CHECKING WALLET BALANCE ===")
         data = json.loads(request.body)
         wallet_address = data.get('walletAddress')
+        required_amount = data.get('amount')  # Get the required payment amount
         
         if not wallet_address:
             print("ERROR: No wallet address provided")
             return JsonResponse({'error': 'Wallet address is required'}, status=400)
             
+        if not required_amount:
+            print("ERROR: No amount provided")
+            return JsonResponse({'error': 'Payment amount is required'}, status=400)
+            
         print(f"Checking balance for address: {wallet_address}")
+        print(f"Required amount: {required_amount} ETH")
             
         # Initialize Web3 with Ganache
         try:
@@ -1424,12 +1532,29 @@ def check_wallet_balance(request):
                 print("Getting balance...")
                 balance = web3.eth.get_balance(wallet_address)
                 eth_balance = web3.from_wei(balance, 'ether')
-                print(f"Balance: {eth_balance} ETH")
+                print(f"Current balance: {eth_balance} ETH")
                 
+                # Convert required amount to float for comparison
+                required_eth = float(required_amount)
+                print(f"Required amount: {required_eth} ETH")
+                
+                # Check if balance is sufficient
+                if float(eth_balance) < required_eth:
+                    print(f"ERROR: Insufficient balance. Required: {required_eth} ETH, Available: {eth_balance} ETH")
+                    return JsonResponse({
+                        'success': False,
+                        'error': f'Insufficient balance. Required: {required_eth} ETH, Available: {float(eth_balance):.4f} ETH',
+                        'is_insufficient_balance': True,
+                        'required_amount': required_eth,
+                        'available_balance': float(eth_balance)
+                    })
+                
+                print(f"Balance sufficient. Proceeding with payment...")
                 return JsonResponse({
                     'success': True,
                     'balance': str(eth_balance),
-                    'formatted_balance': f"{float(eth_balance):.4f} ETH"
+                    'formatted_balance': f"{float(eth_balance):.4f} ETH",
+                    'required_amount': required_eth
                 })
             except Exception as e:
                 print(f"ERROR getting balance: {str(e)}")
