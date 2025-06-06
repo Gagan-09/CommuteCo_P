@@ -849,151 +849,93 @@ def getRequestFromUsers(request):
                     "passenger_count",
                     "is_carpool",
                     "base_fare",
-                    "current_fare"
+                    "current_fare",
+                    "women_only"
                 ))
             print(f"Found {len(user_rides)} direct rides")
             
-            # Process direct rides
-            for ride in user_rides:
-                try:
-                    # Get the actual ride object to access ride_distance
-                    ride_obj = RidePoint.objects.select_related('ride_distance').get(id=ride['id'])
-                    if hasattr(ride_obj, 'ride_distance'):
-                        ride['distance'] = ride_obj.ride_distance.distance
-                        ride['fare'] = ride_obj.ride_distance.fare
-                    else:
-                        # If no ride_distance exists, calculate it
-                        source_coords = get_coordinates(ride['fromCity'])
-                        dest_coords = get_coordinates(ride['toCity'])
-                        
-                        if source_coords and dest_coords:
-                            distance = calculate_distance(
-                                source_coords[0], source_coords[1],
-                                dest_coords[0], dest_coords[1]
-                            )
-                            fare = round(float(distance) * 0.000055, 6)
-                            
-                            # Create the distance record
-                            RideDistance.objects.create(
-                                ride=ride_obj,
-                                distance=distance,
-                                fare=fare
-                            )
-                            ride['distance'] = distance
-                            ride['fare'] = fare
-                        else:
-                            ride['distance'] = None
-                            ride['fare'] = None
-                    
-                    # Count total passengers (creator + joiners)
-                    joiners = JointRide.objects.filter(rideId=ride['id']).count()
-                    total_passengers = 1 + joiners  # Creator + joiners
-                    
-                    # Update the passenger count in the ride object
-                    ride_obj.passenger_count = total_passengers
-                    ride_obj.save()
-                    
-                    # Update the passenger count in the response
-                    ride['passenger_count'] = total_passengers
-                    
-                    if ride.get('applyOn'):
-                        ride['applyOn'] = ride['applyOn'].strftime('%Y-%m-%d %H:%M:%S')
-                except Exception as e:
-                    print(f"Error processing direct ride {ride.get('id')}: {str(e)}")
-                    continue
-                    
-            # Get joint rides
+            # Get joint rides (rides the user has joined)
             print("Fetching joint rides...")
-            joint_rides = JointRide.objects.filter(userid=str(userid)).values(
-                "id", "userid", "rideId", "joined_at"
-            )
+            joint_rides = list(JointRide.objects.filter(userid=str(userid))
+                .values('rideId', 'joined_at', 'payment_status', 'payment_amount'))
             print(f"Found {len(joint_rides)} joint rides")
+            print("Joint rides payment status:", [(jr['rideId'], jr['payment_status']) for jr in joint_rides])
             
-            if joint_rides.exists():
-                try:
-                    # Create mapping of ride IDs to joined_at timestamps
-                    ride_ids = [int(d["rideId"]) for d in joint_rides]
-                    joined_at_map = {str(d["rideId"]): d["joined_at"] for d in joint_rides}
-                    
-                    # Get associated rides
-                    print("Fetching associated rides...")
-                    associated_rides = RidePoint.objects.filter(id__in=ride_ids).select_related('ride_distance').values(
-                        "fromCity",
-                        "toCity",
-                        "datePoint",
-                        "journey_time",
-                        "phone_number",
-                        "contactPoint",
-                        "status",
-                        "driverId",
-                        "applyOn",
-                        "id",
-                        "ride_distance__distance",
-                        "ride_distance__fare",
-                        "passenger_count",
-                        "is_carpool",
-                        "base_fare",
-                        "current_fare"
-                    )
-                    
-                    # Process associated rides
-                    associated_rides_list = list(associated_rides)
-                    for ride in associated_rides_list:
-                        try:
-                            # Get the actual ride object to access ride_distance
-                            ride_obj = RidePoint.objects.select_related('ride_distance').get(id=ride['id'])
-                            if hasattr(ride_obj, 'ride_distance'):
-                                ride['distance'] = ride_obj.ride_distance.distance
-                                ride['fare'] = ride_obj.ride_distance.fare
-                            else:
-                                # If no ride_distance exists, calculate it
-                                source_coords = get_coordinates(ride['fromCity'])
-                                dest_coords = get_coordinates(ride['toCity'])
-                                
-                                if source_coords and dest_coords:
-                                    distance = calculate_distance(
-                                        source_coords[0], source_coords[1],
-                                        dest_coords[0], dest_coords[1]
-                                    )
-                                    fare = round(float(distance) * 0.000055, 6)
-                                    
-                                    # Create the distance record
-                                    RideDistance.objects.create(
-                                        ride=ride_obj,
-                                        distance=distance,
-                                        fare=fare
-                                    )
-                                    ride['distance'] = distance
-                                    ride['fare'] = fare
-                                else:
-                                    ride['distance'] = None
-                                    ride['fare'] = None
-                            
-                            # Count total passengers (creator + joiners)
-                            joiners = JointRide.objects.filter(rideId=ride['id']).count()
-                            total_passengers = 1 + joiners  # Creator + joiners
-                            
-                            # Update the passenger count in the ride object
-                            ride_obj.passenger_count = total_passengers
-                            ride_obj.save()
-                            
-                            # Update the passenger count in the response
-                            ride['passenger_count'] = total_passengers
-                            
-                            ride['joined_at'] = joined_at_map[str(ride['id'])]
-                            if ride.get('applyOn'):
-                                ride['applyOn'] = ride['applyOn'].strftime('%Y-%m-%d %H:%M:%S')
-                            if ride.get('joined_at'):
-                                ride['joined_at'] = ride['joined_at'].strftime('%Y-%m-%d %H:%M:%S')
-                        except Exception as e:
-                            print(f"Error processing associated ride {ride.get('id')}: {str(e)}")
-                            continue
-                            
-                    user_rides.extend(associated_rides_list)
-                    print(f"Added {len(associated_rides_list)} joint rides")
-                except Exception as e:
-                    print(f"Error processing joint rides: {str(e)}")
+            # Create mapping of ride IDs to joined_at timestamps and payment status
+            ride_ids = [int(d["rideId"]) for d in joint_rides]
+            joined_at_map = {str(d["rideId"]): d["joined_at"] for d in joint_rides}
+            payment_status_map = {str(d["rideId"]): d["payment_status"] for d in joint_rides}
+            payment_amount_map = {str(d["rideId"]): d["payment_amount"] for d in joint_rides}
+            print("Payment status map:", payment_status_map)
             
+            # Get associated rides
+            print("Fetching associated rides...")
+            associated_rides = RidePoint.objects.filter(id__in=ride_ids).select_related('ride_distance').values(
+                "fromCity",
+                "toCity",
+                "datePoint",
+                "journey_time",
+                "phone_number",
+                "contactPoint",
+                "status",
+                "driverId",
+                "applyOn",
+                "id",
+                "ride_distance__distance",
+                "ride_distance__fare",
+                "passenger_count",
+                "is_carpool",
+                "base_fare",
+                "current_fare",
+                "women_only"
+            )
+            
+            # Process associated rides
+            associated_rides_list = list(associated_rides)
+            for ride in associated_rides_list:
+                ride['joined_at'] = joined_at_map.get(str(ride['id']))
+                # Get payment status from joint_rides
+                ride['payment_status'] = payment_status_map.get(str(ride['id']), 'pending')
+                ride['payment_amount'] = payment_amount_map.get(str(ride['id']))
+                print(f"Ride {ride['id']} payment status: {ride['payment_status']}")
+            user_rides.extend(associated_rides_list)
+
+            # Check payment status for all rides
+            for ride in user_rides:
+                # For solo rides, check if there's a completed transaction
+                if not ride.get('is_carpool'):
+                    transaction = Transaction.objects.filter(
+                        ride_id=ride['id'],
+                        status='completed'
+                    ).first()
+                    ride['payment_status'] = 'completed' if transaction else 'pending'
+                    if transaction:
+                        ride['payment_amount'] = transaction.fare
+                    print(f"Solo ride {ride['id']} payment status: {ride['payment_status']}")
+                # For carpool rides, check if this specific user has a completed transaction
+                else:
+                    # Get the joint ride for this specific user
+                    joint_ride = JointRide.objects.filter(
+                        rideId=ride['id'],
+                        userid=userid
+                    ).first()
+                    
+                    if joint_ride:
+                        # Use the payment status from the joint ride
+                        ride['payment_status'] = joint_ride.payment_status
+                        ride['payment_amount'] = joint_ride.payment_amount
+                        print(f"Carpool ride {ride['id']} payment status from joint ride: {joint_ride.payment_status}")
+                    else:
+                        # If no joint ride found, check transaction
+                        transaction = Transaction.objects.filter(
+                            ride_id=ride['id'],
+                            status='completed'
+                        ).first()
+                        ride['payment_status'] = 'completed' if transaction else 'pending'
+                        if transaction:
+                            ride['payment_amount'] = transaction.fare
+                        print(f"Carpool ride {ride['id']} payment status from transaction: {ride['payment_status']}")
+
             # Sort rides by most recent activity
             print("Sorting rides...")
             def get_sort_key(ride):
@@ -1015,6 +957,7 @@ def getRequestFromUsers(request):
             user_rides.sort(key=get_sort_key, reverse=True)
             
             print(f"Total rides after processing: {len(user_rides)}")
+            print("Final payment statuses:", [(r['id'], r.get('payment_status')) for r in user_rides])
             print("==============================\n")
             
             return JsonResponse({"data": user_rides})
@@ -1043,6 +986,7 @@ def addPool(request):
         journeyTime = request.POST.get("journeyTime", "").strip()
         phoneNumber = request.POST.get("phoneNumber", "").strip()
         contactPoint = request.POST.get("contactPoint", "").strip()
+        womenOnly = request.POST.get("womenOnly", "no") == "yes"  # Get women_only value
         userId = str(request.session.get("user_id"))
         output = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
@@ -1051,6 +995,7 @@ def addPool(request):
         print(f"From: {fromCity} To: {toCity}")
         print(f"Date: {datePoint} Time: {journeyTime}")
         print(f"Phone: +91{phoneNumber}")
+        print(f"Women Only: {womenOnly}")
         
         if not fromCity or not toCity:
             messages.error(request, "Pickup and destination locations are required")
@@ -1094,7 +1039,8 @@ def addPool(request):
                 passenger_count=1,  # Set initial passenger count to 1 (the creator)
                 is_carpool=True,    # Mark as carpool since it's created for sharing
                 base_fare=fare,     # Set base fare
-                current_fare=fare   # Set current fare
+                current_fare=fare,  # Set current fare
+                women_only=womenOnly  # Set women_only field
             )
             
             # Create the ride distance record
@@ -1235,14 +1181,14 @@ def updateTransaction(request):
             print(f"Ride Type: {'Carpool' if ride.is_carpool else 'Single'}")
             print(f"Passenger Count: {ride.passenger_count}")
             
-            # Check if user has already paid
+            # Check if this specific user has already paid
             existing_user_tx = Transaction.objects.filter(
                 ride_id=ride_id,
                 status='completed'
             ).first()
             
             if existing_user_tx:
-                print(f"User has already paid for this ride")
+                print(f"User {user_id} has already paid for this ride")
                 return JsonResponse({
                     'success': True,
                     'message': 'Payment already recorded',
@@ -1259,8 +1205,10 @@ def updateTransaction(request):
                 # Calculate individual fare
                 if ride.is_carpool:
                     individual_fare = float(ride.base_fare) / 2
+                    print(f"Calculated individual fare for carpool: {individual_fare} ETH")
                 else:
                     individual_fare = float(ride.base_fare)
+                    print(f"Using full fare for single ride: {individual_fare} ETH")
                 
                 # Create new transaction
                 transaction = Transaction.objects.create(
@@ -1275,16 +1223,58 @@ def updateTransaction(request):
                     passenger_count=ride.passenger_count,
                     is_carpool=ride.is_carpool
                 )
-                print(f"Created new transaction {transaction.id} for user payment")
+                print(f"Created new transaction {transaction.id} for user {user_id} payment")
                 
-                # Check if all payments are completed
+                # Update the joint ride payment status for this specific user
+                joint_ride = JointRide.objects.filter(
+                    rideId=ride_id,
+                    userid=user_id
+                ).first()
+                
+                if joint_ride:
+                    joint_ride.payment_status = 'completed'
+                    joint_ride.payment_amount = individual_fare
+                    joint_ride.save()
+                    print(f"Updated joint ride payment status to completed for user {user_id}")
+                else:
+                    print(f"Warning: No joint ride found for user {user_id} and ride {ride_id}")
+                
+                # For carpool rides, create a pending transaction for the other passenger
+                if ride.is_carpool:
+                    # Get all joint rides for this ride
+                    all_joint_rides = JointRide.objects.filter(rideId=ride_id)
+                    print(f"Found {all_joint_rides.count()} joint rides for ride {ride_id}")
+                    
+                    # Get the other passenger's joint ride
+                    other_joint_ride = all_joint_rides.exclude(userid=user_id).first()
+                    
+                    if other_joint_ride:
+                        print(f"Found other passenger's joint ride: {other_joint_ride.id}")
+                        # Create new pending transaction for the other passenger
+                        Transaction.objects.create(
+                            ride=ride,
+                            driver=User.objects.get(id=ride.driverId),
+                            source=ride.fromCity,
+                            destination=ride.toCity,
+                            distance=road_distance,
+                            fare=individual_fare,
+                            status='pending',
+                            passenger_count=ride.passenger_count,
+                            is_carpool=True
+                        )
+                        print(f"Created new pending transaction for other passenger {other_joint_ride.userid}")
+                        
+                        # Keep the other passenger's payment status as pending
+                        other_joint_ride.payment_status = 'pending'
+                        other_joint_ride.payment_amount = individual_fare
+                        other_joint_ride.save()
+                        print(f"Kept payment status as pending for other passenger {other_joint_ride.userid}")
+                    else:
+                        print(f"Warning: No other passenger found for ride {ride_id}")
+                
+                # Get payment status for all passengers
                 all_transactions = Transaction.objects.filter(ride_id=ride_id)
                 completed_transactions = all_transactions.filter(status='completed')
-                
-                if completed_transactions.count() == ride.passenger_count:
-                    ride.status = "Payment Completed"
-                    ride.save()
-                    print("All passengers have paid. Marking ride as Payment Completed")
                 
                 return JsonResponse({
                     'success': True,
@@ -1293,7 +1283,9 @@ def updateTransaction(request):
                     'ride_id': ride_id,
                     'is_carpool': ride.is_carpool,
                     'total_passengers': ride.passenger_count,
-                    'completed_payments': completed_transactions.count()
+                    'completed_payments': completed_transactions.count(),
+                    'payment_status': 'completed',
+                    'fare': individual_fare
                 })
                 
             except Exception as e:

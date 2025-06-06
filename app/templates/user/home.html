@@ -100,6 +100,10 @@
         color: #004aad;
         border-bottom: 2px solid #f0f0f0;
         padding-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
       }
 
       .card p {
@@ -374,6 +378,25 @@
           margin-top: 0.3rem;
         }
       }
+
+      /* Women Only Badge */
+      .women-only-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background-color: #ff69b4;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 500;
+        margin-left: 10px;
+        box-shadow: 0 2px 4px rgba(255, 105, 180, 0.2);
+      }
+
+      .women-only-badge i {
+        font-size: 16px;
+      }
     </style>
     <div class="nothing" id="messagePoint"></div>
     <div class="headerSelction">
@@ -502,8 +525,13 @@
 
           var text = "";
           point.data.forEach((element) => {
+            console.log("Ride data:", element); // Debug log
             text += `<div class="card" data-pool-id="${element.id}">
-              <h3>${element.fromCity} ➜ ${element.toCity}</h3>
+              <h3>${element.fromCity} ➜ ${element.toCity} ${
+              element.women_only
+                ? '<span class="women-only-badge"><i class="fas fa-female"></i> Women Only</span>'
+                : ""
+            }</h3>
               <p><strong>Date:</strong> ${element.datePoint}</p>
               <p><strong>Time:</strong> ${element.journey_time}</p>
               <p><strong>Phone:</strong> ${element.phone_number}</p>
@@ -515,6 +543,13 @@
               <p><strong>Passengers:</strong> ${
                 element.passenger_count || 1
               }/2</p>
+              <p><strong>Payment Status:</strong> <span class="payment-status ${
+                element.payment_status === "completed" ? "completed" : "pending"
+              }">${
+              element.payment_status === "completed"
+                ? "Payment Completed"
+                : "Payment Pending"
+            }</span></p>
               <div class="button-group" style="display: flex; gap: 10px; margin-top: 15px;">
                 <button class="accept-btn" onclick="setString('${
                   element.toCity
@@ -524,7 +559,8 @@
                 ${checkAndUpdate(
                   element.status,
                   element.id,
-                  element.passenger_count
+                  element.passenger_count,
+                  element.payment_status
                 )}
               </div>
             </div>`;
@@ -554,18 +590,41 @@
       window.location.href = `/maps?source=${fromCity}'&destination=${toCity}`;
     }
 
-    function checkAndUpdate(status, rideId, passengerCount) {
-      if (status == "Ride Completed") {
+    function checkAndUpdate(status, rideId, passengerCount, paymentStatus) {
+      console.log("checkAndUpdate called with:", {
+        status,
+        rideId,
+        passengerCount,
+        paymentStatus,
+      }); // Debug log
+
+      // If payment is completed, always show completed button regardless of ride status
+      if (paymentStatus === "completed") {
+        console.log("Payment completed, showing completed button");
+        return `<button class='accept-btn' style='flex: 1; background-color: #4CAF50; color: #fff;' disabled>
+          <i class="fas fa-check"></i> Payment Completed
+        </button>`;
+      }
+
+      // For rides that are completed but not paid
+      if (status === "Ride Completed") {
+        console.log("Ride completed but not paid, showing payment button");
         return `<button onclick="window.location.href='/payment?rideId=${rideId}'" class='accept-btn' style='flex: 1; background-color: #ffcc00; color: #000;'>
           <i class="fas fa-money-bill"></i> Payment
         </button>`;
-      } else if (passengerCount >= 2) {
+      }
+
+      // For full carpools
+      if (passengerCount >= 2) {
+        console.log("Carpool full, showing full button");
         return `<button class='accept-btn' style='flex: 1; background-color: #004aad; color: #fff;' disabled>
           <i class="fas fa-users"></i> Carpool Full
         </button>`;
-      } else {
-        return `<button onclick="deletePool(${rideId})" class='reject-btn' style="flex: 1;">Delete</button>`;
       }
+
+      // Default case - show delete button
+      console.log("Default case, showing delete button");
+      return `<button onclick="deletePool(${rideId})" class='reject-btn' style="flex: 1;">Delete</button>`;
     }
 
     function deletePool(poolId) {

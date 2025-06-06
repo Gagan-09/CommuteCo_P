@@ -60,6 +60,7 @@ class RidePoint(models.Model):
     is_carpool = models.BooleanField(default=False)  # True if 2 passengers, False if 1
     base_fare = models.FloatField(default=0)
     current_fare = models.FloatField(default=0)
+    women_only = models.BooleanField(default=False)  # True if the ride is women-only
 
     def __str__(self):
         return f"Ride from {self.fromCity} to {self.toCity} on {self.datePoint}"

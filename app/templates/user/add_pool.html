@@ -105,7 +105,52 @@
           </div>
 
           <div class="form-group">
-            <label for="contactPoint">Additional Contact Information</label>
+            <!-- <label for="passengerCount">Number of Passengers:</label>
+            <input
+              type="number"
+              class="form-control"
+              id="passengerCount"
+              name="passengerCount"
+              min="1"
+              max="3"
+              required
+            />
+          </div> -->
+
+          <div class="form-group">
+            <label>Women Only Mode:</label>
+            <div class="radio-group">
+              <div class="radio-option">
+                <input
+                  type="radio"
+                  id="womenOnlyYes"
+                  name="womenOnly"
+                  value="yes"
+                  required
+                  onchange="toggleWomenOnlyBadge(this)"
+                />
+                <label for="womenOnlyYes">Yes</label>
+              </div>
+              <div class="radio-option">
+                <input
+                  type="radio"
+                  id="womenOnlyNo"
+                  name="womenOnly"
+                  value="no"
+                  required
+                  onchange="toggleWomenOnlyBadge(this)"
+                />
+                <label for="womenOnlyNo">No</label>
+              </div>
+            </div>
+            <div id="womenOnlyBadge" class="women-only-badge" style="display: none;">
+              <i class="fas fa-female"></i>
+              <span>Women Only</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="payment">Additonal contact:</label>
             <input
               type="text"
               class="form-control"
@@ -465,6 +510,56 @@
           font-size: 0.85rem;
         }
       }
+
+      /* Radio Button Styles */
+      .radio-group {
+        display: flex;
+        gap: 20px;
+        margin-top: 10px;
+      }
+
+      .radio-option {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .radio-option input[type="radio"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: #004aad;
+      }
+
+      .radio-option label {
+        font-size: 16px;
+        cursor: pointer;
+        color: #666;
+      }
+
+      .radio-option input[type="radio"]:checked + label {
+        color: #004aad;
+        font-weight: 500;
+      }
+
+      /* Women Only Badge */
+      .women-only-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background-color: #ff69b4;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 500;
+        margin-left: 10px;
+        box-shadow: 0 2px 4px rgba(255, 105, 180, 0.2);
+      }
+
+      .women-only-badge i {
+        font-size: 16px;
+      }
     </style>
 
     {% if messages %}
@@ -485,6 +580,11 @@
       function toggleMenu() {
         const navPoint = document.querySelector(".navPoint");
         navPoint.classList.toggle("active");
+      }
+
+      function toggleWomenOnlyBadge(radio) {
+        const badge = document.getElementById('womenOnlyBadge');
+        badge.style.display = radio.value === 'yes' ? 'inline-flex' : 'none';
       }
 
       // Close menu when clicking outside
