@@ -1,0 +1,54 @@
+Steps for Executing the Car Pool Project
+
+1. Prerequisites Setup:
+   - Install Python (version 3.8 or higher)
+   - Install Django (pip install django)
+   - Install Ganache (local blockchain development environment)
+   - Install required Python packages:
+     * pip install web3
+     * pip install django-web3
+     * pip install python-dotenv
+   - Have a modern web browser installed
+
+2. Project Setup:
+   - Navigate to the project directory
+   - Create a virtual environment:
+     * python -m venv venv
+     * Activate virtual environment:
+       - Windows: venv\Scripts\activate
+       - Linux/Mac: source venv/bin/activate
+
+3. Database Setup:
+   - Run database migrations:
+     * python manage.py makemigrations
+     * python manage.py migrate
+
+4. Ganache Setup:
+   - Start Ganache on your computer
+   - Make sure it's running on port 7545 (default port)
+   - Ensure your computer and mobile device are on the same network
+   - Note down the Ganache RPC URL (usually http://127.0.0.1:7545)
+
+
+6. Running the Application:
+   - Start the Django development server:
+     * python manage.py runserver
+   - Access the application:
+     * Open web browser and go to http://localhost:8000
+
+7. Testing the Application:
+   - Register a new user account
+   - Create a driver profile
+   - Create a ride
+   - Book a ride
+   - Test the payment system
+   - Verify ride completion
+
+8. Troubleshooting:
+   If you encounter issues:
+   - Check if all services are running (Django server, Ganache)
+   - Verify database connections
+   - Check environment variables
+   - Ensure all dependencies are installed
+   - Check server logs for errors
+   - Verify network connectivity

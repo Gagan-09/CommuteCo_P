@@ -17,6 +17,7 @@ urlpatterns = [
     path('driver/transactions/', view=transactions, name="driverTransactions"),
     path('profileDetails/', view=profileDetails, name="profileDetails"),
     path('profile/', view=profile, name="profile"),
+    path('update_gender/', view=update_gender, name="update_gender"),
     path('getRequestFromUsers/', view=getRequestFromUsers, name="getRequestFromUsers"),
     path('addPool/', view=addPool, name="add_pool"),
     path('driverHome/', view=driverHome, name="driverHome"),
@@ -30,5 +31,6 @@ urlpatterns = [
     path('get_transactions/', view=get_transactions, name='get_transactions'),
     path('clear_transactions/', view=clear_transactions, name='clear_transactions'),
     path('transaction-history/', view=transaction_history, name='transaction_history'),
+    path('check_wallet_balance/', view=check_wallet_balance, name='check_wallet_balance'),
     path("", view=index, name="index"),
 ]

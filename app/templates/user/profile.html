@@ -7,6 +7,10 @@
       href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
       rel="stylesheet"
     />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
 
     {%if messages%} {%for me in messages %} {%if me.tags in "success" %}
     <input type="hidden" value="{{me}}" id="successpoint" />
@@ -26,21 +30,26 @@
         background-color: #f4f6f8;
         margin: 0;
         padding: 0;
+        min-height: 100vh;
       }
 
       .headerSelction {
-        background: #004aad;
+        background: linear-gradient(135deg, #004aad, #0066cc);
         padding: 1rem 2rem;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        position: sticky;
+        top: 0;
+        z-index: 100;
       }
 
       .titlePoint {
         color: white;
         font-size: 1.5rem;
         font-weight: bold;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
       }
 
       .navPoint {
@@ -53,36 +62,61 @@
         text-decoration: none;
         padding: 0.5rem 1rem;
         border-radius: 20px;
-        transition: 0.3s;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
       }
 
       .navPoint a:hover {
-        background: #ffcc00;
+        background: rgba(255, 204, 0, 0.9);
         color: #000;
+        transform: translateY(-2px);
       }
 
       .navPoint a#activac {
         background: #ffcc00;
         color: #000;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
 
       .profile-container {
-        max-width: 600px;
+        max-width: 800px;
         margin: 2rem auto;
         padding: 2rem;
         background: white;
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+        border-radius: 15px;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+      }
+
+      .profile-container:hover {
+        transform: translateY(-5px);
       }
 
       .profile-header {
         text-align: center;
         margin-bottom: 2rem;
+        position: relative;
       }
 
       .profile-header h1 {
         color: #004aad;
         margin-bottom: 0.5rem;
+        font-size: 2rem;
+        position: relative;
+        display: inline-block;
+      }
+
+      .profile-header h1::after {
+        content: "";
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 50px;
+        height: 3px;
+        background: #ffcc00;
+        border-radius: 2px;
       }
 
       .profile-info {
@@ -91,24 +125,52 @@
       }
 
       .info-card {
-        background: #a6d4f4;
+        background: linear-gradient(135deg, #a6d4f4, #c5e1f5);
         padding: 2rem;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        border-radius: 12px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
         width: 100%;
-        max-width: 400px;
+        max-width: 500px;
+        transition: all 0.3s ease;
+      }
+
+      .info-card:hover {
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
       }
 
       .info-card h3 {
         color: #004aad;
         margin-bottom: 1.5rem;
-        font-size: 1.2rem;
+        font-size: 1.3rem;
         text-align: center;
+        position: relative;
+        padding-bottom: 10px;
+      }
+
+      .info-card h3::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 30px;
+        height: 2px;
+        background: #004aad;
+        border-radius: 1px;
       }
 
       .info-item {
         margin-bottom: 1.5rem;
         text-align: center;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 8px;
+        transition: all 0.3s ease;
+      }
+
+      .info-item:hover {
+        background: rgba(255, 255, 255, 0.9);
+        transform: translateX(5px);
       }
 
       .info-item label {
@@ -116,6 +178,8 @@
         color: #666;
         margin-bottom: 0.5rem;
         font-size: 0.9rem;
+        text-align: center;
+        font-weight: 500;
       }
 
       .info-item p {
@@ -125,20 +189,189 @@
         font-weight: 500;
       }
 
-      .edit-btn {
-        background: #004aad;
-        color: white;
-        padding: 0.75rem 1.5rem;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        transition: background-color 0.2s;
-        font-size: 1rem;
-        margin-top: 1rem;
+      /* Radio Button Styles */
+      .radio-group {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 2rem;
+        margin-top: 10px;
+        padding: 10px 0;
       }
 
-      .edit-btn:hover {
+      .radio-option {
+        display: flex;
+        align-items: flex-start;
+        cursor: pointer;
+        padding: 10px 20px;
+        border-radius: 25px;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.7);
+      }
+
+      .radio-option:hover {
+        background: rgba(0, 74, 173, 0.1);
+        transform: translateY(-2px);
+      }
+
+      .radio-input {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        accent-color: #004aad;
+        margin: 0;
+        margin-right: 8px;
+        margin-top: 2px;
+      }
+
+      .radio-label {
+        font-size: 1.1rem;
+        color: #333;
+        cursor: pointer;
+        line-height: 1.2;
+        padding-top: 1px;
+        transition: all 0.3s ease;
+      }
+
+      .radio-input:checked + .radio-label {
+        color: #004aad;
+        font-weight: 600;
+      }
+
+      .radio-option.selected {
+        background: rgba(0, 74, 173, 0.15);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      /* Modal Styles */
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        backdrop-filter: blur(5px);
+      }
+
+      .modal-content {
+        position: relative;
+        background-color: #fff;
+        margin: 10% auto;
+        padding: 2rem;
+        width: 90%;
+        max-width: 500px;
+        border-radius: 15px;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        animation: modalSlideIn 0.3s ease-out;
+      }
+
+      @keyframes modalSlideIn {
+        from {
+          transform: translateY(-50px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      .modal-header {
+        margin-bottom: 1.5rem;
+        text-align: center;
+      }
+
+      .modal-header h2 {
+        color: #004aad;
+        margin: 0;
+        font-size: 1.5rem;
+        position: relative;
+        display: inline-block;
+      }
+
+      .modal-header h2::after {
+        content: "";
+        position: absolute;
+        bottom: -8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 40px;
+        height: 3px;
+        background: #ffcc00;
+        border-radius: 2px;
+      }
+
+      .form-group {
+        margin-bottom: 1.5rem;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #666;
+        font-size: 0.9rem;
+        font-weight: 500;
+      }
+
+      .form-group input {
+        width: 100%;
+        padding: 10px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+      }
+
+      .form-group input:focus {
+        outline: none;
+        border-color: #004aad;
+        box-shadow: 0 0 0 3px rgba(0, 74, 173, 0.2);
+      }
+
+      .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        margin-top: 2rem;
+      }
+
+      .btn {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+      }
+
+      .btn-primary {
+        background: #004aad;
+        color: white;
+        box-shadow: 0 2px 4px rgba(0, 74, 173, 0.2);
+      }
+
+      .btn-primary:hover {
         background: #003d8f;
+        box-shadow: 0 4px 8px rgba(0, 74, 173, 0.3);
+      }
+
+      .btn-secondary {
+        background: #6c757d;
+        color: white;
+        box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2);
+      }
+
+      .btn-secondary:hover {
+        background: #5a6268;
+        box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
       }
 
       .dialog {
@@ -148,10 +381,11 @@
         background: #4caf50;
         color: white;
         padding: 1rem 2rem;
-        border-radius: 5px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         z-index: 1000;
         animation: slideIn 0.3s ease-out;
+        font-weight: 500;
       }
 
       @keyframes slideIn {
@@ -168,11 +402,280 @@
       .nothing {
         display: none;
       }
+
+      /* Hamburger Menu Styles */
+      .hamburger-menu {
+        display: none;
+        cursor: pointer;
+        padding: 0.5rem;
+        color: white;
+        font-size: 1.5rem;
+      }
+
+      .hamburger-menu i {
+        font-size: 1.8rem;
+      }
+
+      /* Media Queries */
+      @media screen and (max-width: 768px) {
+        .hamburger-menu {
+          display: block;
+          position: absolute;
+          right: 1rem;
+          top: 0.1rem;
+        }
+
+        .headerSelction {
+          padding: 1.5rem 1rem;
+          flex-direction: column;
+          gap: 1rem;
+          position: relative;
+          min-height: 3rem;
+        }
+
+        .titlePoint {
+          margin-top: 0.5rem;
+        }
+
+        .navPoint {
+          display: none;
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 0.5rem;
+          width: 100%;
+        }
+
+        .navPoint.active {
+          display: flex;
+        }
+
+        .navPoint a {
+          font-size: 0.9rem;
+          padding: 0.4rem 0.8rem;
+        }
+
+        .profile-container {
+          margin: 1rem;
+          padding: 1.5rem;
+        }
+
+        .info-card {
+          padding: 1.5rem;
+        }
+
+        .info-item {
+          padding: 0.8rem;
+        }
+
+        .info-item p {
+          font-size: 1rem;
+        }
+
+        .radio-group {
+          gap: 1rem;
+        }
+
+        .radio-option {
+          padding: 8px 16px;
+        }
+
+        .radio-label {
+          font-size: 1rem;
+        }
+      }
+
+      @media screen and (max-width: 480px) {
+        .headerSelction {
+          padding: 0.5rem;
+          width: 100vw;
+          box-sizing: border-box;
+          margin: 0;
+          left: 0;
+          right: 0;
+          position: fixed;
+          top: 0;
+        }
+
+        .titlePoint {
+          font-size: 1.1rem;
+          width: 100%;
+          text-align: center;
+          margin: 0;
+          padding: 0;
+        }
+
+        .navPoint {
+          flex-direction: column;
+          align-items: center;
+          width: 100%;
+          padding: 0.3rem 0;
+          gap: 0.2rem;
+          background: #004aad;
+          position: absolute;
+          top: 100%;
+          left: 0;
+          z-index: 1000;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .navPoint a {
+          width: 100%;
+          text-align: center;
+          margin: 0;
+          padding: 0.4rem 0.8rem;
+          box-sizing: border-box;
+          font-size: 0.85rem;
+        }
+
+        /* Add margin to profile container to account for fixed navbar */
+        .profile-container {
+          margin-top: 5rem;
+        }
+
+        .info-item {
+          margin-bottom: 1rem;
+          padding: 0.8rem;
+          width: 100%;
+          box-sizing: border-box;
+        }
+
+        .radio-group {
+          flex-direction: column;
+          gap: 0.5rem;
+          align-items: flex-start;
+          width: 100%;
+          box-sizing: border-box;
+          padding: 0;
+        }
+
+        .radio-option {
+          width: 100%;
+          justify-content: flex-start;
+          padding: 6px 12px;
+          box-sizing: border-box;
+          margin: 0;
+        }
+
+        /* Modal Responsive Styles */
+        .modal {
+          padding: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .modal-content {
+          width: 95%;
+          margin: 0;
+          padding: 1.2rem;
+          max-height: 90vh;
+          overflow-y: auto;
+          position: relative;
+          top: 0;
+          transform: none;
+        }
+
+        .modal-header {
+          margin-bottom: 1rem;
+          padding-bottom: 0.5rem;
+        }
+
+        .modal-header h2 {
+          font-size: 1.2rem;
+          margin: 0;
+        }
+
+        .modal-body {
+          margin-bottom: 1rem;
+        }
+
+        .form-group {
+          margin-bottom: 1rem;
+        }
+
+        .form-group label {
+          font-size: 0.9rem;
+          margin-bottom: 0.3rem;
+        }
+
+        .form-group input {
+          font-size: 0.9rem;
+          padding: 0.6rem;
+          height: 2.5rem;
+        }
+
+        .modal-footer {
+          flex-direction: column;
+          gap: 0.5rem;
+          margin-top: 1rem;
+          padding-top: 0.5rem;
+        }
+
+        .btn {
+          width: 100%;
+          padding: 0.7rem;
+          font-size: 0.9rem;
+          margin: 0;
+        }
+      }
+
+      @media screen and (max-width: 320px) {
+        .headerSelction {
+          padding: 0.4rem;
+        }
+
+        .titlePoint {
+          font-size: 1rem;
+        }
+
+        .navPoint a {
+          padding: 0.3rem 0.6rem;
+          font-size: 0.8rem;
+        }
+
+        /* Adjust margin for smaller screens */
+        .profile-container {
+          margin-top: 4.5rem;
+        }
+
+        .radio-option {
+          padding: 4px 8px;
+          width: 100%;
+          box-sizing: border-box;
+        }
+
+        .modal-content {
+          width: 98%;
+          padding: 1rem;
+        }
+
+        .modal-header h2 {
+          font-size: 1.1rem;
+        }
+
+        .form-group label {
+          font-size: 0.85rem;
+        }
+
+        .form-group input {
+          font-size: 0.85rem;
+          padding: 0.5rem;
+          height: 2.3rem;
+        }
+
+        .btn {
+          padding: 0.6rem;
+          font-size: 0.85rem;
+        }
+      }
     </style>
 
     <div class="nothing" id="messagePoint"></div>
     <div class="headerSelction">
       <div class="titlePoint">CommuteCo</div>
+      <div class="hamburger-menu" onclick="toggleMenu()">
+        <i class="fas fa-ellipsis-v"></i>
+      </div>
       <div class="navPoint">
         <a href="/userHome">My Pool</a>
         <a href="/addPool">Add Pool</a>
@@ -203,6 +706,104 @@
             <label>Type</label>
             <p id="userType"></p>
           </div>
+          <div class="info-item">
+            <label>Are you a female?</label>
+            <div class="radio-group">
+              <div class="radio-option">
+                <input
+                  type="radio"
+                  id="genderNo"
+                  name="gender"
+                  value="Male"
+                  class="radio-input"
+                  onchange="updateGender(this.value)"
+                />
+                <label for="genderNo" class="radio-label">No</label>
+              </div>
+              <div class="radio-option">
+                <input
+                  type="radio"
+                  id="genderYes"
+                  name="gender"
+                  value="Female"
+                  class="radio-input"
+                  onchange="updateGender(this.value)"
+                />
+                <label for="genderYes" class="radio-label">Yes</label>
+              </div>
+            </div>
+          </div>
+          <!-- Emergency Contact Details Section -->
+          <div id="emergencyContactDetails" style="display: none">
+            <h3 style="margin-top: 1.5rem; color: #004aad; font-size: 1.1rem">
+              Emergency Contact
+              <button
+                onclick="editEmergencyContact()"
+                class="btn btn-primary"
+                style="float: right; padding: 0.3rem 0.8rem; font-size: 0.9rem"
+              >
+                Edit
+              </button>
+            </h3>
+            <div class="info-item">
+              <label>Contact Name</label>
+              <p id="emergencyContactName"></p>
+            </div>
+            <div class="info-item">
+              <label>Contact Email</label>
+              <p id="emergencyContactEmail"></p>
+            </div>
+            <div class="info-item">
+              <label>Contact Mobile</label>
+              <p id="emergencyContactMobile"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Emergency Contact Modal -->
+    <div id="emergencyContactModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Emergency Contact Details</h2>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="emergencyName">Contact Name</label>
+            <input
+              type="text"
+              id="emergencyName"
+              placeholder="Enter contact name"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="emergencyEmail">Contact Email</label>
+            <input
+              type="email"
+              id="emergencyEmail"
+              placeholder="Enter contact email"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="emergencyMobile">Contact Mobile</label>
+            <input
+              type="tel"
+              id="emergencyMobile"
+              placeholder="Enter contact mobile number"
+              required
+            />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="closeModal()">
+            Close
+          </button>
+          <button class="btn btn-primary" onclick="saveEmergencyContact()">
+            Save
+          </button>
         </div>
       </div>
     </div>
@@ -222,6 +823,15 @@
     {% endif %}
 
     <script>
+      // Store emergency contact details globally
+      let storedEmergencyContact = null;
+
+      // Hide modal on page load
+      document.addEventListener("DOMContentLoaded", function () {
+        const modal = document.getElementById("emergencyContactModal");
+        modal.style.display = "none";
+      });
+
       window.addEventListener("DOMContentLoaded", () => {
         const userId = "{{ request.session.user_id }}";
         const userType = "{{ request.session.user_type }}";
@@ -231,31 +841,297 @@
           return;
         }
 
-        fetch(`/profileDetails?userid=${userId}`)
-          .then((view) => view.json())
-          .then((point) => {
-            if (point.profile && point.profile.length > 0) {
-              const element = point.profile[0];
-              document.getElementById("userName").textContent = element.name;
-              document.getElementById("userEmail").textContent = element.email;
+        // Fetch user profile data
+        fetch(`/profileDetails/?userid=${userId}`)
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.profile && data.profile.length > 0) {
+              const profile = data.profile[0];
+              document.getElementById("userName").textContent = profile.name;
+              document.getElementById("userEmail").textContent = profile.email;
               document.getElementById("userType").textContent =
-                element.typeView;
-            } else {
-              document.getElementById("userName").textContent = "Not available";
-              document.getElementById("userEmail").textContent =
-                "Not available";
-              document.getElementById("userType").textContent = "Not available";
+                profile.typeView;
+
+              // Store emergency contact details if they exist
+              if (profile.emergency_contact_name) {
+                storedEmergencyContact = {
+                  name: profile.emergency_contact_name,
+                  email: profile.emergency_contact_email,
+                  mobile: profile.emergency_contact_mobile,
+                };
+              }
+
+              // Set the radio button value if gender exists
+              if (profile.gender) {
+                const radioButton = document.querySelector(
+                  `input[name="gender"][value="${profile.gender}"]`
+                );
+                if (radioButton) {
+                  radioButton.checked = true;
+                  document
+                    .querySelectorAll(".radio-option")
+                    .forEach((option) => {
+                      option.classList.remove("selected");
+                    });
+                  radioButton
+                    .closest(".radio-option")
+                    .classList.add("selected");
+
+                  // Show emergency contact details only if gender is Female
+                  if (profile.gender === "Female" && storedEmergencyContact) {
+                    showEmergencyContactDetails();
+                  }
+                }
+              }
             }
           })
           .catch((error) => {
-            console.error("Error:", error);
-            document.getElementById("userName").textContent =
-              "Error loading data";
-            document.getElementById("userEmail").textContent =
-              "Error loading data";
-            document.getElementById("userType").textContent =
-              "Error loading data";
+            console.error("Error fetching profile:", error);
           });
+      });
+
+      function showEmergencyContactDetails() {
+        if (storedEmergencyContact) {
+          document.getElementById("emergencyContactDetails").style.display =
+            "block";
+          document.getElementById("emergencyContactName").textContent =
+            storedEmergencyContact.name;
+          document.getElementById("emergencyContactEmail").textContent =
+            storedEmergencyContact.email;
+          document.getElementById("emergencyContactMobile").textContent =
+            storedEmergencyContact.mobile;
+        }
+      }
+
+      function hideEmergencyContactDetails() {
+        document.getElementById("emergencyContactDetails").style.display =
+          "none";
+      }
+
+      function editEmergencyContact() {
+        if (storedEmergencyContact) {
+          document.getElementById("emergencyName").value =
+            storedEmergencyContact.name;
+          document.getElementById("emergencyEmail").value =
+            storedEmergencyContact.email;
+          document.getElementById("emergencyMobile").value =
+            storedEmergencyContact.mobile;
+        }
+        const modal = document.getElementById("emergencyContactModal");
+        modal.style.display = "block";
+      }
+
+      function updateGender(gender) {
+        const userId = "{{ request.session.user_id }}";
+        console.log("Updating gender:", { userId, gender });
+
+        if (!userId) {
+          console.error("No user ID found");
+          const vali = document.getElementById("messagePoint");
+          vali.className = "dialog";
+          vali.style.backgroundColor = "#dc3545";
+          vali.innerText = "Session expired. Please login again.";
+          setTimeout(() => {
+            vali.className = "nothing";
+          }, 3000);
+          return;
+        }
+
+        // Update selected state
+        document.querySelectorAll(".radio-option").forEach((option) => {
+          option.classList.remove("selected");
+        });
+        event.target.closest(".radio-option").classList.add("selected");
+
+        if (gender === "Female") {
+          // Show the emergency contact modal if no details exist
+          if (!storedEmergencyContact) {
+            const modal = document.getElementById("emergencyContactModal");
+            modal.style.display = "block";
+            // Clear any previous values
+            document.getElementById("emergencyName").value = "";
+            document.getElementById("emergencyEmail").value = "";
+            document.getElementById("emergencyMobile").value = "";
+          } else {
+            // Show existing emergency contact details
+            showEmergencyContactDetails();
+            // Update gender without showing modal
+            saveGenderUpdate(userId, gender);
+          }
+        } else if (gender === "Male") {
+          // Hide emergency contact details but keep data stored
+          hideEmergencyContactDetails();
+          // Update gender
+          saveGenderUpdate(userId, gender);
+        }
+      }
+
+      function closeModal() {
+        const modal = document.getElementById("emergencyContactModal");
+        modal.style.display = "none";
+        // Reset the radio button to previous state if modal is closed
+        const previousGender = "{{ request.session.user_gender }}";
+        if (previousGender) {
+          const radioButton = document.querySelector(
+            `input[name="gender"][value="${previousGender}"]`
+          );
+          if (radioButton) {
+            radioButton.checked = true;
+            document.querySelectorAll(".radio-option").forEach((option) => {
+              option.classList.remove("selected");
+            });
+            radioButton.closest(".radio-option").classList.add("selected");
+          }
+        }
+      }
+
+      // Close modal when clicking outside
+      window.onclick = function (event) {
+        const modal = document.getElementById("emergencyContactModal");
+        if (event.target === modal) {
+          closeModal();
+        }
+      };
+
+      function saveEmergencyContact() {
+        const userId = "{{ request.session.user_id }}";
+        const gender = document.querySelector(
+          'input[name="gender"]:checked'
+        ).value;
+        const emergencyName = document.getElementById("emergencyName").value;
+        const emergencyEmail = document.getElementById("emergencyEmail").value;
+        const emergencyMobile =
+          document.getElementById("emergencyMobile").value;
+
+        if (!emergencyName || !emergencyEmail || !emergencyMobile) {
+          alert("Please fill in all emergency contact details");
+          return;
+        }
+
+        // Store emergency contact details
+        storedEmergencyContact = {
+          name: emergencyName,
+          email: emergencyEmail,
+          mobile: emergencyMobile,
+        };
+
+        // Send update request to server
+        fetch("/update_gender/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie("csrftoken"),
+          },
+          body: JSON.stringify({
+            userId: userId,
+            gender: gender,
+            emergencyName: emergencyName,
+            emergencyEmail: emergencyEmail,
+            emergencyMobile: emergencyMobile,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              // Show success message
+              const vali = document.getElementById("messagePoint");
+              vali.className = "dialog";
+              vali.innerText = "Profile updated successfully!";
+              setTimeout(() => {
+                vali.className = "nothing";
+              }, 3000);
+
+              // Update emergency contact details in the profile
+              showEmergencyContactDetails();
+
+              // Close the modal
+              closeModal();
+            } else {
+              throw new Error(data.error || "Failed to update profile");
+            }
+          })
+          .catch((error) => {
+            console.error("Error updating profile:", error);
+            alert("Failed to update profile. Please try again.");
+          });
+      }
+
+      function saveGenderUpdate(userId, gender) {
+        console.log("Saving gender update:", { userId, gender }); // Debug log
+
+        fetch("/update_gender/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie("csrftoken"),
+          },
+          body: JSON.stringify({
+            userId: userId,
+            gender: gender,
+          }),
+        })
+          .then((response) => {
+            console.log("Response status:", response.status); // Debug log
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then((data) => {
+            console.log("Response data:", data); // Debug log
+            if (data.success) {
+              const vali = document.getElementById("messagePoint");
+              vali.className = "dialog";
+              vali.style.backgroundColor = "#28a745"; // Green color for success
+              vali.innerText = "Gender updated successfully!";
+              setTimeout(() => {
+                vali.className = "nothing";
+              }, 3000);
+            } else {
+              throw new Error(data.error || "Failed to update gender");
+            }
+          })
+          .catch((error) => {
+            console.error("Error updating gender:", error);
+            const vali = document.getElementById("messagePoint");
+            vali.className = "dialog";
+            vali.style.backgroundColor = "#dc3545"; // Red color for error
+            vali.innerText =
+              error.message || "Failed to update gender. Please try again.";
+            setTimeout(() => {
+              vali.className = "nothing";
+            }, 3000);
+          });
+      }
+
+      // Helper to get CSRF token from cookies
+      function getCookie(name) {
+        const cookies = document.cookie.split(";");
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.startsWith(name + "=")) {
+            return decodeURIComponent(cookie.substring(name.length + 1));
+          }
+        }
+        return null;
+      }
+
+      function toggleMenu() {
+        const navPoint = document.querySelector(".navPoint");
+        navPoint.classList.toggle("active");
+      }
+
+      // Close menu when clicking outside
+      document.addEventListener("click", function (event) {
+        const navPoint = document.querySelector(".navPoint");
+        const hamburgerMenu = document.querySelector(".hamburger-menu");
+
+        if (
+          !navPoint.contains(event.target) &&
+          !hamburgerMenu.contains(event.target)
+        ) {
+          navPoint.classList.remove("active");
+        }
       });
     </script>
   </body>

@@ -7,6 +7,10 @@
       href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
       rel="stylesheet"
     />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
 
     {%if messages%} {%for me in messages %} {%if me.tags in "success" %}
     <input type="hidden" value="{{me}}" id="successpoint" />
@@ -96,6 +100,10 @@
         color: #004aad;
         border-bottom: 2px solid #f0f0f0;
         padding-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
       }
 
       .card p {
@@ -160,10 +168,242 @@
       .nothing {
         display: none;
       }
+
+      /* Hamburger Menu Styles */
+      .hamburger-menu {
+        display: none;
+        cursor: pointer;
+        padding: 0.5rem;
+        color: white;
+        font-size: 1.5rem;
+      }
+
+      .hamburger-menu i {
+        font-size: 1.8rem;
+      }
+
+      /* Mobile Media Queries */
+      @media screen and (max-width: 768px) {
+        .hamburger-menu {
+          display: block;
+          position: absolute;
+          right: 1rem;
+          top: 0.1rem;
+        }
+
+        .headerSelction {
+          padding: 1.5rem 1rem;
+          flex-direction: column;
+          gap: 1rem;
+          position: relative;
+          min-height: 3rem;
+        }
+
+        .titlePoint {
+          margin-top: 0.5rem;
+        }
+
+        .navPoint {
+          display: none;
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 0.5rem;
+          width: 100%;
+        }
+
+        .navPoint.active {
+          display: flex;
+        }
+
+        .navPoint a {
+          font-size: 0.9rem;
+          padding: 0.4rem 0.8rem;
+        }
+
+        .request-list {
+          margin: 1rem;
+          gap: 1rem;
+          padding: 0 0.5rem;
+        }
+
+        .card {
+          padding: 1.2rem;
+        }
+
+        .card h3 {
+          font-size: 1.1rem;
+          margin-bottom: 0.8rem;
+        }
+
+        .card p {
+          font-size: 0.9rem;
+          margin: 0.4rem 0;
+        }
+
+        .button-group {
+          flex-direction: column;
+          gap: 0.5rem !important;
+        }
+
+        .accept-btn,
+        .reject-btn {
+          padding: 0.6rem 1rem;
+          font-size: 0.9rem;
+          margin-top: 0.5rem;
+        }
+      }
+
+      @media screen and (max-width: 480px) {
+        .headerSelction {
+          padding: 0.5rem;
+          width: 100vw;
+          box-sizing: border-box;
+          margin: 0;
+          left: 0;
+          right: 0;
+          position: fixed;
+          top: 0;
+        }
+
+        .titlePoint {
+          font-size: 1.1rem;
+          width: 100%;
+          text-align: center;
+          margin: 0;
+          padding: 0;
+        }
+
+        .navPoint {
+          flex-direction: column;
+          align-items: center;
+          width: 100%;
+          padding: 0.3rem 0;
+          gap: 0.2rem;
+          background: #004aad;
+          position: absolute;
+          top: 100%;
+          left: 0;
+          z-index: 1000;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .navPoint a {
+          width: 100%;
+          text-align: center;
+          margin: 0;
+          padding: 0.4rem 0.8rem;
+          box-sizing: border-box;
+          font-size: 0.85rem;
+        }
+
+        /* Add margin to request list to account for fixed navbar */
+        .request-list {
+          margin-top: 5rem;
+          margin-left: 0.5rem;
+          margin-right: 0.5rem;
+          padding: 0;
+        }
+
+        .card {
+          padding: 1rem;
+          margin-bottom: 0.8rem;
+        }
+
+        .card h3 {
+          font-size: 1rem;
+          margin-bottom: 0.6rem;
+          padding-bottom: 0.4rem;
+        }
+
+        .card p {
+          font-size: 0.85rem;
+          margin: 0.3rem 0;
+        }
+
+        .button-group {
+          margin-top: 0.8rem;
+        }
+
+        .accept-btn,
+        .reject-btn {
+          padding: 0.5rem 0.8rem;
+          font-size: 0.85rem;
+          margin-top: 0.4rem;
+        }
+      }
+
+      @media screen and (max-width: 320px) {
+        .headerSelction {
+          padding: 0.4rem;
+        }
+
+        .titlePoint {
+          font-size: 1rem;
+        }
+
+        .navPoint a {
+          padding: 0.3rem 0.6rem;
+          font-size: 0.8rem;
+        }
+
+        /* Adjust margin for smaller screens */
+        .request-list {
+          margin-top: 4.5rem;
+        }
+
+        .card {
+          padding: 0.8rem;
+          margin-bottom: 0.6rem;
+        }
+
+        .card h3 {
+          font-size: 0.95rem;
+          margin-bottom: 0.5rem;
+          padding-bottom: 0.3rem;
+        }
+
+        .card p {
+          font-size: 0.8rem;
+          margin: 0.25rem 0;
+        }
+
+        .button-group {
+          margin-top: 0.6rem;
+        }
+
+        .accept-btn,
+        .reject-btn {
+          padding: 0.4rem 0.7rem;
+          font-size: 0.8rem;
+          margin-top: 0.3rem;
+        }
+      }
+
+      /* Women Only Badge */
+      .women-only-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background-color: #ff69b4;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 500;
+        margin-left: 10px;
+        box-shadow: 0 2px 4px rgba(255, 105, 180, 0.2);
+      }
+
+      .women-only-badge i {
+        font-size: 16px;
+      }
     </style>
     <div class="nothing" id="messagePoint"></div>
     <div class="headerSelction">
       <div class="titlePoint">CommuteCo</div>
+      <div class="hamburger-menu" onclick="toggleMenu()">
+        <i class="fas fa-ellipsis-v"></i>
+      </div>
       <div class="navPoint">
         <a href="/userHome" id="activac">My Pool</a>
         <a href="/addPool">Add Pool</a>
@@ -203,33 +443,146 @@
   {% endif %}
 
   <script>
+    function toggleMenu() {
+      const navPoint = document.querySelector(".navPoint");
+      navPoint.classList.toggle("active");
+    }
+
+    // Close menu when clicking outside
+    document.addEventListener("click", function (event) {
+      const navPoint = document.querySelector(".navPoint");
+      const hamburgerMenu = document.querySelector(".hamburger-menu");
+
+      if (
+        !navPoint.contains(event.target) &&
+        !hamburgerMenu.contains(event.target)
+      ) {
+        navPoint.classList.remove("active");
+      }
+    });
+
     window.addEventListener("DOMContentLoaded", () => {
       const myRequest = document.getElementById("myRequest");
-      fetch(`/getRequestFromUsers?userid={{ request.session.user_id }}`)
-        .then((view) => view.json())
+      const userId = "{{ request.session.user_id }}";
+
+      if (!userId) {
+        myRequest.innerHTML =
+          '<p class="text-center text-danger">Please login to view your rides</p>';
+        return;
+      }
+
+      console.log("Fetching rides for user:", userId);
+
+      // Add loading state
+      myRequest.innerHTML = `
+        <div class="card" style="text-align: center; padding: 2rem;">
+          <h3>Loading Rides...</h3>
+          <p>Please wait while we fetch your rides.</p>
+        </div>`;
+
+      fetch(`/getRequestFromUsers?userid=${userId}`, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+        },
+        credentials: "same-origin", // Include cookies
+      })
+        .then(async (response) => {
+          console.log("Response status:", response.status);
+          console.log(
+            "Response headers:",
+            Object.fromEntries(response.headers.entries())
+          );
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error("Server response:", errorText);
+            throw new Error(`Server error: ${response.status} - ${errorText}`);
+          }
+
+          const data = await response.json();
+          console.log("Received data:", data);
+          return data;
+        })
         .then((point) => {
+          if (point.error) {
+            throw new Error(point.error);
+          }
+
+          if (!point.data || point.data.length === 0) {
+            myRequest.innerHTML =
+              '<p class="text-center">No rides found. Create a new pool or join an existing one!</p>';
+            return;
+          }
+
+          // Sort the rides by most recent activity
+          point.data.sort((a, b) => {
+            const aTime = a.joined_at || a.applyOn;
+            const bTime = b.joined_at || b.applyOn;
+            return new Date(bTime) - new Date(aTime);
+          });
+
           var text = "";
           point.data.forEach((element) => {
-            text += `<div class="card">
-              <h3>${element.fromCity} ➜ ${element.toCity}</h3>
+            console.log("Ride data:", element); // Debug log
+            text += `<div class="card" data-pool-id="${element.id}">
+              <h3>${element.fromCity} ➜ ${element.toCity} ${
+              element.women_only
+                ? '<span class="women-only-badge"><i class="fas fa-female"></i> Women Only</span>'
+                : ""
+            }</h3>
               <p><strong>Date:</strong> ${element.datePoint}</p>
+              <p><strong>Time:</strong> ${element.journey_time}</p>
+              <p><strong>Phone:</strong> ${element.phone_number}</p>
               <p><strong>Contact:</strong> ${element.contactPoint}</p>
-              <p><strong>Raised On:</strong> ${element.applyOn}</p>
+              <p><strong>${
+                element.joined_at ? "Joined On" : "Raised On"
+              }:</strong> ${element.joined_at || element.applyOn}</p>
               <p><strong>Status:</strong> ${element.status}</p>
+              <p><strong>Passengers:</strong> ${
+                element.passenger_count || 1
+              }/2</p>
+              <p><strong>Payment Status:</strong> <span class="payment-status ${
+                element.payment_status === "completed" ? "completed" : "pending"
+              }">${
+              element.payment_status === "completed"
+                ? "Payment Completed"
+                : "Payment Pending"
+            }</span></p>
               <div class="button-group" style="display: flex; gap: 10px; margin-top: 15px;">
                 <button class="accept-btn" onclick="setString('${
                   element.toCity
                 }','${element.fromCity}')" style="flex: 1;">
                   <i class="fas fa-directions"></i> Directions
                 </button>
-                ${checkAndUpdate(element.status, element.id)}
-                <button onclick="deletePool(${
-                  element.id
-                })" class='reject-btn' style="flex: 1;">Delete</button>
+                ${checkAndUpdate(
+                  element.status,
+                  element.id,
+                  element.passenger_count,
+                  element.payment_status
+                )}
               </div>
             </div>`;
           });
           myRequest.innerHTML = text;
+        })
+        .catch((error) => {
+          console.error("Error fetching rides:", error);
+          myRequest.innerHTML = `
+            <div class="card" style="text-align: center; padding: 2rem;">
+              <h3 style="color: #e74c3c;">Error Loading Rides</h3>
+              <p>${error.message}</p>
+              <p style="color: #666; font-size: 0.9em; margin-top: 1rem;">
+                If this error persists, please try:
+                <br>1. Refreshing the page
+                <br>2. Logging out and back in
+                <br>3. Checking your internet connection
+              </p>
+              <button onclick="window.location.reload()" class="accept-btn" style="margin-top: 1rem;">
+                <i class="fas fa-sync"></i> Try Again
+              </button>
+            </div>`;
         });
     });
 
@@ -237,14 +590,41 @@
       window.location.href = `/maps?source=${fromCity}'&destination=${toCity}`;
     }
 
-    function checkAndUpdate(status, rideId) {
-      if (status == "Ride Completed") {
+    function checkAndUpdate(status, rideId, passengerCount, paymentStatus) {
+      console.log("checkAndUpdate called with:", {
+        status,
+        rideId,
+        passengerCount,
+        paymentStatus,
+      }); // Debug log
+
+      // If payment is completed, always show completed button regardless of ride status
+      if (paymentStatus === "completed") {
+        console.log("Payment completed, showing completed button");
+        return `<button class='accept-btn' style='flex: 1; background-color: #4CAF50; color: #fff;' disabled>
+          <i class="fas fa-check"></i> Payment Completed
+        </button>`;
+      }
+
+      // For rides that are completed but not paid
+      if (status === "Ride Completed") {
+        console.log("Ride completed but not paid, showing payment button");
         return `<button onclick="window.location.href='/payment?rideId=${rideId}'" class='accept-btn' style='flex: 1; background-color: #ffcc00; color: #000;'>
           <i class="fas fa-money-bill"></i> Payment
         </button>`;
-      } else {
-        return "";
       }
+
+      // For full carpools
+      if (passengerCount >= 2) {
+        console.log("Carpool full, showing full button");
+        return `<button class='accept-btn' style='flex: 1; background-color: #004aad; color: #fff;' disabled>
+          <i class="fas fa-users"></i> Carpool Full
+        </button>`;
+      }
+
+      // Default case - show delete button
+      console.log("Default case, showing delete button");
+      return `<button onclick="deletePool(${rideId})" class='reject-btn' style="flex: 1;">Delete</button>`;
     }
 
     function deletePool(poolId) {
@@ -253,19 +633,36 @@
           method: "POST",
           headers: {
             "X-CSRFToken": getCookie("csrftoken"),
+            "X-Requested-With": "XMLHttpRequest",
             "Content-Type": "application/json",
           },
         })
-          .then((response) => {
-            if (response.ok) {
-              window.location.reload();
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              // Remove the pool card from the UI
+              const poolCard = document.querySelector(
+                `[data-pool-id="${poolId}"]`
+              );
+              if (poolCard) {
+                poolCard.remove();
+              }
+              // Show success message
+              const messagePoint = document.getElementById("messagePoint");
+              messagePoint.className = "dialog";
+              messagePoint.innerText = data.message;
+              setTimeout(() => {
+                messagePoint.className = "nothing";
+              }, 3000);
             } else {
-              alert("Failed to delete pool. Please try again.");
+              throw new Error(data.message || "Failed to delete pool");
             }
           })
           .catch((error) => {
             console.error("Error:", error);
-            alert("An error occurred while deleting the pool.");
+            alert(
+              error.message || "An error occurred while deleting the pool."
+            );
           });
       }
     }

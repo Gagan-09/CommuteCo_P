@@ -1,20 +1,202 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login - CarPool</title>
+    <title>Login - Car Pool</title>
+    <link rel="stylesheet" href="{% static 'css/login.css' %}" />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
     />
-    <link rel="stylesheet" href="/static/css/login.css" />
+    <style>
+      .new-container {
+        background: rgba(62, 138, 225, 0.95);
+        padding: 3rem;
+        border-radius: 20px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        width: 90%;
+        max-width: 700px;
+        border: 2px solid rgba(255, 255, 255, 0.4);
+        backdrop-filter: blur(8px);
+        margin-top: 20px;
+      }
+
+      .new-head {
+        font-size: 2.2rem;
+        color: #fff;
+        text-align: center;
+        margin-bottom: 1rem;
+        background: linear-gradient(45deg, #ffd700, #ffa500);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 600;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .new-head2 {
+        color: rgba(255, 255, 255, 0.9);
+        text-align: center;
+        margin-bottom: 2.5rem;
+        font-size: 1.2rem;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      }
+
+      .new-input-group {
+        position: relative;
+        margin-bottom: 1.5rem;
+      }
+
+      .new-input-group input {
+        width: 100%;
+        padding: 16px 20px 16px 50px;
+        border: 2px solid rgba(255, 255, 255, 0.4);
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 30px;
+        color: #fff;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+      }
+
+      .new-input-group input:focus {
+        outline: none;
+        background: rgba(255, 255, 255, 0.2);
+        border-color: #d00c0ce9;
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+      }
+
+      .new-input-group input::placeholder {
+        color: #ffffff;
+        opacity: 0.9;
+      }
+
+      .new-input-group i {
+        position: absolute;
+        left: 18px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #ffffff;
+        opacity: 0.9;
+        font-size: 1.1rem;
+      }
+
+      .new-button {
+        width: 100%;
+        padding: 16px;
+        background: linear-gradient(45deg, #ffd700, #ffa500);
+        border: none;
+        border-radius: 30px;
+        color: #333;
+        font-size: 1.2rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+        margin-top: 1rem;
+      }
+
+      .new-button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5);
+      }
+
+      .new-register-links {
+        text-align: center;
+        margin-top: 2rem;
+      }
+
+      .new-register-links p {
+        color: rgba(255, 255, 255, 0.9);
+        margin-bottom: 1rem;
+      }
+
+      .new-register-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+      }
+
+      .new-register-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        width: 180px;
+        justify-content: center;
+      }
+
+      .new-user-btn {
+        background-color: #004aad;
+        color: white;
+      }
+
+      .new-user-btn:hover {
+        background-color: #003d8f;
+        transform: translateY(-2px);
+      }
+
+      .new-driver-btn {
+        background-color: #ffcc00;
+        color: #000;
+      }
+
+      .new-driver-btn:hover {
+        background-color: #e6b800;
+        transform: translateY(-2px);
+      }
+
+      .new-register-btn i {
+        font-size: 1.1rem;
+      }
+
+      @media screen and (max-width: 480px) {
+        .new-container {
+          padding: 2rem;
+          width: 95%;
+        }
+
+        .new-head {
+          font-size: 1.8rem;
+        }
+
+        .new-head2 {
+          font-size: 1rem;
+          margin-bottom: 2rem;
+        }
+
+        .new-input-group input {
+          padding: 14px 15px 14px 45px;
+          font-size: 1rem;
+        }
+
+        .new-button {
+          padding: 14px;
+          font-size: 1.1rem;
+        }
+
+        .new-register-buttons {
+          flex-direction: column;
+          gap: 0.8rem;
+        }
+
+        .new-register-btn {
+          width: 100%;
+        }
+      }
+    </style>
   </head>
 
   <body>
-    <div class="container">
-      <p class="head">Welcome Back</p>
-      <p class="head2">Sign in to continue</p>
+    <img src="{% static 'img/logo.png' %}" alt="Logo" class="logo" />
+
+    <div class="new-container">
+      <h1 class="new-head">Welcome Back</h1>
+      <p class="new-head2">Sign in to continue</p>
 
       {% if messages %} {% for review in messages %}
       <input type="text" value="{{review.message}}" id="point" />
@@ -30,7 +212,7 @@
 
       <form action="/login/" method="post">
         {% csrf_token %}
-        <div class="input-icon">
+        <div class="new-input-group">
           <i class="fas fa-envelope"></i>
           <input
             type="email"
@@ -39,10 +221,11 @@
             placeholder="Email Address"
             title="Invalid Email Format"
             required
+            autocomplete="email"
           />
         </div>
 
-        <div class="input-icon">
+        <div class="new-input-group">
           <i class="fas fa-lock"></i>
           <input
             type="password"
@@ -50,20 +233,21 @@
             pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
             placeholder="Password"
             required
+            autocomplete="current-password"
           />
         </div>
 
-        <button>LOGIN</button>
+        <button type="submit" class="new-button">LOGIN</button>
       </form>
 
-      <div class="register-links">
+      <div class="new-register-links">
         <p>Don't have an account?</p>
-        <div class="register-buttons">
-          <a href="/signup" class="register-btn user-btn">
+        <div class="new-register-buttons">
+          <a href="/signup" class="new-register-btn new-user-btn">
             <i class="fas fa-user"></i>
             Sign Up as User
           </a>
-          <a href="/dregister" class="register-btn driver-btn">
+          <a href="/dregister" class="new-register-btn new-driver-btn">
             <i class="fas fa-car"></i>
             Sign Up as Driver
           </a>
@@ -71,59 +255,4 @@
       </div>
     </div>
   </body>
-
-  <style>
-    .register-links {
-      text-align: center;
-      margin-top: 2rem;
-    }
-
-    .register-links p {
-      color: #666;
-      margin-bottom: 1rem;
-    }
-
-    .register-buttons {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-    }
-
-    .register-btn {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.75rem 1.5rem;
-      border-radius: 8px;
-      text-decoration: none;
-      font-weight: 500;
-      transition: all 0.3s ease;
-      width: 180px;
-      justify-content: center;
-    }
-
-    .user-btn {
-      background-color: #004aad;
-      color: white;
-    }
-
-    .user-btn:hover {
-      background-color: #003d8f;
-      transform: translateY(-2px);
-    }
-
-    .driver-btn {
-      background-color: #ffcc00;
-      color: #000;
-    }
-
-    .driver-btn:hover {
-      background-color: #e6b800;
-      transform: translateY(-2px);
-    }
-
-    .register-btn i {
-      font-size: 1.1rem;
-    }
-  </style>
 </html>
